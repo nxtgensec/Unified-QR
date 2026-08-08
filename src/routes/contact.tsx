@@ -27,11 +27,12 @@ export const Route = createFileRoute("/contact")({
 
 function Contact() {
   const [values, setValues] = useState({ name: "", email: "", message: "" });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  type Errors = { name?: string; email?: string; message?: string };
+  const [errors, setErrors] = useState<Errors>({});
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    const next: Record<string, string> = {};
+    const next: Errors = {};
     if (!values.name.trim()) next.name = "Please enter your name";
     if (!/^\S+@\S+\.\S+$/.test(values.email)) next.email = "Enter a valid email address";
     if (values.message.trim().length < 10) next.message = "Tell us a little more (10+ characters)";
