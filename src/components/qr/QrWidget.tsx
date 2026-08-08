@@ -33,9 +33,10 @@ export function QrWidget() {
   }, [payload]);
 
   const template = useMemo(() => {
-    const base = templates.find((t) => t.id === templateId) ?? templates[0];
+    const base = templates.find((t) => t.id === templateId) ?? templates[0]!;
     return { ...base, fg: fg ?? base.fg, bg: bg ?? base.bg, eye: fg ?? base.eye };
   }, [templateId, fg, bg]);
+
 
   const data = debounced.trim() || PLACEHOLDER;
   const isEmpty = !debounced.trim();
