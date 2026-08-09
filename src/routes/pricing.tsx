@@ -4,11 +4,11 @@ import { Check } from "lucide-react";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "Pricing — Free, Flex and Pro QR Code Plans | TQRCG" },
+      { title: "Pricing — Free, Flex and Pro QR Code Plans | UnifiedQR" },
       {
         name: "description",
         content:
-          "Compare TQRCG plans: start free with static QR Codes, or upgrade for dynamic codes, scan analytics and team collaboration.",
+          "Compare UnifiedQR plans: start free with static QR Codes, or upgrade for dynamic codes, scan analytics and team collaboration.",
       },
       { property: "og:title", content: "Pricing — Free, Flex and Pro QR Code Plans" },
       {

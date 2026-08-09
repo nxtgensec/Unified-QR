@@ -81,14 +81,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "The QR Code Generator — Free QR Codes in Seconds" },
+      { title: "UnifiedQR — Free QR Codes in Seconds" },
       {
         name: "description",
         content:
           "Create, customize and download free QR Codes for URLs, PDFs, contacts, SMS and more.",
       },
-      { name: "author", content: "The QR Code Generator" },
-      { property: "og:site_name", content: "The QR Code Generator" },
+      { name: "author", content: "UnifiedQR" },
+      { property: "og:site_name", content: "UnifiedQR" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

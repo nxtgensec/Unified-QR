@@ -4,7 +4,7 @@ import { qrTypes } from "@/components/qr/TypeTabs";
 export const Route = createFileRoute("/qr-code-types")({
   head: () => ({
     meta: [
-      { title: "QR Code Types — URL, vCard, PDF, SMS and More | TQRCG" },
+      { title: "QR Code Types — URL, vCard, PDF, SMS and More | UnifiedQR" },
       {
         name: "description",
         content:

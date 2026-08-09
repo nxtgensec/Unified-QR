@@ -16,10 +16,8 @@ export function Logo() {
           <path d="M3 3h7v7H3V3zm2 2v3h3V5H5zM14 3h7v7h-7V3zm2 2v3h3V5h-3zM3 14h7v7H3v-7zm2 2v3h3v-3H5zM14 14h3v3h-3v-3zm5 0h2v2h-2v-2zm-5 5h2v2h-2v-2zm3 0h4v2h-4v-2zm2-3h2v2h-2v-2z" />
         </svg>
       </span>
-      <span className="text-[15px] font-extrabold leading-tight tracking-tight">
-        The QR Code
-        <br />
-        Generator
+      <span className="text-[17px] font-extrabold leading-tight tracking-tight">
+        UnifiedQR
       </span>
     </Link>
   );

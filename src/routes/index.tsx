@@ -26,7 +26,7 @@ import analytics from "@/assets/feature-analytics.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Free QR Code Generator — Create & Download QR Codes | TQRCG" },
+      { title: "Free QR Code Generator — Create & Download QR Codes | UnifiedQR" },
       {
         name: "description",
         content:
@@ -47,7 +47,7 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebApplication",
-          name: "The QR Code Generator",
+          name: "UnifiedQR",
           applicationCategory: "UtilitiesApplication",
           offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
         }),
@@ -105,7 +105,7 @@ function Home() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">
-              The QR Code Generator
+              UnifiedQR
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
               All-in-one tool to create free QR Codes, edit them, and track campaign
@@ -148,7 +148,7 @@ function Home() {
       <section className="py-14">
         <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
           <p className="text-sm font-semibold text-muted-foreground">
-            TQRCG protects your data with globally recognized certifications
+            UnifiedQR protects your data with globally recognized certifications
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
             {["SOC 2 Type II", "ISO 27001", "GDPR compliant"].map((c) => (
@@ -256,7 +256,7 @@ function Home() {
               Generate a QR Code without leaving your tab
             </h2>
             <p className="mt-3 text-sm opacity-80">
-              No more switching screens or copying links. Just tap the TQRCG Chrome Extension to
+              No more switching screens or copying links. Just tap the UnifiedQR Chrome Extension to
               create a QR Code with a single click.
             </p>
           </div>
@@ -272,7 +272,7 @@ function Home() {
       <section className="bg-surface py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <h2 className="max-w-3xl text-2xl font-extrabold tracking-tight sm:text-4xl">
-            Why 4 Million+ users trust TQRCG for ROI driven QR Code campaigns
+            Why 4 Million+ users trust UnifiedQR for ROI driven QR Code campaigns
           </h2>
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
             <div className="rounded-3xl border border-border bg-card p-6 shadow-card lg:col-span-2">

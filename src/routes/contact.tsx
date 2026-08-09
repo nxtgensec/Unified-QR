@@ -7,16 +7,16 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact TQRCG — Talk to the QR Code Team" },
+      { title: "Contact UnifiedQR — Talk to the QR Code Team" },
       {
         name: "description",
         content:
-          "Questions about QR Codes, plans or enterprise campaigns? Send the TQRCG team a message and we'll reply within one business day.",
+          "Questions about QR Codes, plans or enterprise campaigns? Send the UnifiedQR team a message and we'll reply within one business day.",
       },
-      { property: "og:title", content: "Contact TQRCG — Talk to the QR Code Team" },
+      { property: "og:title", content: "Contact UnifiedQR — Talk to the QR Code Team" },
       {
         property: "og:description",
-        content: "Reach the TQRCG team about pricing, dynamic QR Codes or enterprise support.",
+        content: "Reach the UnifiedQR team about pricing, dynamic QR Codes or enterprise support.",
       },
       { property: "og:url", content: "/contact" },
     ],

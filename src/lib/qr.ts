@@ -213,7 +213,7 @@ export function renderQrSvg(
   ].join("");
 
   const mark = watermark
-    ? `<g><rect x="${size / 2 - size * 0.29}" y="${size - size * 0.12}" width="${size * 0.58}" height="${size * 0.075}" rx="${size * 0.0375}" fill="${template.fg}" opacity="0.9"/><text x="${size / 2}" y="${size - size * 0.065}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="${size * 0.036}" fill="${template.bg}">the-qrcode-generator.com</text></g>`
+    ? `<g><rect x="${size / 2 - size * 0.29}" y="${size - size * 0.12}" width="${size * 0.58}" height="${size * 0.075}" rx="${size * 0.0375}" fill="${template.fg}" opacity="0.9"/><text x="${size / 2}" y="${size - size * 0.065}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="${size * 0.036}" fill="${template.bg}">unifiedqr.app</text></g>`
     : "";
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="${template.bg}"/>${body}${eyes}${mark}</svg>`;
