@@ -84,7 +84,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border pt-6 sm:flex-row sm:items-center">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} The QR Code Generator. All rights reserved.
+            © {new Date().getFullYear()} UnifiedQR. All rights reserved.
           </p>
           <select
             aria-label="Language"

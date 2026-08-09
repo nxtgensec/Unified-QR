@@ -15,7 +15,7 @@ import { TypeForm } from "./TypeForm";
 import { Download, Lock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
-const PLACEHOLDER = "https://www.the-qrcode-generator.com/";
+const PLACEHOLDER = "https://unifiedqr.app";
 
 export function QrWidget() {
   const [type, setType] = useState<QrType>("url");
