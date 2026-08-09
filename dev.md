@@ -1,6 +1,6 @@
-# TQRCG Clone — Development Status
+# UnifiedQR — Development Status
 
-Clone of https://www.the-qrcode-generator.com/ built on TanStack Start + Tailwind v4.
+Structure cloned from https://www.the-qrcode-generator.com/, rebranded as **UnifiedQR**. Built on TanStack Start + Tailwind v4.
 Everything is currently **frontend-only** (no backend, no accounts, no database).
 
 ---
@@ -74,10 +74,44 @@ Everything is currently **frontend-only** (no backend, no accounts, no database)
 
 ---
 
-## 3. Open questions for you
+## 3. Decisions made (locked)
 
-1. How far do you want the clone to go — **marketing clone only**, or the **real product** (accounts, dynamic QR codes, scan analytics)? The latter needs Lovable Cloud enabled.
-2. Should the missing nav pages (Products, Resources, Blog) be built out, or should the links be trimmed?
-3. Do you want per-type landing pages (roughly 10 extra pages) for SEO parity with the original?
-4. Should the contact form actually deliver email, or stay demo-only?
-5. Keep the TQRCG name/branding, or rebrand to your own name and logo?
+| Question | Decision |
+| --- | --- |
+| Scope | **Full product** — accounts, dynamic QR codes, scan analytics (Lovable Cloud) |
+| Nav pages | **Build them out** — Products, Resources, Blog get real pages |
+| Per-type landing pages | **Yes, all 10** |
+| Branding | **UnifiedQR** (rebrand done across header, footer, meta, watermark) |
+
+## 4. Build roadmap
+
+### Phase 1 — Marketing completion (no backend)
+1. `/products` overview, `/resources`, `/blog` + `/blog/$slug` (static posts).
+2. 10 per-type landing pages at `/qr-code-types/$type` with unique head(), hero generator preset to that type, copy + FAQ.
+3. Legal: `/terms`, `/privacy`, `/cookies`. Sitemap.
+4. Home: alternating image/text rows per type, logo wall/testimonials.
+
+### Phase 2 — Accounts (Lovable Cloud)
+5. Enable Cloud. Email/password + Google sign-in, `/auth`, `/reset-password`.
+6. `profiles` table (display name, avatar, plan) + `user_roles` table.
+7. `_authenticated` dashboard shell.
+
+### Phase 3 — Dynamic QR codes
+8. `qr_codes` table (owner, type, payload, style, short_slug, active).
+9. Public redirect route `/r/$slug` that logs a scan and 302s.
+10. Save-from-generator flow, dashboard list, edit destination, delete.
+
+### Phase 4 — Analytics
+11. `scans` table (code_id, ts, country, city, device, referrer, UA).
+12. Dashboard charts: scans over time, unique, top locations, devices, CSV export.
+
+### Phase 5 — Teams, billing, extras
+13. Teams + invites, role-based access.
+14. Plan limits enforced server-side (Free: 2 dynamic codes, 5 members).
+15. Payments for Flex/Pro.
+16. Logo upload + frames + JPG/PDF export; PDF file upload to storage; real multi-URL landing pages.
+17. Contact form delivering email.
+
+## 5. Notes
+- Watermark/domain now reads `unifiedqr.app`.
+- Anything in Phase 2+ requires Lovable Cloud to be enabled first.
