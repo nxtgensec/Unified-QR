@@ -42,9 +42,38 @@ export function QrWidget() {
     return { ...base, fg: fg ?? base.fg, bg: bg ?? base.bg, eye: fg ?? base.eye };
   }, [templateId, fg, bg]);
 
+  const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
 
   const data = debounced.trim() || PLACEHOLDER;
   const isEmpty = !debounced.trim();
+
+  async function save(dynamic: boolean) {
+    if (!user || isEmpty) return;
+    setSaving(true);
+    const slug = dynamic ? makeSlug() : null;
+    const { error } = await supabase.from("qr_codes").insert({
+      user_id: user.id,
+      name: `${type.toUpperCase()} code`,
+      type,
+      content: payload,
+      is_dynamic: dynamic,
+      slug,
+      destination: dynamic ? payload : null,
+      template_id: templateId,
+      fg: fg ?? template.fg,
+      bg: bg ?? template.bg,
+    });
+    setSaving(false);
+    if (error) {
+      toast.error("Could not save this code. Please try again.");
+      return;
+    }
+    toast.success(dynamic ? "Dynamic code created" : "Saved to your account", {
+      description: dynamic && slug ? shortUrl(slug) : "Find it in your dashboard.",
+    });
+  }
+
 
   const svg = useMemo(
     () => renderQrSvg(data, template, { size: 512, watermark: true }),
