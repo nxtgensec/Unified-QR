@@ -12,10 +12,15 @@ import {
 } from "@/lib/qr";
 import { TypeTabs, qrTypes } from "./TypeTabs";
 import { TypeForm } from "./TypeForm";
-import { Download, Lock, Sparkles } from "lucide-react";
+import { Download, Lock, Save, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { makeSlug, shortUrl } from "@/lib/codes";
 
 const PLACEHOLDER = "https://unifiedqr.app";
+
 
 export function QrWidget() {
   const [type, setType] = useState<QrType>("url");
