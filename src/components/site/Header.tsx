@@ -52,16 +52,37 @@ export function Header() {
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <a href="#generator" className="text-sm font-semibold text-foreground/80 hover:text-brand">
-            Log in
-          </a>
-          <a
-            href="#generator"
-            className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
-          >
-            Sign up free
-          </a>
+          {user ? (
+            <>
+              <Link
+                to="/dashboard"
+                className="text-sm font-semibold text-foreground/80 hover:text-brand"
+              >
+                Dashboard
+              </Link>
+              <button
+                type="button"
+                onClick={signOut}
+                className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-surface"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/auth" className="text-sm font-semibold text-foreground/80 hover:text-brand">
+                Log in
+              </Link>
+              <Link
+                to="/auth"
+                className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+              >
+                Sign up free
+              </Link>
+            </>
+          )}
         </div>
+
 
         <button
           className="lg:hidden"
