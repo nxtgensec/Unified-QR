@@ -16,6 +16,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as QrCodeTypesRouteImport } from './routes/qr-code-types'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as RSlugRouteImport } from './routes/r.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -51,6 +52,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const RSlugRoute = RSlugRouteImport.update({
+  id: '/r/$slug',
+  path: '/r/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/qr-code-types': typeof QrCodeTypesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/r/$slug': typeof RSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/qr-code-types': typeof QrCodeTypesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/r/$slug': typeof RSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,13 +85,27 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/qr-code-types': typeof QrCodeTypesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/r/$slug': typeof RSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/contact' | '/pricing' | '/qr-code-types' | '/dashboard'
+    | '/'
+    | '/auth'
+    | '/contact'
+    | '/pricing'
+    | '/qr-code-types'
+    | '/dashboard'
+    | '/r/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/contact' | '/pricing' | '/qr-code-types' | '/dashboard'
+  to:
+    | '/'
+    | '/auth'
+    | '/contact'
+    | '/pricing'
+    | '/qr-code-types'
+    | '/dashboard'
+    | '/r/$slug'
   id:
     | '__root__'
     | '/'
@@ -93,6 +115,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/qr-code-types'
     | '/_authenticated/dashboard'
+    | '/r/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -102,6 +125,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   PricingRoute: typeof PricingRoute
   QrCodeTypesRoute: typeof QrCodeTypesRoute
+  RSlugRoute: typeof RSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -155,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/r/$slug': {
+      id: '/r/$slug'
+      path: '/r/$slug'
+      fullPath: '/r/$slug'
+      preLoaderRoute: typeof RSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -176,6 +207,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   PricingRoute: PricingRoute,
   QrCodeTypesRoute: QrCodeTypesRoute,
+  RSlugRoute: RSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

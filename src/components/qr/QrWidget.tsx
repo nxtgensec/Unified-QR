@@ -87,13 +87,48 @@ export function QrWidget() {
           </div>
 
           <div className="mt-6 space-y-3">
-            <PremiumToggle label="Track your scans" />
-            <PremiumToggle label="Remove watermark" />
-            <p className="text-xs text-muted-foreground">
-              To enable tracking,{" "}
-              <span className="font-semibold text-brand">create a Dynamic QR Code</span>
-            </p>
+            {user ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void save(false)}
+                  disabled={saving || isEmpty}
+                  className="flex w-full items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-left text-sm font-semibold disabled:opacity-60"
+                >
+                  Save to my account
+                  <Save className="size-4 text-brand" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void save(true)}
+                  disabled={saving || isEmpty || type !== "url"}
+                  className="flex w-full items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-left text-sm font-semibold disabled:opacity-60"
+                  title={type === "url" ? undefined : "Dynamic links work with the URL type"}
+                >
+                  Create dynamic, trackable link
+                  <Sparkles className="size-4 text-premium" />
+                </button>
+                <p className="text-xs text-muted-foreground">
+                  Dynamic codes stay scannable while you change the destination —{" "}
+                  <Link to="/dashboard" className="font-semibold text-brand">
+                    open your dashboard
+                  </Link>
+                </p>
+              </>
+            ) : (
+              <>
+                <PremiumToggle label="Track your scans" />
+                <PremiumToggle label="Remove watermark" />
+                <p className="text-xs text-muted-foreground">
+                  <Link to="/auth" className="font-semibold text-brand">
+                    Sign in with Google
+                  </Link>{" "}
+                  to save codes and create trackable dynamic links.
+                </p>
+              </>
+            )}
           </div>
+
         </div>
 
         <div className="flex flex-col items-center">
