@@ -117,13 +117,13 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            <a
-              href="#generator"
+            <Link
+              to={user ? "/dashboard" : "/auth"}
               onClick={() => setOpen(false)}
               className="mt-2 rounded-full bg-brand px-5 py-2.5 text-center text-sm font-bold text-brand-foreground"
             >
-              Sign up free
-            </a>
+              {user ? "Dashboard" : "Sign up free"}
+            </Link>
           </nav>
         </div>
       )}
