@@ -76,7 +76,10 @@ function Dashboard() {
 
   async function remove(id: string) {
     const { error } = await supabase.from("qr_codes").delete().eq("id", id);
-    if (error) return toast.error("Delete failed.");
+    if (error) {
+      toast.error("Delete failed.");
+      return;
+    }
     setCodes((c) => c.filter((x) => x.id !== id));
     toast.success("QR Code deleted");
   }
@@ -86,7 +89,10 @@ function Dashboard() {
       .from("qr_codes")
       .update({ active: !c.active })
       .eq("id", c.id);
-    if (error) return toast.error("Update failed.");
+    if (error) {
+      toast.error("Update failed.");
+      return;
+    }
     setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, active: !c.active } : r)));
   }
 
@@ -99,7 +105,10 @@ function Dashboard() {
       .from("qr_codes")
       .update({ destination: value })
       .eq("id", c.id);
-    if (error) return toast.error("Update failed.");
+    if (error) {
+      toast.error("Update failed.");
+      return;
+    }
     setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, destination: value } : r)));
     toast.success("Destination updated — the printed code keeps working");
   }
@@ -108,7 +117,10 @@ function Dashboard() {
     const next = window.prompt("Rename QR Code", c.name);
     if (!next?.trim()) return;
     const { error } = await supabase.from("qr_codes").update({ name: next.trim() }).eq("id", c.id);
-    if (error) return toast.error("Rename failed.");
+    if (error) {
+      toast.error("Rename failed.");
+      return;
+    }
     setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, name: next.trim() } : r)));
   }
 
