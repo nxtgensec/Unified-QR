@@ -14,7 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          plan: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          plan?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          plan?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qr_codes: {
+        Row: {
+          active: boolean
+          bg: string | null
+          content: string
+          created_at: string
+          destination: string | null
+          fg: string | null
+          id: string
+          is_dynamic: boolean
+          name: string
+          slug: string | null
+          template_id: number
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          bg?: string | null
+          content?: string
+          created_at?: string
+          destination?: string | null
+          fg?: string | null
+          id?: string
+          is_dynamic?: boolean
+          name?: string
+          slug?: string | null
+          template_id?: number
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          bg?: string | null
+          content?: string
+          created_at?: string
+          destination?: string | null
+          fg?: string | null
+          id?: string
+          is_dynamic?: boolean
+          name?: string
+          slug?: string | null
+          template_id?: number
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scans: {
+        Row: {
+          code_id: string
+          device: string | null
+          id: string
+          referrer: string | null
+          scanned_at: string
+        }
+        Insert: {
+          code_id: string
+          device?: string | null
+          id?: string
+          referrer?: string | null
+          scanned_at?: string
+        }
+        Update: {
+          code_id?: string
+          device?: string | null
+          id?: string
+          referrer?: string | null
+          scanned_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scans_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
