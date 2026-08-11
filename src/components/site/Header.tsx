@@ -1,6 +1,9 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+
 
 const nav = [
   { label: "QR Code types", to: "/qr-code-types" },
