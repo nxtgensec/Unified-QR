@@ -1,6 +1,9 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+
 
 const nav = [
   { label: "QR Code types", to: "/qr-code-types" },
@@ -25,6 +28,14 @@ export function Logo() {
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    navigate({ to: "/", replace: true });
+  }
+
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
@@ -52,16 +63,37 @@ export function Header() {
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <a href="#generator" className="text-sm font-semibold text-foreground/80 hover:text-brand">
-            Log in
-          </a>
-          <a
-            href="#generator"
-            className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
-          >
-            Sign up free
-          </a>
+          {user ? (
+            <>
+              <Link
+                to="/dashboard"
+                className="text-sm font-semibold text-foreground/80 hover:text-brand"
+              >
+                Dashboard
+              </Link>
+              <button
+                type="button"
+                onClick={signOut}
+                className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-surface"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/auth" className="text-sm font-semibold text-foreground/80 hover:text-brand">
+                Log in
+              </Link>
+              <Link
+                to="/auth"
+                className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+              >
+                Sign up free
+              </Link>
+            </>
+          )}
         </div>
+
 
         <button
           className="lg:hidden"
@@ -85,13 +117,13 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            <a
-              href="#generator"
+            <Link
+              to={user ? "/dashboard" : "/auth"}
               onClick={() => setOpen(false)}
               className="mt-2 rounded-full bg-brand px-5 py-2.5 text-center text-sm font-bold text-brand-foreground"
             >
-              Sign up free
-            </a>
+              {user ? "Dashboard" : "Sign up free"}
+            </Link>
           </nav>
         </div>
       )}

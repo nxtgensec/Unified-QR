@@ -115,3 +115,17 @@ Everything is currently **frontend-only** (no backend, no accounts, no database)
 ## 5. Notes
 - Watermark/domain now reads `unifiedqr.app`.
 - Anything in Phase 2+ requires Lovable Cloud to be enabled first.
+
+---
+
+## 6. Update — Accounts (Google only) + dynamic codes
+
+**Working now**
+- Google-only sign-in at `/auth` (email/password disabled). Header reflects session; sign out works.
+- `profiles` auto-created on first sign-in; `qr_codes` and `scans` tables with RLS.
+- Generator: "Save to my account" and "Create dynamic, trackable link" (URL type).
+- `/dashboard` (auth-gated): saved codes list, previews, rename, edit destination, pause/activate, PNG/SVG download, delete, stats (saved / dynamic / total scans).
+- `/r/$slug` short-link redirect that records a scan.
+
+**Marked Beta (visible, not live)**
+- Advanced analytics charts, Teams, Billing, Logos & frames / JPG-PDF export.

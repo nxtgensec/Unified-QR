@@ -12,10 +12,15 @@ import {
 } from "@/lib/qr";
 import { TypeTabs, qrTypes } from "./TypeTabs";
 import { TypeForm } from "./TypeForm";
-import { Download, Lock, Sparkles } from "lucide-react";
+import { Download, Lock, Save, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { makeSlug, shortUrl } from "@/lib/codes";
 
 const PLACEHOLDER = "https://unifiedqr.app";
+
 
 export function QrWidget() {
   const [type, setType] = useState<QrType>("url");
@@ -37,9 +42,38 @@ export function QrWidget() {
     return { ...base, fg: fg ?? base.fg, bg: bg ?? base.bg, eye: fg ?? base.eye };
   }, [templateId, fg, bg]);
 
+  const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
 
   const data = debounced.trim() || PLACEHOLDER;
   const isEmpty = !debounced.trim();
+
+  async function save(dynamic: boolean) {
+    if (!user || isEmpty) return;
+    setSaving(true);
+    const slug = dynamic ? makeSlug() : null;
+    const { error } = await supabase.from("qr_codes").insert({
+      user_id: user.id,
+      name: `${type.toUpperCase()} code`,
+      type,
+      content: payload,
+      is_dynamic: dynamic,
+      slug,
+      destination: dynamic ? payload : null,
+      template_id: templateId,
+      fg: fg ?? template.fg,
+      bg: bg ?? template.bg,
+    });
+    setSaving(false);
+    if (error) {
+      toast.error("Could not save this code. Please try again.");
+      return;
+    }
+    toast.success(dynamic ? "Dynamic code created" : "Saved to your account", {
+      description: dynamic && slug ? shortUrl(slug) : "Find it in your dashboard.",
+    });
+  }
+
 
   const svg = useMemo(
     () => renderQrSvg(data, template, { size: 512, watermark: true }),
@@ -87,13 +121,48 @@ export function QrWidget() {
           </div>
 
           <div className="mt-6 space-y-3">
-            <PremiumToggle label="Track your scans" />
-            <PremiumToggle label="Remove watermark" />
-            <p className="text-xs text-muted-foreground">
-              To enable tracking,{" "}
-              <span className="font-semibold text-brand">create a Dynamic QR Code</span>
-            </p>
+            {user ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void save(false)}
+                  disabled={saving || isEmpty}
+                  className="flex w-full items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-left text-sm font-semibold disabled:opacity-60"
+                >
+                  Save to my account
+                  <Save className="size-4 text-brand" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void save(true)}
+                  disabled={saving || isEmpty || type !== "url"}
+                  className="flex w-full items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-left text-sm font-semibold disabled:opacity-60"
+                  title={type === "url" ? undefined : "Dynamic links work with the URL type"}
+                >
+                  Create dynamic, trackable link
+                  <Sparkles className="size-4 text-premium" />
+                </button>
+                <p className="text-xs text-muted-foreground">
+                  Dynamic codes stay scannable while you change the destination —{" "}
+                  <Link to="/dashboard" className="font-semibold text-brand">
+                    open your dashboard
+                  </Link>
+                </p>
+              </>
+            ) : (
+              <>
+                <PremiumToggle label="Track your scans" />
+                <PremiumToggle label="Remove watermark" />
+                <p className="text-xs text-muted-foreground">
+                  <Link to="/auth" className="font-semibold text-brand">
+                    Sign in with Google
+                  </Link>{" "}
+                  to save codes and create trackable dynamic links.
+                </p>
+              </>
+            )}
           </div>
+
         </div>
 
         <div className="flex flex-col items-center">
