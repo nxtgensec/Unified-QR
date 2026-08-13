@@ -118,12 +118,20 @@ function Dashboard() {
     setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, name: value } : r)));
     toast.success("Renamed");
   }
+  const [dialog, setDialog] = useState<{
+    title: string;
+    label: string;
+    value: string;
+    onSave: (v: string) => Promise<void>;
+  } | null>(null);
 
+  const [confirmDelete, setConfirmDelete] = useState<SavedCode | null>(null);
 
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
+
 
   const totalScans = Object.values(counts).reduce((a, b) => a + b, 0);
   const dynamicCount = codes.filter((c) => c.is_dynamic).length;
