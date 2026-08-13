@@ -12,7 +12,7 @@ import {
 } from "@/lib/qr";
 import { TypeTabs, qrTypes } from "./TypeTabs";
 import { TypeForm } from "./TypeForm";
-import { Download, Lock, Save, Sparkles } from "lucide-react";
+import { Download, Save, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
@@ -239,28 +239,6 @@ export function QrWidget() {
         </div>
       </div>
     </div>
-  );
-}
-
-function PremiumToggle({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={() =>
-        toast("Premium feature", {
-          description: "Sign up free to unlock tracking and watermark-free codes.",
-        })
-      }
-      className="flex w-full items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-left"
-    >
-      <span className="flex items-center gap-2 text-sm font-semibold">
-        {label}
-        <Sparkles className="size-4 text-premium" />
-      </span>
-      <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-        <Lock className="size-3.5" /> Locked
-      </span>
-    </button>
   );
 }
 
