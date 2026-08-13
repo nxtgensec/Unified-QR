@@ -229,10 +229,32 @@ function Dashboard() {
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                    <Action onClick={() => rename(c)}>Rename</Action>
+                    <Action
+                      onClick={() =>
+                        setDialog({
+                          title: "Rename QR Code",
+                          label: "Name",
+                          value: c.name,
+                          onSave: (v) => saveName(c, v),
+                        })
+                      }
+                    >
+                      Rename
+                    </Action>
                     {c.is_dynamic && (
                       <>
-                        <Action onClick={() => editDestination(c)}>Edit destination</Action>
+                        <Action
+                          onClick={() =>
+                            setDialog({
+                              title: "Edit destination",
+                              label: "Destination URL",
+                              value: c.destination ?? "",
+                              onSave: (v) => saveDestination(c, v),
+                            })
+                          }
+                        >
+                          Edit destination
+                        </Action>
                         <Action onClick={() => toggleActive(c)}>
                           {c.active ? "Pause" : "Activate"}
                         </Action>
@@ -244,10 +266,11 @@ function Dashboard() {
                     <Action onClick={() => downloadSvg(codeSvg(c, 1024), `${c.name}.svg`)}>
                       SVG
                     </Action>
-                    <Action onClick={() => remove(c.id)}>
+                    <Action onClick={() => setConfirmDelete(c)}>
                       <Trash2 className="size-3" /> Delete
                     </Action>
                   </div>
+
                 </div>
               </li>
             ))}
