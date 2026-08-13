@@ -45,7 +45,6 @@ const plans = [
       "Everything in Free",
       "25 dynamic QR Codes",
       "Scan analytics & locations",
-      "No watermark",
       "Logo upload",
       "Email support",
     ],

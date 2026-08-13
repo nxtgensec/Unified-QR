@@ -48,7 +48,7 @@ function codeData(c: SavedCode) {
 function codeSvg(c: SavedCode, size = 256) {
   const base = templates.find((t) => t.id === c.template_id) ?? templates[0]!;
   const tpl = { ...base, fg: c.fg ?? base.fg, bg: c.bg ?? base.bg, eye: c.fg ?? base.eye };
-  return renderQrSvg(codeData(c), tpl, { size, watermark: false });
+  return renderQrSvg(codeData(c), tpl, { size });
 }
 
 function Dashboard() {
@@ -96,11 +96,7 @@ function Dashboard() {
     setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, active: !c.active } : r)));
   }
 
-  async function editDestination(c: SavedCode) {
-    const next = window.prompt("New destination URL", c.destination ?? "");
-    if (next === null) return;
-    const value = next.trim();
-    if (!value) return;
+  async function saveDestination(c: SavedCode, value: string) {
     const { error } = await supabase
       .from("qr_codes")
       .update({ destination: value })
@@ -113,21 +109,29 @@ function Dashboard() {
     toast.success("Destination updated — the printed code keeps working");
   }
 
-  async function rename(c: SavedCode) {
-    const next = window.prompt("Rename QR Code", c.name);
-    if (!next?.trim()) return;
-    const { error } = await supabase.from("qr_codes").update({ name: next.trim() }).eq("id", c.id);
+  async function saveName(c: SavedCode, value: string) {
+    const { error } = await supabase.from("qr_codes").update({ name: value }).eq("id", c.id);
     if (error) {
       toast.error("Rename failed.");
       return;
     }
-    setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, name: next.trim() } : r)));
+    setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, name: value } : r)));
+    toast.success("Renamed");
   }
+  const [dialog, setDialog] = useState<{
+    title: string;
+    label: string;
+    value: string;
+    onSave: (v: string) => Promise<void>;
+  } | null>(null);
+
+  const [confirmDelete, setConfirmDelete] = useState<SavedCode | null>(null);
 
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
+
 
   const totalScans = Object.values(counts).reduce((a, b) => a + b, 0);
   const dynamicCount = codes.filter((c) => c.is_dynamic).length;
@@ -225,10 +229,32 @@ function Dashboard() {
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                    <Action onClick={() => rename(c)}>Rename</Action>
+                    <Action
+                      onClick={() =>
+                        setDialog({
+                          title: "Rename QR Code",
+                          label: "Name",
+                          value: c.name,
+                          onSave: (v) => saveName(c, v),
+                        })
+                      }
+                    >
+                      Rename
+                    </Action>
                     {c.is_dynamic && (
                       <>
-                        <Action onClick={() => editDestination(c)}>Edit destination</Action>
+                        <Action
+                          onClick={() =>
+                            setDialog({
+                              title: "Edit destination",
+                              label: "Destination URL",
+                              value: c.destination ?? "",
+                              onSave: (v) => saveDestination(c, v),
+                            })
+                          }
+                        >
+                          Edit destination
+                        </Action>
                         <Action onClick={() => toggleActive(c)}>
                           {c.active ? "Pause" : "Activate"}
                         </Action>
@@ -240,10 +266,11 @@ function Dashboard() {
                     <Action onClick={() => downloadSvg(codeSvg(c, 1024), `${c.name}.svg`)}>
                       SVG
                     </Action>
-                    <Action onClick={() => remove(c.id)}>
+                    <Action onClick={() => setConfirmDelete(c)}>
                       <Trash2 className="size-3" /> Delete
                     </Action>
                   </div>
+
                 </div>
               </li>
             ))}
@@ -271,9 +298,127 @@ function Dashboard() {
           </BetaCard>
         </div>
       </section>
+
+      {dialog && (
+        <PromptDialog
+          title={dialog.title}
+          label={dialog.label}
+          initial={dialog.value}
+          onClose={() => setDialog(null)}
+          onSave={async (v) => {
+            await dialog.onSave(v);
+            setDialog(null);
+          }}
+        />
+      )}
+
+      {confirmDelete && (
+        <Modal onClose={() => setConfirmDelete(null)}>
+          <h2 className="text-lg font-extrabold">Delete “{confirmDelete.name}”?</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            This cannot be undone. Any printed version of this code will stop working.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(null)}
+              className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-surface"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void remove(confirmDelete.id);
+                setConfirmDelete(null);
+              }}
+              className="rounded-full bg-destructive px-5 py-2.5 text-sm font-bold text-destructive-foreground"
+            >
+              Delete
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
+
+function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-float"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function PromptDialog({
+  title,
+  label,
+  initial,
+  onSave,
+  onClose,
+}: {
+  title: string;
+  label: string;
+  initial: string;
+  onSave: (value: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [value, setValue] = useState(initial);
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <Modal onClose={onClose}>
+      <h2 className="text-lg font-extrabold">{title}</h2>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!value.trim() || busy) return;
+          setBusy(true);
+          await onSave(value.trim());
+          setBusy(false);
+        }}
+      >
+        <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {label}
+        </label>
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:border-brand"
+        />
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-surface"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={busy || !value.trim()}
+            className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground disabled:opacity-60"
+          >
+            {busy ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 
 function Stat({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (

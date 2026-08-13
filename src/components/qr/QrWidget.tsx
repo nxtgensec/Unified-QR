@@ -12,7 +12,7 @@ import {
 } from "@/lib/qr";
 import { TypeTabs, qrTypes } from "./TypeTabs";
 import { TypeForm } from "./TypeForm";
-import { Download, Lock, Save, Sparkles } from "lucide-react";
+import { Download, Save, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,7 +76,7 @@ export function QrWidget() {
 
 
   const svg = useMemo(
-    () => renderQrSvg(data, template, { size: 512, watermark: true }),
+    () => renderQrSvg(data, template, { size: 512 }),
     [data, template],
   );
 
@@ -91,7 +91,7 @@ export function QrWidget() {
 
   const handleDownload = useCallback(
     async (format: "png" | "svg") => {
-      const out = renderQrSvg(data, template, { size: 1024, watermark: true });
+      const out = renderQrSvg(data, template, { size: 1024 });
       if (format === "svg") {
         downloadSvg(out);
       } else {
@@ -150,17 +150,23 @@ export function QrWidget() {
                 </p>
               </>
             ) : (
-              <>
-                <PremiumToggle label="Track your scans" />
-                <PremiumToggle label="Remove watermark" />
-                <p className="text-xs text-muted-foreground">
-                  <Link to="/auth" className="font-semibold text-brand">
-                    Sign in with Google
-                  </Link>{" "}
-                  to save codes and create trackable dynamic links.
+              <div className="rounded-xl border border-border bg-surface p-4">
+                <p className="flex items-center gap-2 text-sm font-bold">
+                  <Sparkles className="size-4 text-premium" /> Save & track your codes
                 </p>
-              </>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Sign in with Google to store your codes, create editable dynamic links and
+                  see scan counts. Downloads are always free and never watermarked.
+                </p>
+                <Link
+                  to="/auth"
+                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+                >
+                  Sign in with Google
+                </Link>
+              </div>
             )}
+
           </div>
 
         </div>
@@ -233,28 +239,6 @@ export function QrWidget() {
         </div>
       </div>
     </div>
-  );
-}
-
-function PremiumToggle({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={() =>
-        toast("Premium feature", {
-          description: "Sign up free to unlock tracking and watermark-free codes.",
-        })
-      }
-      className="flex w-full items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-left"
-    >
-      <span className="flex items-center gap-2 text-sm font-semibold">
-        {label}
-        <Sparkles className="size-4 text-premium" />
-      </span>
-      <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-        <Lock className="size-3.5" /> Locked
-      </span>
-    </button>
   );
 }
 

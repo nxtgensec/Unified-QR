@@ -146,8 +146,8 @@ export const templates: QrTemplate[] = [
 type RenderOptions = {
   size?: number;
   margin?: number;
-  watermark?: boolean;
 };
+
 
 function isEye(row: number, col: number, count: number) {
   return (
@@ -179,7 +179,7 @@ function eyeGroup(
 export function renderQrSvg(
   data: string,
   template: QrTemplate,
-  { size = 512, margin = 4, watermark = false }: RenderOptions = {},
+  { size = 512, margin = 4 }: RenderOptions = {},
 ): string {
   const qr = qrcode(0, "M");
   qr.addData(data);
@@ -212,11 +212,8 @@ export function renderQrSvg(
     eyeGroup(off, off + (count - 7) * unit, unit, template.eye, template.bg, template.eyeShape),
   ].join("");
 
-  const mark = watermark
-    ? `<g><rect x="${size / 2 - size * 0.29}" y="${size - size * 0.12}" width="${size * 0.58}" height="${size * 0.075}" rx="${size * 0.0375}" fill="${template.fg}" opacity="0.9"/><text x="${size / 2}" y="${size - size * 0.065}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="${size * 0.036}" fill="${template.bg}">unifiedqr.app</text></g>`
-    : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="${template.bg}"/>${body}${eyes}</svg>`;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="${template.bg}"/>${body}${eyes}${mark}</svg>`;
 }
 
 export function svgToDataUrl(svg: string) {
