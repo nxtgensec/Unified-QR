@@ -298,9 +298,127 @@ function Dashboard() {
           </BetaCard>
         </div>
       </section>
+
+      {dialog && (
+        <PromptDialog
+          title={dialog.title}
+          label={dialog.label}
+          initial={dialog.value}
+          onClose={() => setDialog(null)}
+          onSave={async (v) => {
+            await dialog.onSave(v);
+            setDialog(null);
+          }}
+        />
+      )}
+
+      {confirmDelete && (
+        <Modal onClose={() => setConfirmDelete(null)}>
+          <h2 className="text-lg font-extrabold">Delete “{confirmDelete.name}”?</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            This cannot be undone. Any printed version of this code will stop working.
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(null)}
+              className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-surface"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void remove(confirmDelete.id);
+                setConfirmDelete(null);
+              }}
+              className="rounded-full bg-destructive px-5 py-2.5 text-sm font-bold text-destructive-foreground"
+            >
+              Delete
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
+
+function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-float"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function PromptDialog({
+  title,
+  label,
+  initial,
+  onSave,
+  onClose,
+}: {
+  title: string;
+  label: string;
+  initial: string;
+  onSave: (value: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [value, setValue] = useState(initial);
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <Modal onClose={onClose}>
+      <h2 className="text-lg font-extrabold">{title}</h2>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!value.trim() || busy) return;
+          setBusy(true);
+          await onSave(value.trim());
+          setBusy(false);
+        }}
+      >
+        <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {label}
+        </label>
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:border-brand"
+        />
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-surface"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={busy || !value.trim()}
+            className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground disabled:opacity-60"
+          >
+            {busy ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 
 function Stat({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (
