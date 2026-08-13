@@ -146,8 +146,8 @@ export const templates: QrTemplate[] = [
 type RenderOptions = {
   size?: number;
   margin?: number;
-  watermark?: boolean;
 };
+
 
 function isEye(row: number, col: number, count: number) {
   return (
