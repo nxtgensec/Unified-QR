@@ -179,7 +179,7 @@ function eyeGroup(
 export function renderQrSvg(
   data: string,
   template: QrTemplate,
-  { size = 512, margin = 4, watermark = false }: RenderOptions = {},
+  { size = 512, margin = 4 }: RenderOptions = {},
 ): string {
   const qr = qrcode(0, "M");
   qr.addData(data);

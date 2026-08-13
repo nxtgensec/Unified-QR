@@ -48,7 +48,7 @@ function codeData(c: SavedCode) {
 function codeSvg(c: SavedCode, size = 256) {
   const base = templates.find((t) => t.id === c.template_id) ?? templates[0]!;
   const tpl = { ...base, fg: c.fg ?? base.fg, bg: c.bg ?? base.bg, eye: c.fg ?? base.eye };
-  return renderQrSvg(codeData(c), tpl, { size, watermark: false });
+  return renderQrSvg(codeData(c), tpl, { size });
 }
 
 function Dashboard() {

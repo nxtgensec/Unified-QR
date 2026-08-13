@@ -76,7 +76,7 @@ export function QrWidget() {
 
 
   const svg = useMemo(
-    () => renderQrSvg(data, template, { size: 512, watermark: true }),
+    () => renderQrSvg(data, template, { size: 512 }),
     [data, template],
   );
 
@@ -91,7 +91,7 @@ export function QrWidget() {
 
   const handleDownload = useCallback(
     async (format: "png" | "svg") => {
-      const out = renderQrSvg(data, template, { size: 1024, watermark: true });
+      const out = renderQrSvg(data, template, { size: 1024 });
       if (format === "svg") {
         downloadSvg(out);
       } else {
