@@ -137,30 +137,20 @@ function Dashboard() {
   const dynamicCount = codes.filter((c) => c.is_dynamic).length;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Your QR Codes</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Your QR Codes</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Signed in as {user?.email}
+            Saved codes, dynamic links and scan totals for {user?.email}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link
-            to="/"
-            hash="generator"
-            className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card"
-          >
-            <Plus className="size-4" /> New QR Code
-          </Link>
-          <button
-            type="button"
-            onClick={signOut}
-            className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-surface"
-          >
-            Sign out
-          </button>
-        </div>
+        <Link
+          to="/create"
+          className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card"
+        >
+          <Plus className="size-4" /> New QR Code
+        </Link>
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
