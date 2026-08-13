@@ -150,17 +150,23 @@ export function QrWidget() {
                 </p>
               </>
             ) : (
-              <>
-                <PremiumToggle label="Track your scans" />
-                <PremiumToggle label="Remove watermark" />
-                <p className="text-xs text-muted-foreground">
-                  <Link to="/auth" className="font-semibold text-brand">
-                    Sign in with Google
-                  </Link>{" "}
-                  to save codes and create trackable dynamic links.
+              <div className="rounded-xl border border-border bg-surface p-4">
+                <p className="flex items-center gap-2 text-sm font-bold">
+                  <Sparkles className="size-4 text-premium" /> Save & track your codes
                 </p>
-              </>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Sign in with Google to store your codes, create editable dynamic links and
+                  see scan counts. Downloads are always free and never watermarked.
+                </p>
+                <Link
+                  to="/auth"
+                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+                >
+                  Sign in with Google
+                </Link>
+              </div>
             )}
+
           </div>
 
         </div>
