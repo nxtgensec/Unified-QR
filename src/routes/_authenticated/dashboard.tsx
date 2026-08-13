@@ -18,7 +18,7 @@ import {
   CreditCard,
   Image as ImageIcon,
 } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -53,7 +53,6 @@ function codeSvg(c: SavedCode, size = 256) {
 
 function Dashboard() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [codes, setCodes] = useState<SavedCode[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -127,12 +126,6 @@ function Dashboard() {
 
   const [confirmDelete, setConfirmDelete] = useState<SavedCode | null>(null);
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  }
-
-
   const totalScans = Object.values(counts).reduce((a, b) => a + b, 0);
   const dynamicCount = codes.filter((c) => c.is_dynamic).length;
 
@@ -171,8 +164,7 @@ function Dashboard() {
               Build one on the generator and hit “Save to my account”.
             </p>
             <Link
-              to="/"
-              hash="generator"
+              to="/create"
               className="mt-5 inline-block rounded-full bg-brand px-6 py-2.5 text-sm font-bold text-brand-foreground"
             >
               Open generator
