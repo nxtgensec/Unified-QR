@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -127,19 +128,38 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const APP_PREFIXES = [
+  "/auth",
+  "/dashboard",
+  "/create",
+  "/analytics",
+  "/bulk",
+  "/team",
+  "/billing",
+  "/settings",
+];
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isApp = APP_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col font-sans antialiased">
-        <Header />
-        <main className="flex-1">
+      {isApp ? (
+        <div className="min-h-screen font-sans antialiased">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
-        </main>
-        <Footer />
-      </div>
+        </div>
+      ) : (
+        <div className="flex min-h-screen flex-col font-sans antialiased">
+          <Header />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <Footer />
+        </div>
+      )}
       <Toaster />
     </QueryClientProvider>
   );

@@ -1,6 +1,8 @@
-import { createFileRoute, Outlet, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { AppShell } from "@/components/app/AppShell";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -17,16 +19,17 @@ function AuthenticatedLayout() {
 
   if (loading || !user) {
     return (
-      <div className="grid min-h-[50vh] place-items-center px-4">
-        <p className="text-sm text-muted-foreground">
-          Checking your session…{" "}
-          <Link to="/auth" className="font-semibold text-brand">
-            Sign in
-          </Link>
+      <div className="grid min-h-screen place-items-center bg-surface px-4">
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> Checking your session…
         </p>
       </div>
     );
   }
 
-  return <Outlet />;
+  return (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  );
 }
