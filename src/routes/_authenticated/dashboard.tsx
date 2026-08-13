@@ -96,11 +96,7 @@ function Dashboard() {
     setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, active: !c.active } : r)));
   }
 
-  async function editDestination(c: SavedCode) {
-    const next = window.prompt("New destination URL", c.destination ?? "");
-    if (next === null) return;
-    const value = next.trim();
-    if (!value) return;
+  async function saveDestination(c: SavedCode, value: string) {
     const { error } = await supabase
       .from("qr_codes")
       .update({ destination: value })
@@ -113,16 +109,16 @@ function Dashboard() {
     toast.success("Destination updated — the printed code keeps working");
   }
 
-  async function rename(c: SavedCode) {
-    const next = window.prompt("Rename QR Code", c.name);
-    if (!next?.trim()) return;
-    const { error } = await supabase.from("qr_codes").update({ name: next.trim() }).eq("id", c.id);
+  async function saveName(c: SavedCode, value: string) {
+    const { error } = await supabase.from("qr_codes").update({ name: value }).eq("id", c.id);
     if (error) {
       toast.error("Rename failed.");
       return;
     }
-    setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, name: next.trim() } : r)));
+    setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, name: value } : r)));
+    toast.success("Renamed");
   }
+
 
   async function signOut() {
     await supabase.auth.signOut();
