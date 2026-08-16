@@ -27,11 +27,11 @@ type NavItem = {
 const nav: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutGrid className="size-4" /> },
   { to: "/create", label: "Create QR Code", icon: <Plus className="size-4" /> },
-  { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" />, beta: true },
-  { to: "/bulk", label: "Bulk & campaigns", icon: <Layers className="size-4" />, beta: true },
+  { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" /> },
+  { to: "/bulk", label: "Bulk import", icon: <Layers className="size-4" /> },
   { to: "/team", label: "Team", icon: <Users className="size-4" />, beta: true },
   { to: "/billing", label: "Billing", icon: <CreditCard className="size-4" />, beta: true },
-  { to: "/settings", label: "Settings", icon: <Settings className="size-4" />, beta: true },
+  { to: "/settings", label: "Settings", icon: <Settings className="size-4" /> },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
