@@ -13,7 +13,6 @@ import {
   Users,
   Headphones,
   Wallet,
-  ShieldCheck,
   Star,
   Chrome,
   ArrowRight,
