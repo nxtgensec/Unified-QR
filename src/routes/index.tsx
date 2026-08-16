@@ -145,24 +145,6 @@ function Home() {
         </div>
       </section>
 
-      <section className="py-14">
-        <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
-          <p className="text-sm font-semibold text-muted-foreground">
-            UnifiedQR protects your data with globally recognized certifications
-          </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
-            {["SOC 2 Type II", "ISO 27001", "GDPR compliant"].map((c) => (
-              <div
-                key={c}
-                className="flex items-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 text-sm font-bold shadow-card"
-              >
-                <ShieldCheck className="size-5 text-success" />
-                {c}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <section className="bg-surface py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
