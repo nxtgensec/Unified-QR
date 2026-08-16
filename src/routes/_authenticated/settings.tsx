@@ -150,9 +150,9 @@ function SettingsPage() {
             onChange={(e) => setDefaultTemplate(Number(e.target.value))}
             className="mt-2 w-full rounded-xl border border-border bg-card px-4 py-3 text-sm outline-none focus:border-brand"
           >
-            {templates.map((t) => (
+            {templates.map((t, i) => (
               <option key={t.id} value={t.id}>
-                {t.name}
+                Template {i + 1} — {t.shape} dots
               </option>
             ))}
           </select>
