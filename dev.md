@@ -55,13 +55,13 @@ Everything is currently **frontend-only** (no backend, no accounts, no database)
 - [ ] Multi-URL type currently encodes a text list — original hosts a real link-list page (needs backend).
 - [ ] PDF type takes a link, not a real file upload (needs storage).
 
-### Backend-dependent (needs Lovable Cloud — not started)
-- [ ] Sign up / log in / password reset.
-- [ ] Dynamic QR Codes: short-link redirect service + editable destination.
+### Backend-dependent (partly done on own Supabase — see section 6)
+- [x] Sign up / log in (Google OAuth via Supabase).
+- [x] Dynamic QR Codes: short-link redirect service + editable destination.
 - [ ] Scan analytics: scans, unique users, location, device, charts.
-- [ ] Saved QR code dashboard / history.
+- [x] Saved QR code dashboard / history.
 - [ ] Team collaboration & invites.
-- [ ] Payments / subscriptions for Flex & Pro plans.
+- [x] Payments wired to Cashfree (merchant keys pending).
 - [ ] Contact form actually sending email.
 - [ ] File storage for PDF and logo uploads.
 
@@ -78,7 +78,7 @@ Everything is currently **frontend-only** (no backend, no accounts, no database)
 
 | Question | Decision |
 | --- | --- |
-| Scope | **Full product** — accounts, dynamic QR codes, scan analytics (Lovable Cloud) |
+| Scope | **Full product** — accounts, dynamic QR codes, scan analytics (own Supabase) |
 | Nav pages | **Build them out** — Products, Resources, Blog get real pages |
 | Per-type landing pages | **Yes, all 10** |
 | Branding | **UnifiedQR** (rebrand done across header, footer, meta, watermark) |
@@ -91,8 +91,8 @@ Everything is currently **frontend-only** (no backend, no accounts, no database)
 3. Legal: `/terms`, `/privacy`, `/cookies`. Sitemap.
 4. Home: alternating image/text rows per type, logo wall/testimonials.
 
-### Phase 2 — Accounts (Lovable Cloud)
-5. Enable Cloud. Email/password + Google sign-in, `/auth`, `/reset-password`.
+### Phase 2 — Accounts (own Supabase)
+5. Email/password + Google sign-in, `/auth`, `/reset-password`.
 6. `profiles` table (display name, avatar, plan) + `user_roles` table.
 7. `_authenticated` dashboard shell.
 
@@ -114,11 +114,16 @@ Everything is currently **frontend-only** (no backend, no accounts, no database)
 
 ## 5. Notes
 - Watermark/domain now reads `unifiedqr.app`.
-- Anything in Phase 2+ requires Lovable Cloud to be enabled first.
+- The app runs on its own Supabase project (see section 6) and its own Vite config — no external platform dependencies.
 
 ---
 
 ## 6. Update — Accounts (Google only) + dynamic codes
+
+The app now runs on its **own Supabase project**. Google OAuth
+goes directly through Supabase Auth; the DB schema (`profiles`, `qr_codes`,
+`scans`) lives in `supabase/migrations` and is applied with `supabase db push`.
+Payments are wired through **Cashfree** (see `src/lib/cashfree.functions.ts`).
 
 **Working now**
 - Google-only sign-in at `/auth` (email/password disabled). Header reflects session; sign out works.

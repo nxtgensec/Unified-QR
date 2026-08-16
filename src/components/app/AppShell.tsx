@@ -11,11 +11,11 @@ import {
   LogOut,
   Menu,
   Plus,
-  QrCode,
   Settings,
   Users,
   X,
 } from "lucide-react";
+import unifiedQrLogo from "@/assets/UnifiedQR_Logo.png";
 
 type NavItem = {
   to: string;
@@ -60,9 +60,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="flex h-16 items-center justify-between px-5">
           <span className="flex items-center gap-2 font-extrabold tracking-tight">
-            <span className="grid size-8 place-items-center rounded-lg bg-brand text-brand-foreground">
-              <QrCode className="size-4" />
-            </span>
+            <img src={unifiedQrLogo} alt="UnifiedQR logo" className="size-8 shrink-0" />
             UnifiedQR
           </span>
           <button
@@ -135,7 +133,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button type="button" onClick={() => setOpen(true)} aria-label="Open menu">
             <Menu className="size-5" />
           </button>
-          <span className="font-extrabold tracking-tight">UnifiedQR</span>
+          <span className="flex items-center gap-2 font-extrabold tracking-tight">
+            <img src={unifiedQrLogo} alt="UnifiedQR logo" className="size-6 shrink-0" />
+            UnifiedQR
+          </span>
         </header>
         <main className="min-w-0 flex-1">{children}</main>
       </div>

@@ -1,25 +1,34 @@
 # Unified QR
 
-just plan and built the exact clone of most profesioanl structured website exact clone
-use https://www.the-qrcode-generator.com/
+A clone of the most professional structured QR code generator website, built on
+the structure of https://www.the-qrcode-generator.com/.
 
-This project was built with [Lovable](https://lovable.dev).
+## Stack
 
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/ec84dd08-79b1-4a46-9428-4715442ad7d9).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- TanStack Start + React + Tailwind v4
+- Supabase (auth, database, RLS)
+- Cashfree Payments (billing)
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+You need Node.js and npm (or bun).
 
 ```sh
 git clone <this-repository-url>
 cd <repository-name>
 npm i
 npm run dev
+```
+
+Copy `.env.local.example` to `.env.local` and fill in your Supabase project URL
+and keys. The dev server runs at http://localhost:8080.
+
+## Database
+
+Schema lives in `supabase/migrations`. Apply it to a linked Supabase project with:
+
+```sh
+supabase login
+supabase link --project-ref <your-project-ref>
+supabase db push
 ```

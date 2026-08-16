@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BarChart3, Link2, QrCode, ShieldCheck, Sparkles } from "lucide-react";
+import { BarChart3, Link2, ShieldCheck, Sparkles } from "lucide-react";
+import unifiedQrLogo from "@/assets/UnifiedQR_Logo.png";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -37,18 +38,18 @@ function AuthPage() {
 
   async function signIn() {
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/auth`,
-      extraParams: { prompt: "select_account" },
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth`,
+        queryParams: { prompt: "select_account" },
+      },
     });
 
-    if (result.error) {
+    if (error) {
       setBusy(false);
       toast.error("Could not sign in with Google. Please try again.");
-      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard", replace: true });
   }
 
   return (
@@ -64,10 +65,11 @@ function AuthPage() {
           className="pointer-events-none absolute -bottom-32 -left-16 size-96 rounded-full bg-brand-foreground/10 blur-3xl"
         />
 
-        <Link to="/" className="relative flex items-center gap-2 text-lg font-extrabold tracking-tight">
-          <span className="grid size-9 place-items-center rounded-xl bg-brand-foreground/15">
-            <QrCode className="size-5" />
-          </span>
+        <Link
+          to="/"
+          className="relative flex items-center gap-2 text-lg font-extrabold tracking-tight"
+        >
+          <img src={unifiedQrLogo} alt="UnifiedQR logo" className="size-9 shrink-0" />
           UnifiedQR
         </Link>
 
@@ -100,9 +102,7 @@ function AuthPage() {
             to="/"
             className="flex items-center gap-2 text-base font-extrabold tracking-tight lg:hidden"
           >
-            <span className="grid size-8 place-items-center rounded-lg bg-brand text-brand-foreground">
-              <QrCode className="size-4" />
-            </span>
+            <img src={unifiedQrLogo} alt="UnifiedQR logo" className="size-8 shrink-0" />
             UnifiedQR
           </Link>
 
@@ -118,10 +118,22 @@ function AuthPage() {
             className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-card px-6 py-3.5 text-sm font-bold shadow-card transition-colors hover:bg-surface disabled:opacity-60"
           >
             <svg viewBox="0 0 48 48" className="size-5" aria-hidden>
-              <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.2 17.6 9.5 24 9.5z" />
-              <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.1 5.3-4.6 6.9l7.1 5.5c4.2-3.8 6.6-9.5 6.6-16.9z" />
-              <path fill="#FBBC05" d="M10.4 28.7A14.5 14.5 0 0 1 9.6 24c0-1.6.3-3.2.8-4.7l-7.8-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.8-6.1z" />
-              <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.4-4.6 2.2-8.8 2.2-6.4 0-11.7-3.7-13.6-9.2l-7.8 6.1C6.5 42.6 14.6 48 24 48z" />
+              <path
+                fill="#EA4335"
+                d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.2 17.6 9.5 24 9.5z"
+              />
+              <path
+                fill="#4285F4"
+                d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.1 5.3-4.6 6.9l7.1 5.5c4.2-3.8 6.6-9.5 6.6-16.9z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M10.4 28.7A14.5 14.5 0 0 1 9.6 24c0-1.6.3-3.2.8-4.7l-7.8-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.8-6.1z"
+              />
+              <path
+                fill="#34A853"
+                d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.4-4.6 2.2-8.8 2.2-6.4 0-11.7-3.7-13.6-9.2l-7.8 6.1C6.5 42.6 14.6 48 24 48z"
+              />
             </svg>
             {busy ? "Opening Google…" : "Continue with Google"}
           </button>

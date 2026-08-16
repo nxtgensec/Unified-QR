@@ -3,7 +3,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-
+import unifiedQrLogo from "@/assets/UnifiedQR_Logo.png";
 
 const nav = [
   { label: "QR Code types", to: "/qr-code-types" },
@@ -14,14 +14,8 @@ const nav = [
 export function Logo() {
   return (
     <Link to="/" className="flex items-center gap-2.5">
-      <span className="grid size-9 place-items-center rounded-xl bg-brand text-brand-foreground">
-        <svg viewBox="0 0 24 24" className="size-5" fill="currentColor" aria-hidden>
-          <path d="M3 3h7v7H3V3zm2 2v3h3V5H5zM14 3h7v7h-7V3zm2 2v3h3V5h-3zM3 14h7v7H3v-7zm2 2v3h3v-3H5zM14 14h3v3h-3v-3zm5 0h2v2h-2v-2zm-5 5h2v2h-2v-2zm3 0h4v2h-4v-2zm2-3h2v2h-2v-2z" />
-        </svg>
-      </span>
-      <span className="text-[17px] font-extrabold leading-tight tracking-tight">
-        UnifiedQR
-      </span>
+      <img src={unifiedQrLogo} alt="UnifiedQR logo" className="size-9 shrink-0" />
+      <span className="text-[17px] font-extrabold leading-tight tracking-tight">UnifiedQR</span>
     </Link>
   );
 }
@@ -35,7 +29,6 @@ export function Header() {
     await supabase.auth.signOut();
     navigate({ to: "/", replace: true });
   }
-
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
@@ -81,7 +74,10 @@ export function Header() {
             </>
           ) : (
             <>
-              <Link to="/auth" className="text-sm font-semibold text-foreground/80 hover:text-brand">
+              <Link
+                to="/auth"
+                className="text-sm font-semibold text-foreground/80 hover:text-brand"
+              >
                 Log in
               </Link>
               <Link
@@ -94,12 +90,7 @@ export function Header() {
           )}
         </div>
 
-
-        <button
-          className="lg:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Toggle menu"
-        >
+        <button className="lg:hidden" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
           {open ? <X className="size-6" /> : <Menu className="size-6" />}
         </button>
       </div>
