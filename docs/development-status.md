@@ -1,0 +1,147 @@
+# UnifiedQR — Development Status
+
+Internal working document for the UnifiedQR product. The app runs on its own
+Supabase project (auth + database) and its own TanStack Start pipeline; there
+are no third-party platform dependencies. This file tracks what is built,
+what remains, and the decisions that are locked in.
+
+---
+
+## 1. Done
+
+### Design system
+- `src/styles.css` — semantic tokens: `--brand`, `--brand-soft`, `--surface`, `--premium`, `--success`, card shadow, radii, dark mode.
+- Plus Jakarta Sans loaded via `<link>` in `src/routes/__root.tsx`.
+- No hardcoded colors in components.
+
+### Layout
+- `src/components/site/Header.tsx` — sticky header, logo, nav (Products, QR Code types, Pricing, Resources), **static** (identical signed-in or signed-out) with a single **Sign in** CTA and a language switcher (English / हिन्दी).
+- `src/components/site/Footer.tsx` — multi-column footer (product / QR Codes / company / legal), socials, working language selector, Admin link.
+- `src/routes/__root.tsx` — root layout, global meta/OG defaults, font links, `LocaleProvider`.
+
+### QR engine (real, working, client-side)
+- `src/lib/qr.ts` (258 lines)
+  - Payload builders: URL, PDF link, Multi-URL, Contact (vCard), Plain Text, App, SMS, Email, Phone, Social.
+  - 13 style templates (foreground / background / eye colors, dot shape).
+  - SVG renderer with square / rounded / circle modules and eye styles.
+- `src/components/qr/TypeTabs.tsx` — 10 type tabs with icons + taglines.
+- `src/components/qr/TypeForm.tsx` — type-specific input forms for all 10 types.
+- `src/components/qr/QrWidget.tsx` — live debounced preview, template picker, color pickers, premium toggles (locked upsell), PNG (1024px canvas) + SVG download.
+
+### Pages (each with own `head()` — title, description, OG)
+- `/` — hero generator, social-proof band (4.8 Google, 4M+ users), trust badges (SOC 2 / ISO 27001 / GDPR), 3-step how-to with generated images, "QR Codes explained", Chrome-extension band, 5-card bento "Why 4M+ users trust", QR types grid, FAQ accordion. JSON-LD WebApplication.
+- `/pricing` — Free / Flex / Pro tier comparison priced in **INR** (₹0 / ₹749 / ₹2,999), auto-localised + translated via `useLocale`.
+- `/admin` — admin panel: Google-only sign-in, server-gated to `dev.nxtgensec@gmail.com` (`ADMIN_EMAIL`), shows users / codes / dynamic / scans stats, recent users, top codes. `noindex`.
+- `/qr-code-types` — grid of all types.
+- `/contact` — contact form with client-side validation only.
+
+### Assets
+- `src/assets/`: step-1-choose-type.jpg, step-2-customize.jpg, step-3-download.jpg, feature-analytics.jpg.
+
+---
+
+## 2. Not done / remaining
+
+### Content & pages (visual gaps vs. original)
+- [ ] `/products` and `/resources` and `/blog` nav links have no destination pages yet.
+- [ ] Per-type landing pages (e.g. `/qr-code-types/url`, `/vcard-qr-code`) — original has one per type.
+- [ ] Alternating image/text rows for each QR type on home (currently a simpler card grid).
+- [ ] Customer logo wall / testimonials section.
+- [ ] Legal pages: Terms, Privacy, Cookie policy.
+- [x] Language selector — real i18n (English / हिन्दी) via `src/lib/locale.tsx`; currency auto-detects by location (INR default).
+
+### Generator features
+- [ ] Logo upload in the centre of the QR code.
+- [ ] Frame / call-to-action captions ("SCAN ME") around the code.
+- [ ] Error-correction level selector and size/margin controls.
+- [ ] JPG and PDF download formats (currently PNG + SVG only).
+- [ ] Multi-URL type currently encodes a text list — original hosts a real link-list page (needs backend).
+- [ ] PDF type takes a link, not a real file upload (needs storage).
+
+### Backend-dependent (partly done on own Supabase — see section 6)
+- [x] Sign up / log in (Google OAuth via Supabase).
+- [x] Dynamic QR Codes: short-link redirect service + editable destination.
+- [x] Scan analytics: scans, unique users, location, device, charts.
+- [x] Saved QR code dashboard / history.
+- [x] Team collaboration & invites — create a team, invite by email link, roles (owner / admin / member), shared code library, member limits by plan (Free 3, Flex 5, Pro unlimited).
+- [x] Payments wired to Cashfree (merchant keys pending) — INR, secured behind `requireSupabaseAuth`.
+- [x] Admin panel (`/admin`) — Google-only, email-gated server-side.
+- [ ] Contact form actually sending email.
+- [ ] File storage for PDF and logo uploads.
+
+### Polish / quality
+- [ ] Responsive audit at 375–430px (current preview width) for the hero widget.
+- [ ] Accessibility pass: focus states, labels on colour inputs, tab-list ARIA roles.
+- [ ] `sitemap.xml`; `robots.txt` exists.
+- [ ] og:image assets (absolute URLs) once published.
+- [ ] No automated tests yet.
+
+---
+
+## 3. Decisions made (locked)
+
+| Question | Decision |
+| --- | --- |
+| Scope | **Full product** — accounts, dynamic QR codes, scan analytics (own Supabase) |
+| Nav pages | **Build them out** — Products, Resources, Blog get real pages |
+| Per-type landing pages | **Yes, all 10** |
+| Branding | **UnifiedQR** (rebrand done across header, footer, meta, watermark) |
+
+## 4. Build roadmap
+
+### Phase 1 — Marketing completion (no backend)
+1. `/products` overview, `/resources`, `/blog` + `/blog/$slug` (static posts).
+2. 10 per-type landing pages at `/qr-code-types/$type` with unique head(), hero generator preset to that type, copy + FAQ.
+3. Legal: `/terms`, `/privacy`, `/cookies`. Sitemap.
+4. Home: alternating image/text rows per type, logo wall/testimonials.
+
+### Phase 2 — Accounts (own Supabase)
+5. Email/password + Google sign-in, `/auth`, `/reset-password`.
+6. `profiles` table (display name, avatar, plan) + `user_roles` table.
+7. `_authenticated` dashboard shell.
+
+### Phase 3 — Dynamic QR codes
+8. `qr_codes` table (owner, type, payload, style, short_slug, active).
+9. Public redirect route `/r/$slug` that logs a scan and 302s.
+10. Save-from-generator flow, dashboard list, edit destination, delete.
+
+### Phase 4 — Analytics
+11. `scans` table (code_id, ts, country, city, device, referrer, UA).
+12. Dashboard charts: scans over time, unique, top locations, devices, CSV export.
+
+### Phase 5 — Teams, billing, extras
+13. [x] Teams + invites, role-based access.
+14. Plan limits enforced server-side (Free: 2 dynamic codes, 5 members).
+15. Payments for Flex/Pro.
+16. Logo upload + frames + JPG/PDF export; PDF file upload to storage; real multi-URL landing pages.
+17. Contact form delivering email.
+
+## 5. Notes
+- Watermark/domain now reads `unifiedqr.app`.
+- The app runs on its own Supabase project (see section 6) and its own Vite config — no external platform dependencies.
+
+---
+
+## 6. Update — Accounts (Google only) + dynamic codes
+
+The app now runs on its **own Supabase project**. Google OAuth
+goes directly through Supabase Auth; the DB schema (`profiles`, `qr_codes`,
+`scans`) lives in `supabase/migrations` and is applied with `supabase db push`.
+Payments are wired through **Cashfree** (see `src/lib/cashfree.functions.ts`).
+
+**Working now**
+- Google-only sign-in at `/auth` (email/password disabled). Site header is **static** — it never swaps to a "Dashboard" link when signed in; dashboard is reached via `/auth` (auto-redirect) or direct URL.
+- `profiles` auto-created on first sign-in; `qr_codes` and `scans` tables with RLS.
+- Generator: "Save to my account" and "Create dynamic, trackable link" (URL type).
+- `/dashboard` (auth-gated): saved codes list, previews, rename, edit destination, pause/activate, PNG/SVG download, delete, stats (saved / dynamic / total scans).
+- `/analytics` (auth-gated): 30-day scan charts, devices, top codes, CSV export.
+- `/bulk` (auth-gated): CSV import → dynamic codes.
+- `/r/$slug` short-link redirect that records a scan.
+- i18n + INR: `LocaleProvider` in `src/lib/locale.tsx` (en/hi), currency by location (INR default), `formatMoney`, INR prices (₹749 Flex / ₹2,999 Pro) shared via `src/lib/plans.ts`.
+- Billing: `/billing` creates Cashfree orders with INR amounts; the server fn is behind `requireSupabaseAuth` and derives the customer from the session (no client-supplied email/name).
+- Teams: `/team` (auth-gated) — create team, invite members by email (generates a 7-day link, no email service needed), accept via `?invite=TOKEN`, roles owner / admin / member, remove/revoke/leave/delete, member limits by plan. Shared library: codes saved with "Save to team library" appear for every member; non-owners can rename / edit destination / pause but not delete. RLS policies in `supabase/migrations/20260816120000_teams_and_shared_library.sql`.
+- Visitor count: `visitor_counts` table (per-day) + `increment_visitor_count` + `get_total_visitor_count` RPCs in `supabase/migrations/20260816140000_visitor_counts.sql` and `20260816150000_total_visitor_count.sql`. `VisitorBadge` on the homepage (`/`) only — shows total visitors across all days, updates live over Supabase Realtime (all rows). Anon can read and call both RPCs; writes are RLS-blocked.
+- Language chooser: compact globe + code badge ("EN" / "HI") in header nav; dropdown with native names + checkmark. First-time visitors see a floating bottom chooser modal; preference stored via `unifiedqr:locale:chosen` in localStorage.
+
+**Marked Beta (visible, not live)**
+- Logos & frames / JPG-PDF export.

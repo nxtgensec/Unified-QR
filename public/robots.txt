@@ -1,0 +1,43 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /create
+Disallow: /analytics
+Disallow: /bulk
+Disallow: /team
+Disallow: /billing
+Disallow: /settings
+Disallow: /auth
+
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /create
+Disallow: /analytics
+Disallow: /bulk
+Disallow: /team
+Disallow: /billing
+Disallow: /settings
+Disallow: /auth
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /create
+Disallow: /analytics
+Disallow: /bulk
+Disallow: /team
+Disallow: /billing
+Disallow: /settings
+Disallow: /auth
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+Sitemap: https://qr.nxtgensec.org/sitemap.xml

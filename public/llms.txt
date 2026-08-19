@@ -1,0 +1,51 @@
+# UnifiedQR
+
+> Free QR Code generator and tracker. Create, customize, download and manage QR codes for URLs, PDFs, contacts, SMS, email, WiFi and more.
+
+## What is UnifiedQR?
+
+UnifiedQR is a web application that lets users create, customize, track and manage QR codes — both static and dynamic — entirely for free. It supports URL, PDF, multi-URL, vCard contact, plain text, app store link, SMS, email, phone call and social media QR code types.
+
+## Key Features
+
+- Free QR code generation with no watermarks, no sign-up required
+- 13 customizable QR code templates with color and style options
+- Static codes (permanent data) and dynamic codes (editable destination + analytics)
+- Download as PNG or SVG in any resolution
+- Dynamic codes support real-time scan tracking with device, referrer and geo data
+- Team collaboration — invite members, share QR code libraries
+- CSV bulk import for batch QR code creation
+- QR code short links (qr.nxtgensec.org/r/slug) for print and marketing
+- Multi-language support — 40 languages with automatic detection
+
+## Pricing
+
+- Free: Unlimited static QR codes, 2 dynamic codes, basic analytics
+- Flex: ₹749/mo — 25 dynamic codes, team collaboration, priority support
+- Pro: ₹2,999/mo — Unlimited dynamic codes, unlimited team members, full analytics
+
+## Technology
+
+- Built with TanStack Start (SSR), React, TypeScript, Tailwind CSS
+- Supabase for authentication, database and realtime
+- Cashfree for payment processing (INR)
+
+## Links
+
+- Website: https://qr.nxtgensec.org
+- QR Code Generator: https://qr.nxtgensec.org
+- QR Code Types: https://qr.nxtgensec.org/qr-code-types
+- Pricing: https://qr.nxtgensec.org/pricing
+- Contact: https://qr.nxtgensec.org/contact
+- About: https://qr.nxtgensec.org/about
+- Privacy Policy: https://qr.nxtgensec.org/privacy
+- Terms of Service: https://qr.nxtgensec.org/terms
+- Cookie Policy: https://qr.nxtgensec.org/cookies
+- Refund Policy: https://qr.nxtgensec.org/refund
+- GitHub: https://github.com/nxtgensec/Unified-QR
+
+## Contact
+
+- Email: unifiedqr@nxtgensec.org
+- Company: UnifiedQR (nxtgensec)
+- Country: India
