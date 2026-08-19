@@ -1,66 +1,73 @@
-# UnifiedQR
-
-**Design, generate, and track QR codes — static or dynamic — without a design tool or a developer.**
-
-UnifiedQR is a full web application for creating professional QR codes. Choose
-one of ten content types, restyle it with a built-in template or your own
-colors, and download a crisp SVG or 1024px PNG in seconds. Create an account
-and you get dynamic codes with editable short links, a saved-code library, and
-per-code scan tracking.
-
 <p align="center">
-  <img src="src/assets/step-1-choose-type.jpg" width="200" alt="Choose your QR code type" />
-  <img src="src/assets/step-2-customize.jpg" width="200" alt="Customize colors and shapes" />
-  <img src="src/assets/step-3-download.jpg" width="200" alt="Download PNG or SVG" />
+  <img src="src/assets/UnifiedQR_Logo.png" width="120" alt="UnifiedQR logo" />
 </p>
 
-## Highlights
+<h1 align="center">UnifiedQR</h1>
 
-- **Ten content types** — URL, PDF, Multi-URL, Contact (vCard), Text, App
-  stores, SMS, Email, Phone, and Social links.
-- **Full design control** — thirteen preset templates, custom foreground and
-  background colors, and square / dot / rounded modules with matching eye
-  styles, rendered as clean SVG.
-- **Instant downloads** — one click for SVG or 1024px PNG from a live,
-  debounced preview.
-- **Dynamic QR codes** — turn any code into a trackable short link under
-  `/r/:slug`, edit the destination later, and pause or reactivate it without
-  reprinting a single code.
-- **Scan intelligence** — every redirect logs a scan (device, referrer, and
-  timestamp) that feeds a workspace analytics view.
-- **Saved library** — your codes are stored in your account, ready to rename,
-  re-download, or delete.
-- **Bulk generation** — upload a CSV of names and destinations and get dynamic
-  codes back in one pass, with a short-link CSV to take away.
-- **Simple billing** — Free, Flex, and Pro tiers with checkout handled
-  securely by Cashfree.
+<p align="center">
+  <strong>Design, generate &amp; track QR codes — no design tool, no developer.</strong>
+</p>
 
-## QR code types
+<p align="center">
+  <a href="https://github.com/nxtgensec/Unified-QR/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" />
+  </a>
+  <img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen" alt="Node.js 20+" />
+  <img src="https://img.shields.io/badge/typescript-strict-3178c6?logo=typescript&logoColor=white" alt="TypeScript Strict" />
+  <img src="https://img.shields.io/badge/version-0.0.2-8b5cf6" alt="Version" />
+</p>
 
-| Type | What it encodes |
+<p align="center">
+  <em>One app. Every QR format. Real-time scan analytics. Ship-ready in 2 minutes.</em>
+</p>
+
+---
+
+<p align="center">
+  <img src="src/assets/step-1-choose-type.jpg" width="240" alt="Choose a QR code type" />
+  &nbsp;&nbsp;
+  <img src="src/assets/step-2-customize.jpg" width="240" alt="Customize colors, shapes, and templates" />
+  &nbsp;&nbsp;
+  <img src="src/assets/step-3-download.jpg" width="240" alt="Download as PNG, SVG, JPG, WebP, or PDF" />
+</p>
+
+---
+
+## Why UnifiedQR?
+
+| Problem | UnifiedQR solves it |
 | --- | --- |
-| URL | A web address, opened on scan |
-| PDF | A link to a hosted document |
-| Multi-URL | Several destinations encoded together |
-| Contact | A vCard with name, phone, email, company, and website |
-| Text | Free-form text or notes |
-| App | iOS and/or Android store links |
-| SMS | A pre-filled `SMSTO:` message to a phone number |
-| Email | A `mailto:` link with optional subject and body |
-| Phone | A `tel:` link |
-| Social | Instagram, YouTube, and X profiles |
+| "I need a QR code but hate ugly generators" | 24 designer templates with dot, diamond, heart, star, and triangle shapes |
+| "I printed a code but the URL changed" | Dynamic codes with editable destinations — reprint once, update forever |
+| "I have no idea if anyone scanned it" | Per-code analytics: device, referrer, timestamp, growth %, peak hours |
+| "I need 500 codes for my product launch" | Bulk CSV import with instant short-link export |
+| "My team needs shared access" | Team workspaces with role-based permissions |
+
+## Features
+
+- **10 QR content types** — URL, PDF, Multi-URL, vCard contact, plain text, app store, SMS, email, phone, and social profile links.
+- **Full design engine** — 24 templates, 7 body shapes (square, dot, rounded, diamond, star, heart, triangle), 3 eye styles, custom fg/bg colors, gradients with angle control, logo embedding, and frame text.
+- **Multi-format export** — Download as SVG, PNG (1024px), JPG, WebP, or PDF in one click.
+- **Dynamic short links** — Each code gets a `/r/:slug` redirect with pause, resume, and editable destination.
+- **Scan intelligence** — Today/yesterday counts, growth %, device breakdown, top referrers, and a peak-hours heatmap.
+- **Saved-code library** — Rename, re-download, delete, and view per-code stats from a single dashboard.
+- **Bulk generation** — Upload a CSV of names and destinations; get dynamic codes back with a short-link CSV export.
+- **Link pages (bio links)** — Create multi-link pages at `/p/:slug` with sections and drag-to-reorder items.
+- **3-tier billing** — Free, Flex, and Pro plans with secure Cashfree checkout.
+- **29-language i18n** — Auto-detect locale with full native-script support across the entire UI.
 
 ## How dynamic codes work
 
-A dynamic QR code stores a short slug instead of your final URL. When someone
-scans it, the `/r/:slug` route looks up the code, records a scan, and
-redirects to the current destination. Because the code itself never changes,
-you can update the destination, or pause and reactivate the code, whenever you
-like — everything already printed keeps working.
+A dynamic QR code encodes a short slug, not your final URL. When someone
+scans it:
 
-The redirect and the scan log are protected by row-level security: any
-visitor can be redirected to an active public code, but only its owner can
-read the scan history or modify it.
+1. `/r/:slug` looks up the code and verifies it is active.
+2. A scan row is recorded (device, referrer, timestamp).
+3. The visitor is redirected to the current destination.
+
+Because the code itself never changes, you can update the destination,
+pause, or reactivate — everything already printed keeps working. Row-level
+security ensures only the owner can read scan history or modify the code.
 
 ## Tech stack
 
@@ -68,47 +75,38 @@ read the scan history or modify it.
 | --- | --- |
 | Framework | [TanStack Start](https://tanstack.com/start) (React 19, server functions) |
 | Language | TypeScript (strict) |
-| Styling | Tailwind CSS v4 + [shadcn/ui](https://ui.shadcn.com/) components on Radix primitives |
+| Styling | Tailwind CSS v4 + [shadcn/ui](https://ui.shadcn.com/) on Radix |
 | QR engine | `qrcode-generator` with a custom SVG renderer |
-| Data & auth | [Supabase](https://supabase.com) (Postgres, Row-Level Security, Google OAuth) |
+| Data & auth | [Supabase](https://supabase.com) (Postgres, RLS, Google OAuth) |
 | Payments | [Cashfree](https://cashfree.com) Payments Gateway |
-| Build | Vite with a Nitro server preset for Cloudflare Workers |
+| Build | Vite + Nitro (Cloudflare Workers preset) |
 
-## Getting started
-
-### Prerequisites
-
-- Node.js 20 or newer
-- A package manager — `npm` or `bun`
-- The [Supabase CLI](https://supabase.com/docs/guides/cli) (for database work)
-- A Supabase project, or a local Supabase instance
-
-### Install and run
+## Quick start
 
 ```sh
-git clone https://github.com/devnxtgensec/unified-qr.git
-cd unified-qr
-npm install        # or: bun install
+git clone https://github.com/nxtgensec/Unified-QR.git
+cd Unified-QR
+npm ci
 cp .env.local.example .env.local
 npm run dev
 ```
 
-Open http://localhost:8080. The home page generator works without any
-configuration; sign-in, dynamic codes, and billing need the environment
+Open **http://localhost:8080**. The home-page generator works with zero
+configuration. Sign-in, dynamic codes, and billing require the environment
 variables below.
 
-### Environment variables
+> **Time to first QR code:** under 30 seconds.
 
-All configuration lives in `.env.local` and is never committed. Server-side
-variables are read by server functions; `VITE_`-prefixed variables are
-exposed to the client.
+## Environment variables
+
+All configuration lives in `.env.local` and is never committed.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `SUPABASE_PROJECT_ID` | accounts | Supabase project reference |
 | `SUPABASE_URL` | accounts | Supabase API URL (`https://<ref>.supabase.co`) |
 | `SUPABASE_PUBLISHABLE_KEY` | accounts | Client-safe publishable key |
-| `SUPABASE_SERVICE_ROLE_KEY` | server | Server-only key — do not expose to the client |
+| `SUPABASE_SERVICE_ROLE_KEY` | server | Server-only — never expose to client |
 | `VITE_SUPABASE_PROJECT_ID` | accounts | Exposed project reference |
 | `VITE_SUPABASE_URL` | accounts | Exposed Supabase API URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | accounts | Exposed publishable key |
@@ -116,13 +114,13 @@ exposed to the client.
 | `CASHFREE_CLIENT_ID` | billing | Cashfree merchant client ID |
 | `CASHFREE_CLIENT_SECRET` | billing | Cashfree merchant client secret |
 | `CASHFREE_CURRENCY` | billing | Order currency (default `INR`) |
-| `CASHFREE_RETURN_URL` | billing | Where Cashfree returns the customer after checkout |
+| `CASHFREE_RETURN_URL` | billing | Post-checkout redirect URL |
 | `VITE_CASHFREE_ENV` | billing | Exposed Cashfree environment flag |
 
 ## Database
 
-The schema lives in `supabase/migrations` and is applied with the Supabase
-CLI. Migrations are immutable once merged — changes always ship as new files.
+Migrations live in `supabase/migrations/` and are applied with the Supabase
+CLI. **Never edit a merged migration** — always add a new file.
 
 ```sh
 supabase login
@@ -130,82 +128,74 @@ supabase link --project-ref <your-project-ref>
 npm run db:push
 ```
 
-Three tables back the product:
+| Table | Purpose |
+| --- | --- |
+| `profiles` | User display name, avatar, plan — auto-created on first sign-in |
+| `qr_codes` | Saved codes with type, payload, design fields, and dynamic-code fields |
+| `scans` | One row per scan of a dynamic code |
+| `link_pages` | Multi-link bio page definitions |
+| `link_sections` | Sections within a link page |
+| `link_items` | Individual links within sections |
 
-- `profiles` — user display name, avatar, and plan, auto-created on first sign-in.
-- `qr_codes` — saved codes with type, payload, style template, and dynamic-code fields (`slug`, `destination`, `active`).
-- `scans` — one row per recorded scan of a dynamic code.
-
-Each table has row-level security enabled; policies scope reads and writes to
-the owning user, with a narrow public path for active dynamic redirects.
+Every table has row-level security enabled with policies scoped to the
+owning user.
 
 ## Project structure
 
 ```text
 .
-├── .github/                 # PR and issue templates
-├── docs/                    # Development status and roadmap
-├── public/                  # Static assets (favicon, robots.txt)
 ├── src/
-│   ├── assets/              # Brand logo and marketing images
 │   ├── components/
 │   │   ├── app/             # Authenticated workspace shell
-│   │   ├── qr/              # Generator widgets (preview, forms, tabs)
-│   │   ├── site/            # Public header and footer
+│   │   ├── qr/              # Generator widget, forms, type tabs
+│   │   ├── site/            # Public header, footer, visitor badge
 │   │   └── ui/              # shadcn/ui primitives
-│   ├── hooks/               # Shared React hooks
-│   ├── integrations/        # Supabase and Cashfree clients
-│   ├── lib/                 # QR engine, payloads, code helpers
+│   ├── lib/                 # QR engine, payloads, codes, i18n, admin
 │   ├── routes/              # TanStack file-based routes
-│   │   ├── _authenticated/  # Workspace pages (dashboard, create, …)
-│   │   └── ...              # Public pages and the /r/:slug redirect
-│   ├── router.tsx           # Router wiring
-│   └── styles.css           # Design tokens and Tailwind entry
-├── supabase/
-│   ├── config.toml          # Supabase project config
-│   └── migrations/          # Versioned SQL migrations
-├── package.json
+│   │   ├── _authenticated/  # Dashboard, create, analytics, billing, links
+│   │   └── ...              # Public pages + /r/:slug redirect
+│   └── integrations/        # Supabase + Cashfree clients
+├── supabase/migrations/     # Versioned SQL (immutable once merged)
+├── .github/                 # Issue & PR templates
 └── vite.config.ts           # Vite + TanStack Start + Nitro
 ```
 
-## Available scripts
+## Scripts
 
-| Command | Description |
+| Command | What it does |
 | --- | --- |
-| `npm run dev` | Start the dev server at http://localhost:8080 |
-| `npm run build` | Production build (Nitro Cloudflare Workers preset) |
+| `npm run dev` | Dev server at http://localhost:8080 |
+| `npm run build` | Production build (Cloudflare Workers) |
 | `npm run preview` | Preview the production build locally |
 | `npm run lint` | ESLint across the project |
-| `npm run format` | Format all source files with Prettier |
-| `npm run typecheck` | Type-check with `tsc --noEmit` (strict) |
-| `npm run db:push` | Apply Supabase migrations to the linked project |
+| `npm run format` | Format with Prettier |
+| `npm run typecheck` | `tsc --noEmit` (strict) |
+| `npm run db:push` | Apply Supabase migrations |
 
 ## Deployment
 
-The production build targets Cloudflare Workers via Nitro's
-`cloudflare-module` preset. After a build, upload the generated output with
-Wrangler and set the environment variables in the Cloudflare dashboard.
-Static files under `public/` are emitted alongside the worker bundle.
+The production build targets **Cloudflare Workers** via Nitro's
+`cloudflare-module` preset.
 
-## Quality gates
+```sh
+npm run build
+npx wrangler deploy
+```
 
-- TypeScript runs in strict mode; `npm run typecheck` must pass.
-- ESLint is wired with React Hooks and Prettier plugins.
-- Server functions validate input with Zod before touching the network or
-  database.
-- Database access goes through Supabase with row-level security — never
-  through a service-role key on the client.
+Set environment variables in the Cloudflare dashboard. Static assets under
+`public/` are emitted alongside the worker bundle.
 
 ## Roadmap
 
-Planned and in-progress work — including per-type landing pages, legal pages,
-team collaboration, plan-limit enforcement, and more export formats — is
-tracked in [docs/development-status.md](docs/development-status.md).
+Planned and in-progress work — per-type landing pages, team collaboration,
+plan-limit enforcement, multi-format downloads, enhanced analytics, and
+more — is tracked in
+[docs/development-status.md](docs/development-status.md).
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow, code
-conventions, and the PR checklist.
+conventions, and PR checklist.
 
 ## Security
 
@@ -215,4 +205,4 @@ problems.
 
 ## License
 
-[MIT](LICENSE) © 2026 UnifiedQR contributors
+[MIT](LICENSE) &copy; 2026 UnifiedQR contributors
