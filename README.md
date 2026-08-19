@@ -1,25 +1,24 @@
-<p align="center">
-  <img src="src/assets/UnifiedQR_Logo.png" width="120" alt="UnifiedQR logo" />
-</p>
-
-<h1 align="center">UnifiedQR</h1>
-
-<p align="center">
-  <strong>Design, generate &amp; track QR codes — no design tool, no developer.</strong>
-</p>
-
-<p align="center">
-  <a href="https://github.com/nxtgensec/Unified-QR/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" />
-  </a>
-  <img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen" alt="Node.js 20+" />
-  <img src="https://img.shields.io/badge/typescript-strict-3178c6?logo=typescript&logoColor=white" alt="TypeScript Strict" />
-  <img src="https://img.shields.io/badge/version-0.0.2-8b5cf6" alt="Version" />
-</p>
-
-<p align="center">
-  <em>One app. Every QR format. Real-time scan analytics. Ship-ready in 2 minutes.</em>
-</p>
+<table>
+  <tr>
+    <td width="140" align="center">
+      <img src="src/assets/UnifiedQR_Logo.png" width="120" alt="UnifiedQR logo" />
+    </td>
+    <td>
+      <h1>UnifiedQR</h1>
+      <h3>100% Free QR Code Generator</h3>
+      <p>Design, generate &amp; track QR codes — no design tool, no developer.</p>
+      <p>
+        <a href="https://github.com/nxtgensec/Unified-QR/blob/main/LICENSE">
+          <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" />
+        </a>
+        <img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen" alt="Node.js 20+" />
+        <img src="https://img.shields.io/badge/typescript-strict-3178c6?logo=typescript&logoColor=white" alt="TypeScript Strict" />
+        <img src="https://img.shields.io/badge/version-0.0.3-8b5cf6" alt="Version" />
+      </p>
+      <p><em>One app. Every QR format. Real-time scan analytics. Ship-ready in 2 minutes.</em></p>
+    </td>
+  </tr>
+</table>
 
 ---
 
