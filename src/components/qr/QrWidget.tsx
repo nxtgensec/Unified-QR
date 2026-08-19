@@ -423,7 +423,7 @@ function TemplateCarousel({
 
   return (
     <div
-      className="border-b border-border"
+      className="border-b border-border relative overflow-hidden"
       onMouseEnter={() => {
         pausedRef.current = true;
       }}
@@ -431,12 +431,13 @@ function TemplateCarousel({
         pausedRef.current = false;
       }}
     >
+      <div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-brand/10 to-brand/5 pointer-events-none" />
       <div
         ref={trackRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        className="flex gap-2 overflow-x-auto px-5 py-3 sm:px-8 cursor-grab select-none"
+        className="relative flex gap-2 overflow-x-auto px-5 py-3 sm:px-8 cursor-grab select-none"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         <div className="flex gap-2 shrink-0">
