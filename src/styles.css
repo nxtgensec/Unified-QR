@@ -90,7 +90,8 @@
   --surface-strong: oklch(0.949 0.011 253);
   --premium: oklch(0.78 0.15 78);
   --success: oklch(0.62 0.15 155);
-  --shadow-card-value: 0 1px 2px oklch(0.19 0.035 265 / 0.06), 0 8px 24px oklch(0.19 0.035 265 / 0.06);
+  --shadow-card-value:
+    0 1px 2px oklch(0.19 0.035 265 / 0.06), 0 8px 24px oklch(0.19 0.035 265 / 0.06);
   --shadow-float-value: 0 20px 60px oklch(0.19 0.035 265 / 0.12);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.24 0.04 265);

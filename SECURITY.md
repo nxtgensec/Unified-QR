@@ -5,10 +5,10 @@
 Security fixes are applied to the latest release and backported to the most
 recent minor where the fix can land cleanly.
 
-| Version | Supported |
-| --- | --- |
-| v1.x | Supported |
-| Older | Not supported |
+| Version | Supported     |
+| ------- | ------------- |
+| v1.x    | Supported     |
+| Older   | Not supported |
 
 ## Reporting a vulnerability
 

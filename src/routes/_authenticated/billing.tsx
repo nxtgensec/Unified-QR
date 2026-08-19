@@ -1,6 +1,6 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { PageHeader } from "@/components/app/AppShell";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/lib/cashfree.functions";
 import { startCashfreeCheckout } from "@/integrations/cashfree/client";
 import { useLocale } from "@/lib/locale";
-import { PLANS, type PlanId } from "@/lib/plans";
+import { PLANS, PLAN_IDS, PAID_PLAN_IDS, type PlanId, effectivePlan } from "@/lib/plans";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/billing")({
       {
         name: "description",
         content:
-          "Upgrade to Flex or Pro with Cashfree: more dynamic codes, full analytics, teams and more.",
+          "Choose a UnifiedQR plan: Day Pass, Week Pass, Monthly or Yearly for dynamic QR codes, analytics and more.",
       },
       { property: "og:title", content: "Billing — UnifiedQR" },
       { property: "og:description", content: "Plans, upgrades and invoices." },
@@ -32,16 +32,18 @@ export const Route = createFileRoute("/_authenticated/billing")({
   component: BillingPage,
 });
 
-const fetchUserPlan = createServerFn({ method: "GET" })
+const fetchUserProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context;
-    const { data } = await supabase
+    const { data } = await context.supabase
       .from("profiles")
-      .select("plan")
+      .select("plan, plan_expires_at")
       .eq("id", context.userId)
       .maybeSingle();
-    return (data?.plan as PlanId) ?? "free";
+    return {
+      plan: (data?.plan as PlanId) ?? "free",
+      planExpiresAt: data?.plan_expires_at ?? null,
+    };
   });
 
 type BillingSearchParams = {
@@ -49,42 +51,22 @@ type BillingSearchParams = {
   plan?: string;
 };
 
-const planCards: Record<PlanId, { features: string[] }> = {
-  free: {
-    features: ["Unlimited static codes", "2 dynamic codes", "Scan totals", "PNG & SVG export"],
-  },
-  flex: {
-    features: ["25 dynamic codes", "Full analytics", "Bulk CSV import", "Logos & frames"],
-  },
-  pro: {
-    features: [
-      "Unlimited dynamic codes",
-      "Team workspace",
-      "Campaigns & folders",
-      "Priority support",
-    ],
-  },
-};
-
-const planOrder: PlanId[] = ["free", "flex", "pro"];
-const MIN_AMOUNT = 9;
-const MAX_AMOUNT = 999999;
-
 function BillingPage() {
   const { t, formatMoney } = useLocale();
   const [busy, setBusy] = useState<PlanId | null>(null);
   const [userPlan, setUserPlan] = useState<PlanId>("free");
+  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const verifiedRef = useRef(false);
 
-  const [inputPlan, setInputPlan] = useState<Extract<PlanId, "flex" | "pro"> | null>(null);
-  const [amount, setAmount] = useState<string>("");
-
   const searchParams = useSearch({ from: Route.id }) as BillingSearchParams;
 
+  const activePlan = effectivePlan(userPlan, planExpiresAt);
+
   useEffect(() => {
-    fetchUserPlan().then((plan) => {
-      if (plan === "flex" || plan === "pro" || plan === "free") setUserPlan(plan);
+    fetchUserProfile().then((profile) => {
+      setUserPlan(profile.plan);
+      setPlanExpiresAt(profile.planExpiresAt);
     });
   }, []);
 
@@ -93,15 +75,17 @@ function BillingPage() {
     const orderId = searchParams.order_id;
     const planParam = searchParams.plan;
 
-    if (orderId && planParam && (planParam === "flex" || planParam === "pro")) {
+    if (orderId && planParam && (PAID_PLAN_IDS as string[]).includes(planParam)) {
       verifiedRef.current = true;
       setVerifying(true);
 
-      verifyCashfreePayment({ data: { orderId, plan: planParam } })
+      verifyCashfreePayment({
+        data: { orderId, plan: planParam as "day" | "week" | "month" | "year" },
+      })
         .then((result) => {
           if (result.ok) {
-            setUserPlan(planParam);
-            toast.success(`Successfully upgraded to ${PLANS[planParam].label}!`);
+            setUserPlan(planParam as PlanId);
+            toast.success(`Successfully activated ${PLANS[planParam as PlanId].label}!`);
           } else {
             toast.error(result.message ?? "Payment verification failed. Contact support.");
           }
@@ -116,30 +100,12 @@ function BillingPage() {
     }
   }, [searchParams.order_id, searchParams.plan]);
 
-  function openAmountInput(planId: Extract<PlanId, "flex" | "pro">) {
-    setInputPlan(planId);
-    setAmount("");
-  }
-
-  function cancelAmountInput() {
-    setInputPlan(null);
-    setAmount("");
-  }
-
-  async function proceedWithPayment() {
-    if (!inputPlan) return;
-    const num = Number(amount);
-    if (!Number.isFinite(num) || !Number.isInteger(num) || num < MIN_AMOUNT || num > MAX_AMOUNT) {
-      toast.error(
-        `Amount must be between ₹${MIN_AMOUNT} and ₹${MAX_AMOUNT.toLocaleString("en-IN")}`,
-      );
-      return;
-    }
-
-    setBusy(inputPlan);
+  async function handleCheckout(planId: PlanId) {
+    if (planId === "free" || busy) return;
+    setBusy(planId);
     try {
       const result: CreateCashfreeOrderResult = await createCashfreeOrder({
-        data: { plan: inputPlan, amount: num },
+        data: { plan: planId },
       });
       if (!result.ok || !result.paymentSessionId) {
         toast.error(result.message ?? "Could not start checkout.");
@@ -155,19 +121,24 @@ function BillingPage() {
     }
   }
 
-  function getButtonState(planId: PlanId) {
-    const isCurrent = planId === userPlan;
-    const planIdx = planOrder.indexOf(planId);
-    const currentIdx = planOrder.indexOf(userPlan);
-    const canUpgrade = planIdx > currentIdx;
+  function getButtonLabel(planId: PlanId): string {
+    if (planId === activePlan) return "Current plan";
+    if (planId === "free") return activePlan !== "free" ? "Downgrade" : "Free forever";
+    const planIdx = PAID_PLAN_IDS.indexOf(planId as (typeof PAID_PLAN_IDS)[number]);
+    const currentIdx =
+      activePlan === "free"
+        ? -1
+        : PAID_PLAN_IDS.indexOf(activePlan as (typeof PAID_PLAN_IDS)[number]);
+    if (planIdx > currentIdx) return `Activate ${PLANS[planId].label}`;
+    return `Switch to ${PLANS[planId].label}`;
+  }
 
-    if (isCurrent) return "current";
-    if (canUpgrade) return "upgrade";
-    return "locked";
+  function isButtonDisabled(planId: PlanId): boolean {
+    return planId === activePlan || busy !== null;
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader title={t("billing.title")} description={t("billing.subtitle")} />
 
       {verifying && (
@@ -177,127 +148,101 @@ function BillingPage() {
         </div>
       )}
 
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
-        {planOrder.map((planId) => {
+      <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        {PLAN_IDS.map((planId) => {
           const plan = PLANS[planId];
-          const { features } = planCards[planId];
-          const isCurrent = planId === userPlan;
-          const isPaying = inputPlan === planId;
+          const isCurrent = planId === activePlan;
           const isBusy = busy === planId;
-          const buttonState = getButtonState(planId);
 
           return (
             <div
               key={planId}
-              className={`rounded-2xl border p-6 shadow-card ${
+              className={`relative flex flex-col rounded-2xl border p-5 shadow-card transition-all ${
                 isCurrent
                   ? "border-brand bg-background ring-2 ring-brand/15"
-                  : "border-border bg-background"
+                  : planId === "month"
+                    ? "border-brand/40 bg-background"
+                    : "border-border bg-background"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-extrabold">{plan.label}</h2>
-                {isCurrent && (
-                  <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[10px] font-bold uppercase text-brand">
-                    Current plan
-                  </span>
-                )}
-              </div>
-
-              {planId === "free" ? (
-                <p className="mt-2 text-3xl font-extrabold tracking-tight">
-                  {formatMoney(0)}{" "}
-                  <span className="text-sm font-medium text-muted-foreground">Forever free</span>
-                </p>
-              ) : (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Pay what you want — min {formatMoney(MIN_AMOUNT)}
-                </p>
+              {planId === "month" && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand px-3 py-0.5 text-[10px] font-bold text-brand-foreground">
+                  <Zap className="mr-0.5 inline size-3" /> Best Value
+                </span>
+              )}
+              {isCurrent && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-soft px-3 py-0.5 text-[10px] font-bold text-brand">
+                  Current
+                </span>
               )}
 
-              <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
-                {features.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <Check className="mt-0.5 size-4 shrink-0 text-brand" /> {f}
+              <h2 className="text-base font-extrabold">{plan.label}</h2>
+
+              <p className="mt-2">
+                <span className="text-2xl font-extrabold tracking-tight">
+                  {formatMoney(plan.amount)}
+                </span>
+                {plan.durationDays && (
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    /{" "}
+                    {plan.durationDays === 1
+                      ? "day"
+                      : plan.durationDays === 7
+                        ? "week"
+                        : plan.durationDays === 30
+                          ? "month"
+                          : "year"}
+                  </span>
+                )}
+                {!plan.durationDays && (
+                  <span className="ml-1 text-xs text-muted-foreground">forever</span>
+                )}
+              </p>
+
+              <ul className="mt-4 flex-1 space-y-1.5 text-xs text-muted-foreground">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-1.5">
+                    <Check className="mt-0.5 size-3.5 shrink-0 text-brand" /> {f}
                   </li>
                 ))}
               </ul>
 
-              {isPaying && buttonState === "upgrade" ? (
-                <div className="mt-6 space-y-3">
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-muted-foreground">
-                      Amount (₹) — min {MIN_AMOUNT}, max {MAX_AMOUNT.toLocaleString("en-IN")}
-                    </label>
-                    <input
-                      type="number"
-                      min={MIN_AMOUNT}
-                      max={MAX_AMOUNT}
-                      step="1"
-                      placeholder={`e.g. ${planId === "flex" ? "499" : "2999"}`}
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      autoFocus
-                      className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm font-semibold outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      disabled={isBusy}
-                      onClick={() => void proceedWithPayment()}
-                      className="flex flex-1 items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground hover:-translate-y-0.5"
-                    >
-                      {isBusy ? (
-                        <>
-                          <Loader2 className="size-4 animate-spin" /> Processing...
-                        </>
-                      ) : amount ? (
-                        `Pay ${formatMoney(Number(amount))}`
-                      ) : (
-                        "Pay now"
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isBusy}
-                      onClick={cancelAmountInput}
-                      className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-background"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : buttonState === "current" ? (
-                <button
-                  type="button"
-                  disabled
-                  className="mt-6 flex w-full cursor-default items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-bold text-muted-foreground"
-                >
-                  Your plan
-                </button>
-              ) : buttonState === "upgrade" ? (
-                <button
-                  type="button"
-                  disabled={isBusy}
-                  onClick={() => openAmountInput(planId as Extract<PlanId, "flex" | "pro">)}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground hover:-translate-y-0.5"
-                >
-                  Upgrade to {plan.label}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  className="mt-6 flex w-full cursor-default items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-bold text-muted-foreground opacity-50"
-                >
-                  Downgrade
-                </button>
-              )}
+              <button
+                type="button"
+                disabled={isButtonDisabled(planId)}
+                onClick={() => void handleCheckout(planId)}
+                className={`mt-5 flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-all ${
+                  isCurrent
+                    ? "cursor-default border border-border text-muted-foreground"
+                    : planId === "free"
+                      ? "cursor-default border border-border text-muted-foreground opacity-60"
+                      : "bg-brand text-brand-foreground hover:-translate-y-0.5"
+                }`}
+              >
+                {isBusy ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" /> Processing...
+                  </>
+                ) : (
+                  getButtonLabel(planId)
+                )}
+              </button>
             </div>
           );
         })}
       </div>
+
+      {planExpiresAt && activePlan !== "free" && (
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Your {PLANS[activePlan].label} is active until{" "}
+          {new Date(planExpiresAt).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
+          .
+        </p>
+      )}
     </div>
   );
 }

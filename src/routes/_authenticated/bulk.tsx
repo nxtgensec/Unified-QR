@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { makeSlug, parseCsv, shortUrl, toCsv, downloadCsv } from "@/lib/codes";
+import { getDynamicLimit, effectivePlan } from "@/lib/plans";
 import { toast } from "sonner";
 import { FileSpreadsheet, Loader2, Upload, Download, FolderTree } from "lucide-react";
 
@@ -84,11 +85,11 @@ function BulkPage() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("plan")
+      .select("plan, plan_expires_at")
       .eq("id", user.id)
       .maybeSingle();
-    const plan = profile?.plan ?? "free";
-    const limit = plan === "pro" ? Infinity : plan === "flex" ? 25 : 2;
+    const plan = effectivePlan(profile?.plan, profile?.plan_expires_at);
+    const limit = getDynamicLimit(plan);
 
     const { count: existingDynamic } = await supabase
       .from("qr_codes")

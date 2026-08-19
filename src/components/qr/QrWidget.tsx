@@ -43,6 +43,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { makeSlug, shortUrl } from "@/lib/codes";
+import { getDynamicLimit, effectivePlan } from "@/lib/plans";
 
 const PLACEHOLDER = "https://qr.nxtgensec.org";
 
@@ -106,11 +107,11 @@ export function QrWidget() {
       }
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan")
+        .select("plan, plan_expires_at")
         .eq("id", user.id)
         .maybeSingle();
-      const plan = profile?.plan ?? "free";
-      const limit = plan === "pro" ? Infinity : plan === "flex" ? 25 : 2;
+      const plan = effectivePlan(profile?.plan, profile?.plan_expires_at);
+      const limit = getDynamicLimit(plan);
 
       const { count } = await supabase
         .from("qr_codes")

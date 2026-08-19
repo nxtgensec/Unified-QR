@@ -1,16 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { PLANS } from "@/lib/plans";
+import { PLANS, PAID_PLAN_IDS, type PlanId } from "@/lib/plans";
 
-const PLAN_PRICES: Record<string, number> = {
-  flex: PLANS.flex.amount,
-  pro: PLANS.pro.amount,
-};
+const PLAN_PRICES: Record<string, number> = Object.fromEntries(
+  PAID_PLAN_IDS.map((id) => [id, PLANS[id].amount]),
+);
+
+const paidPlanEnum = z.enum(["day", "week", "month", "year"]);
 
 const orderInput = z.object({
-  plan: z.enum(["flex", "pro"]),
-  amount: z.number().int().min(9).max(999999),
+  plan: paidPlanEnum,
 });
 
 export type CreateCashfreeOrderInput = z.infer<typeof orderInput>;
@@ -51,6 +51,11 @@ export const createCashfreeOrder = createServerFn({ method: "POST" })
         };
       }
 
+      const serverAmount = PLAN_PRICES[data.plan];
+      if (serverAmount === undefined) {
+        return { ok: false, message: "Invalid plan selected." };
+      }
+
       const claims = (context.claims ?? {}) as Record<string, unknown>;
       const customerEmail = typeof claims["email"] === "string" ? claims["email"] : context.userId;
       const meta = claims["user_metadata"] as Record<string, unknown> | undefined;
@@ -64,11 +69,6 @@ export const createCashfreeOrder = createServerFn({ method: "POST" })
         .slice(0, 8);
       const orderId = `UQR-${Date.now()}-${randPart}`;
       const baseReturnUrl = process.env["CASHFREE_RETURN_URL"] ?? "http://localhost:8080/billing";
-
-      const serverAmount = PLAN_PRICES[data.plan];
-      if (!serverAmount) {
-        return { ok: false, message: "Invalid plan selected." };
-      }
 
       const response = await fetch(`${cashfreeBaseUrl()}/pg/orders`, {
         method: "POST",
@@ -115,8 +115,6 @@ export const createCashfreeOrder = createServerFn({ method: "POST" })
       return { ok: true, paymentSessionId: json.payment_session_id };
     } catch (err) {
       console.error("[Cashfree] createCashfreeOrder crashed", err);
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("[Cashfree] createCashfreeOrder crashed", err);
       return { ok: false, message: "An unexpected error occurred. Please try again." };
     }
   });
@@ -128,7 +126,7 @@ export type VerifyPaymentResult = {
 };
 
 export const verifyCashfreePayment = createServerFn({ method: "POST" })
-  .validator(z.object({ orderId: z.string().min(1), plan: z.enum(["flex", "pro"]) }))
+  .validator(z.object({ orderId: z.string().min(1), plan: paidPlanEnum }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }): Promise<VerifyPaymentResult> => {
     const clientId = process.env["CASHFREE_CLIENT_ID"];
@@ -171,17 +169,24 @@ export const verifyCashfreePayment = createServerFn({ method: "POST" })
 
     const expectedAmount = PLAN_PRICES[data.plan];
     const orderAmount = Number((order as Record<string, unknown>)["order_amount"]);
-    if (expectedAmount && orderAmount !== expectedAmount) {
-      console.error("[Billing] payment amount mismatch");
+    if (expectedAmount !== undefined && orderAmount !== expectedAmount) {
+      console.error("[Billing] payment amount mismatch", {
+        expected: expectedAmount,
+        got: orderAmount,
+      });
       return { ok: false, message: "Payment amount does not match the selected plan." };
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = context.userId;
+    const planDef = PLANS[data.plan as PlanId];
+    const expiresAt = planDef.durationDays
+      ? new Date(Date.now() + planDef.durationDays * 86400000).toISOString()
+      : null;
 
     const { error: updateError } = await supabaseAdmin
       .from("profiles")
-      .update({ plan: data.plan })
+      .update({ plan: data.plan, plan_expires_at: expiresAt })
       .eq("id", userId);
 
     if (updateError) {

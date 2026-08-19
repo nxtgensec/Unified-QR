@@ -66,6 +66,7 @@ Ugly defaults &middot; no analytics &middot; paid walls for basic features &midd
 <td width="50%" valign="top">
 
 ### Content Types
+
 - **URL** — any web address
 - **PDF** — link to a hosted document
 - **Multi-URL** — multiple destinations in one code
@@ -81,6 +82,7 @@ Ugly defaults &middot; no analytics &middot; paid walls for basic features &midd
 <td width="50%" valign="top">
 
 ### Design Engine
+
 - **34 templates** — curated color &amp; shape combos
 - **7 body shapes** — square, dot, rounded, diamond, star, heart, triangle
 - **3 eye styles** — square, rounded, circle
@@ -95,6 +97,7 @@ Ugly defaults &middot; no analytics &middot; paid walls for basic features &midd
 <td width="50%" valign="top">
 
 ### Export Formats
+
 - **SVG** — scalable, print-ready
 - **PNG** — 1024px high-res
 - **JPG** — lightweight share
@@ -105,6 +108,7 @@ Ugly defaults &middot; no analytics &middot; paid walls for basic features &midd
 <td width="50%" valign="top">
 
 ### Analytics &amp; Intelligence
+
 - **Today / Yesterday** — daily scan counts
 - **Growth %** — compare against previous day
 - **Top referrers** — where scans originate
@@ -118,6 +122,7 @@ Ugly defaults &middot; no analytics &middot; paid walls for basic features &midd
 <td width="50%" valign="top">
 
 ### Workspace
+
 - **Link pages** — one QR, many destinations
 - **Drag &amp; drop** — reorder sections &amp; links
 - **Custom slugs** — branded short URLs
@@ -127,6 +132,7 @@ Ugly defaults &middot; no analytics &middot; paid walls for basic features &midd
 <td width="50%" valign="top">
 
 ### Platform
+
 - **Team collaboration** — shared code libraries
 - **Admin panel** — user management &amp; stats
 - **29 languages** — full i18n support
@@ -252,18 +258,18 @@ npm run dev
 
 ## Environment Variables
 
-| Variable | Scope | Description |
-| --- | --- | --- |
-| `SUPABASE_URL` | server | Supabase API URL |
-| `SUPABASE_PUBLISHABLE_KEY` | server | Client-safe key |
-| `SUPABASE_SERVICE_ROLE_KEY` | server | Admin key — never expose |
-| `VITE_SUPABASE_URL` | client | Exposed API URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | client | Exposed publishable key |
-| `CASHFREE_ENV` | server | `sandbox` or `production` |
-| `CASHFREE_CLIENT_ID` | server | Merchant client ID |
-| `CASHFREE_CLIENT_SECRET` | server | Merchant secret |
-| `CASHFREE_CURRENCY` | server | Default `INR` |
-| `CASHFREE_RETURN_URL` | server | Post-checkout redirect |
+| Variable                        | Scope  | Description               |
+| ------------------------------- | ------ | ------------------------- |
+| `SUPABASE_URL`                  | server | Supabase API URL          |
+| `SUPABASE_PUBLISHABLE_KEY`      | server | Client-safe key           |
+| `SUPABASE_SERVICE_ROLE_KEY`     | server | Admin key — never expose  |
+| `VITE_SUPABASE_URL`             | client | Exposed API URL           |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | client | Exposed publishable key   |
+| `CASHFREE_ENV`                  | server | `sandbox` or `production` |
+| `CASHFREE_CLIENT_ID`            | server | Merchant client ID        |
+| `CASHFREE_CLIENT_SECRET`        | server | Merchant secret           |
+| `CASHFREE_CURRENCY`             | server | Default `INR`             |
+| `CASHFREE_RETURN_URL`           | server | Post-checkout redirect    |
 
 <br />
 
@@ -277,14 +283,14 @@ supabase link --project-ref <your-ref>
 npm run db:push
 ```
 
-| Table | Purpose |
-| --- | --- |
-| `profiles` | User name, avatar, plan |
-| `qr_codes` | Saved codes + design fields + dynamic fields |
-| `scans` | One row per scan event |
-| `link_pages` | Bio page definitions |
-| `link_sections` | Sections within a page |
-| `link_items` | Individual links within sections |
+| Table           | Purpose                                      |
+| --------------- | -------------------------------------------- |
+| `profiles`      | User name, avatar, plan                      |
+| `qr_codes`      | Saved codes + design fields + dynamic fields |
+| `scans`         | One row per scan event                       |
+| `link_pages`    | Bio page definitions                         |
+| `link_sections` | Sections within a page                       |
+| `link_items`    | Individual links within sections             |
 
 <br />
 
@@ -312,14 +318,14 @@ src/
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Dev server at http://localhost:8080 |
-| `npm run build` | Production build (Cloudflare Workers) |
-| `npm run preview` | Preview prod build locally |
-| `npm run lint` | ESLint + Prettier |
-| `npm run typecheck` | Strict TypeScript check |
-| `npm run db:push` | Apply Supabase migrations |
+| Command             | Description                           |
+| ------------------- | ------------------------------------- |
+| `npm run dev`       | Dev server at http://localhost:8080   |
+| `npm run build`     | Production build (Cloudflare Workers) |
+| `npm run preview`   | Preview prod build locally            |
+| `npm run lint`      | ESLint + Prettier                     |
+| `npm run typecheck` | Strict TypeScript check               |
+| `npm run db:push`   | Apply Supabase migrations             |
 
 <br />
 

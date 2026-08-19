@@ -32,6 +32,7 @@ function SettingsPage() {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [plan, setPlan] = useState("free");
+  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [defaultTemplate, setDefaultTemplate] = useState(1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,11 +43,12 @@ function SettingsPage() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, plan")
+        .select("display_name, plan, plan_expires_at")
         .eq("id", user.id)
         .maybeSingle();
       setDisplayName(data?.display_name ?? "");
       setPlan(data?.plan ?? "free");
+      setPlanExpiresAt(data?.plan_expires_at ?? null);
       const stored = Number(localStorage.getItem(TEMPLATE_KEY));
       if (stored) setDefaultTemplate(stored);
       setLoading(false);
@@ -172,6 +174,11 @@ function SettingsPage() {
         <div className="flex items-center justify-between pt-2">
           <span className="text-xs text-muted-foreground">
             Plan: <span className="font-bold uppercase text-foreground">{plan}</span>
+            {planExpiresAt && (
+              <span className="ml-1 text-muted-foreground">
+                (expires {new Date(planExpiresAt).toLocaleDateString()})
+              </span>
+            )}
           </span>
           <button
             type="button"
