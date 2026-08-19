@@ -199,6 +199,16 @@ export const templates: QrTemplate[] = [
   { id: 22, fg: "#8b5cf6", bg: "#ffffff", eye: "#7c3aed", shape: "triangle", eyeShape: "rounded" },
   { id: 23, fg: "#ec4899", bg: "#fdf2f8", eye: "#db2777", shape: "dot", eyeShape: "circle" },
   { id: 24, fg: "#14b8a6", bg: "#f0fdfa", eye: "#0d9488", shape: "diamond", eyeShape: "rounded" },
+  { id: 25, fg: "#ffffff", bg: "#0f172a", eye: "#f43f5e", shape: "star", eyeShape: "circle" },
+  { id: 26, fg: "#1c1917", bg: "#fef9c3", eye: "#a16207", shape: "square", eyeShape: "circle" },
+  { id: 27, fg: "#ffffff", bg: "#7c3aed", eye: "#fbbf24", shape: "heart", eyeShape: "rounded" },
+  { id: 28, fg: "#f43f5e", bg: "#111827", eye: "#f43f5e", shape: "diamond", eyeShape: "square" },
+  { id: 29, fg: "#0d9488", bg: "#f0fdfa", eye: "#0d9488", shape: "triangle", eyeShape: "circle" },
+  { id: 30, fg: "#1e293b", bg: "#f1f5f9", eye: "#e11d48", shape: "rounded", eyeShape: "circle" },
+  { id: 31, fg: "#ffffff", bg: "#be185d", eye: "#fbbf24", shape: "star", eyeShape: "circle" },
+  { id: 32, fg: "#111827", bg: "#ecfdf5", eye: "#059669", shape: "heart", eyeShape: "circle" },
+  { id: 33, fg: "#0f172a", bg: "#e0e7ff", eye: "#4f46e5", shape: "diamond", eyeShape: "rounded" },
+  { id: 34, fg: "#ffffff", bg: "#1e293b", eye: "#22d3ee", shape: "dot", eyeShape: "circle" },
 ];
 
 function buildDesign(
