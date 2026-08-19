@@ -22,24 +22,10 @@ import {
 } from "@/lib/qr";
 import { TypeTabs, qrTypes } from "./TypeTabs";
 import { TypeForm } from "./TypeForm";
-import {
-  Download,
-  Save,
-  Sparkles,
-  Users,
-  Upload,
-  ChevronDown,
-  ChevronRight,
-  Palette,
-  Image,
-  Frame,
-  Loader2,
-  FileImage,
-  FileType,
-  FileText,
-} from "lucide-react";
+import { Download, Save, Sparkles, Users, Upload, ChevronDown, ChevronRight, Palette, Image, Frame, Loader2, FileImage, FileType, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { makeSlug, shortUrl } from "@/lib/codes";
@@ -196,6 +182,7 @@ export function QrWidget() {
     () =>
       templates.map((t) => ({
         id: t.id,
+        variant: t.variant,
         src: svgToDataUrl(
           renderQrSvg(
             "https://example.com",
@@ -213,6 +200,9 @@ export function QrWidget() {
       })),
     [],
   );
+
+  const plainThumbs = useMemo(() => thumbs.filter((t) => t.variant === "plain"), [thumbs]);
+  const gradientThumbs = useMemo(() => thumbs.filter((t) => t.variant === "gradient"), [thumbs]);
 
   const handleDownload = useCallback(
     async (format: "png" | "svg" | "jpg" | "webp" | "pdf") => {
@@ -243,8 +233,8 @@ export function QrWidget() {
   function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Logo must be under 2MB");
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error("Logo must be under 4MB");
       return;
     }
     const reader = new FileReader();
@@ -282,12 +272,24 @@ export function QrWidget() {
 
       {/* ── Template carousel ── */}
       <TemplateCarousel
-        thumbs={thumbs}
+        thumbs={plainThumbs}
         activeId={templateId}
         onSelect={(id) => {
           setTemplateId(id);
           resetAllCustom();
         }}
+        direction="ltr"
+        label="Plain Templates"
+      />
+      <TemplateCarousel
+        thumbs={gradientThumbs}
+        activeId={templateId}
+        onSelect={(id) => {
+          setTemplateId(id);
+          resetAllCustom();
+        }}
+        direction="rtl"
+        label="Premium Templates"
       />
 
       <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -364,7 +366,7 @@ export function QrWidget() {
           )}
 
           <div className="mt-6">
-            <FormatDropdown onDownload={handleDownload} />
+            <FormatDialog onDownload={handleDownload} previewSrc={svgToDataUrl(svg)} />
           </div>
         </div>
       </div>
@@ -376,10 +378,14 @@ function TemplateCarousel({
   thumbs,
   activeId,
   onSelect,
+  direction = "ltr",
+  label,
 }: {
   thumbs: { id: number; src: string }[];
   activeId: number;
   onSelect: (id: number) => void;
+  direction?: "ltr" | "rtl";
+  label: string;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
@@ -392,14 +398,19 @@ function TemplateCarousel({
     let raf: number;
     function tick() {
       if (el && !pausedRef.current && !dragRef.current.dragging && el.isConnected) {
-        el.scrollLeft -= speed;
-        if (el.scrollLeft <= 0) el.scrollLeft += el.scrollWidth / 2;
+        if (direction === "ltr") {
+          el.scrollLeft -= speed;
+          if (el.scrollLeft <= 0) el.scrollLeft += el.scrollWidth / 2;
+        } else {
+          el.scrollLeft += speed;
+          if (el.scrollLeft >= el.scrollWidth / 2) el.scrollLeft -= el.scrollWidth / 2;
+        }
       }
       raf = requestAnimationFrame(tick);
     }
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [direction]);
 
   function onPointerDown(e: React.PointerEvent) {
     const el = trackRef.current;
@@ -432,6 +443,7 @@ function TemplateCarousel({
       }}
     >
       <div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-brand/10 to-brand/5 pointer-events-none" />
+      <p className="relative px-5 sm:px-8 pt-2 pb-0 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
       <div
         ref={trackRef}
         onPointerDown={onPointerDown}
@@ -467,28 +479,14 @@ function TemplateCarousel({
   );
 }
 
-function FormatDropdown({
+function FormatDialog({
   onDownload,
+  previewSrc,
 }: {
   onDownload: (format: "png" | "svg" | "jpg" | "webp" | "pdf") => void;
+  previewSrc: string;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, []);
 
   const formats = [
     { value: "png" as const, label: "PNG", desc: "Best for screens & social media" },
@@ -499,45 +497,54 @@ function FormatDropdown({
   ];
 
   return (
-    <div ref={ref} className="relative w-full">
+    <Dialog open={open} onOpenChange={setOpen}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5 cursor-pointer"
       >
-        <Download className="size-4" /> Download QR Code{" "}
-        <ChevronDown className={`size-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+        <Download className="size-4" /> Download QR Code
       </button>
-      {open && (
-        <div className="absolute bottom-full left-0 z-50 mb-2 w-full overflow-hidden rounded-xl border border-border bg-card shadow-float">
-          {formats.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              onClick={() => {
-                onDownload(f.value);
-                setOpen(false);
-              }}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface"
-            >
-              <span className="grid size-8 place-items-center rounded-lg bg-brand-soft text-brand">
-                {f.value === "pdf" ? (
-                  <FileText className="size-4" />
-                ) : f.value === "svg" ? (
-                  <FileType className="size-4" />
-                ) : (
-                  <FileImage className="size-4" />
-                )}
-              </span>
-              <div>
-                <span className="block text-sm font-bold">{f.label}</span>
-                <span className="block text-[11px] text-muted-foreground">{f.desc}</span>
-              </div>
-            </button>
-          ))}
+      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
+        <div className="flex flex-col items-center gap-6 p-8">
+          <DialogHeader className="items-center text-center">
+            <DialogTitle className="text-xl">Download QR Code</DialogTitle>
+          </DialogHeader>
+          <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+            <img
+              src={previewSrc}
+              alt="QR code preview"
+              className="w-64 h-64 sm:w-80 sm:h-80 object-contain"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 w-full">
+            {formats.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => {
+                  onDownload(f.value);
+                  setOpen(false);
+                }}
+                className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-md cursor-pointer"
+              >
+                <span className="grid size-10 place-items-center rounded-xl bg-brand-soft text-brand">
+                  {f.value === "pdf" ? (
+                    <FileText className="size-5" />
+                  ) : f.value === "svg" ? (
+                    <FileType className="size-5" />
+                  ) : (
+                    <FileImage className="size-5" />
+                  )}
+                </span>
+                <span className="text-sm font-bold">{f.label}</span>
+                <span className="text-[11px] text-muted-foreground text-center leading-tight">{f.desc}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
