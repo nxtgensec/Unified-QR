@@ -264,11 +264,11 @@ function RootComponent() {
         {isStandalone ? (
           <Outlet />
         ) : isApp ? (
-          <div className="min-h-screen font-sans antialiased">
+          <div className="min-h-screen bg-background font-sans antialiased">
             <Outlet />
           </div>
         ) : (
-          <div className="flex min-h-screen flex-col font-sans antialiased">
+          <div className="flex min-h-screen flex-col bg-background font-sans antialiased">
             <Header />
             <main className="flex-1">
               <Outlet />
@@ -276,7 +276,6 @@ function RootComponent() {
             <Footer />
           </div>
         )}
-        <LanguageChooser />
         <Toaster />
       </LocaleProvider>
     </QueryClientProvider>

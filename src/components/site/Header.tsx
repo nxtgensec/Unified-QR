@@ -129,9 +129,18 @@ export function Header() {
           </Link>
         </div>
 
-        <button className="lg:hidden" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
-          {open ? <X className="size-6" /> : <Menu className="size-6" />}
-        </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <LanguageSwitcher />
+          <Link
+            to="/auth"
+            className="rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground"
+          >
+            Sign up free
+          </Link>
+          <button onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
+            {open ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
+        </div>
       </div>
 
       {open && (

@@ -343,7 +343,7 @@ export function QrWidget() {
               <img
                 src={svgToDataUrl(svg)}
                 alt="QR Code preview"
-                className="size-32 rounded-lg sm:size-40 lg:size-56"
+                className="size-40 rounded-lg sm:size-44 lg:size-56"
               />
             </div>
             {isEmpty && (
