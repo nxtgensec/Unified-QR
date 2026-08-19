@@ -289,76 +289,76 @@ export function QrWidget() {
       </div>
 
       <div className="flex flex-col lg:flex-row">
-        {/* ── Desktop left: gradient vertical (bottom-to-top) ── */}
-        <div className="hidden lg:block">
-          <VerticalCarousel
-            thumbs={gradientThumbs}
-            activeId={templateId}
-            onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
-            direction="btt"
-            label="Premium"
-          />
-        </div>
-
-        {/* ── Center: controls + preview + download ── */}
-        <div className="flex-1 grid gap-8 p-5 sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
-          {/* ── Left column: design controls + save ── */}
-          <div className="order-2 lg:order-1">
-            <div className="flex items-center justify-center gap-6">
-              <ColorPicker label="Code" value={fg ?? template.fg} onChange={setFg} />
-              <ColorPicker label="Background" value={bg ?? template.bg} onChange={setBg} />
-            </div>
-
-            <DesignControls
-              bodyShape={bodyShape}
-              setBodyShape={setBodyShape}
-              eyeShape={eyeShape}
-              setEyeShape={setEyeShape}
-              gradient={gradient}
-              setGradient={setGradient}
-              logo={logo}
-              onLogoUpload={handleLogoUpload}
-              onLogoRemove={() => setLogo(null)}
-              logoInputRef={logoInputRef}
-              frame={frame}
-              setFrame={setFrame}
-            />
-
-            <div className="mt-6 space-y-3">
-              {user ? (
-                <>
-                  <SaveSection
-                    saving={saving}
-                    isEmpty={isEmpty}
-                    type={type}
-                    teamId={teamId}
-                    onSaveStatic={() => void save(false)}
-                    onSaveDynamic={() => void save(true)}
-                    onSaveTeam={() => void save(false, true)}
-                  />
-                </>
-              ) : (
-                <div className="rounded-xl border border-border bg-surface p-4">
-                  <p className="flex items-center gap-2 text-sm font-bold">
-                    <Sparkles className="size-4 text-premium" /> Save & track your codes
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Sign in with Google to store your codes, create editable dynamic links and see
-                    scan counts. Downloads are always free and never watermarked.
-                  </p>
-                  <Link
-                    to="/auth"
-                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
-                  >
-                    Sign in with Google
-                  </Link>
-                </div>
-              )}
-            </div>
+        {/* ── Left: design controls + save ── */}
+        <div className="order-2 p-5 sm:p-8 lg:order-1 lg:w-[45%]">
+          <div className="flex items-center justify-center gap-6">
+            <ColorPicker label="Code" value={fg ?? template.fg} onChange={setFg} />
+            <ColorPicker label="Background" value={bg ?? template.bg} onChange={setBg} />
           </div>
 
-          {/* ── Right column: preview + download ── */}
-          <div className="order-1 flex flex-col items-center lg:order-2">
+          <DesignControls
+            bodyShape={bodyShape}
+            setBodyShape={setBodyShape}
+            eyeShape={eyeShape}
+            setEyeShape={setEyeShape}
+            gradient={gradient}
+            setGradient={setGradient}
+            logo={logo}
+            onLogoUpload={handleLogoUpload}
+            onLogoRemove={() => setLogo(null)}
+            logoInputRef={logoInputRef}
+            frame={frame}
+            setFrame={setFrame}
+          />
+
+          <div className="mt-6 space-y-3">
+            {user ? (
+              <>
+                <SaveSection
+                  saving={saving}
+                  isEmpty={isEmpty}
+                  type={type}
+                  teamId={teamId}
+                  onSaveStatic={() => void save(false)}
+                  onSaveDynamic={() => void save(true)}
+                  onSaveTeam={() => void save(false, true)}
+                />
+              </>
+            ) : (
+              <div className="rounded-xl border border-border bg-surface p-4">
+                <p className="flex items-center gap-2 text-sm font-bold">
+                  <Sparkles className="size-4 text-premium" /> Save & track your codes
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Sign in with Google to store your codes, create editable dynamic links and see
+                  scan counts. Downloads are always free and never watermarked.
+                </p>
+                <Link
+                  to="/auth"
+                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+                >
+                  Sign in with Google
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Right: vertical carousels + QR preview ── */}
+        <div className="order-1 flex lg:order-2 lg:w-[55%]">
+          {/* Desktop left carousel: gradient bottom-to-top */}
+          <div className="hidden lg:block">
+            <VerticalCarousel
+              thumbs={gradientThumbs}
+              activeId={templateId}
+              onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+              direction="btt"
+              label="Premium"
+            />
+          </div>
+
+          {/* QR preview + download */}
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-5 sm:p-8">
             <div className="rounded-2xl border border-border bg-surface p-4">
               <img
                 src={svgToDataUrl(svg)}
@@ -369,26 +369,23 @@ export function QrWidget() {
               />
             </div>
             {isEmpty && (
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Showing a sample code — start typing to make it yours
               </p>
             )}
-
-            <div className="mt-6">
-              <FormatDialog onDownload={handleDownload} previewSrc={svgToDataUrl(svg)} />
-            </div>
+            <FormatDialog onDownload={handleDownload} previewSrc={svgToDataUrl(svg)} />
           </div>
-        </div>
 
-        {/* ── Desktop right: plain vertical (top-to-bottom) ── */}
-        <div className="hidden lg:block">
-          <VerticalCarousel
-            thumbs={plainThumbs}
-            activeId={templateId}
-            onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
-            direction="ttb"
-            label="Plain"
-          />
+          {/* Desktop right carousel: plain top-to-bottom */}
+          <div className="hidden lg:block">
+            <VerticalCarousel
+              thumbs={plainThumbs}
+              activeId={templateId}
+              onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+              direction="ttb"
+              label="Plain"
+            />
+          </div>
         </div>
       </div>
     </div>
