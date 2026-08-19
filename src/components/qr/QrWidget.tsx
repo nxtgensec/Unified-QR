@@ -277,14 +277,14 @@ export function QrWidget() {
           activeId={templateId}
           onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
           direction="ltr"
-          label="Plain Templates"
+          label="Plain"
         />
         <TemplateCarousel
           thumbs={gradientThumbs}
           activeId={templateId}
           onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
           direction="rtl"
-          label="Premium Templates"
+          label="Premium"
         />
       </div>
 
@@ -344,47 +344,47 @@ export function QrWidget() {
           </div>
         </div>
 
-        {/* ── Right: vertical carousels + QR preview ── */}
-        <div className="order-1 flex lg:order-2 lg:w-[55%]">
-          {/* Desktop left carousel: gradient bottom-to-top */}
-          <div className="hidden lg:block">
-            <VerticalCarousel
-              thumbs={gradientThumbs}
-              activeId={templateId}
-              onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
-              direction="btt"
-              label="Premium"
-            />
-          </div>
-
-          {/* QR preview + download */}
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-5 sm:p-8">
-            <div className="rounded-2xl border border-border bg-surface p-4">
-              <img
-                src={svgToDataUrl(svg)}
-                alt="QR Code preview"
-                width={224}
-                height={224}
-                className="size-56 rounded-lg"
+        {/* ── Right: carousels flanking QR preview ── */}
+        <div className="order-1 flex flex-col items-center lg:order-2 lg:w-[55%]">
+          <div className="flex items-center justify-center gap-0">
+            {/* Gradient carousel — left of QR */}
+            <div className="hidden lg:block">
+              <VerticalCarousel
+                thumbs={gradientThumbs}
+                activeId={templateId}
+                onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+                direction="btt"
               />
             </div>
-            {isEmpty && (
-              <p className="text-xs text-muted-foreground">
-                Showing a sample code — start typing to make it yours
-              </p>
-            )}
-            <FormatDialog onDownload={handleDownload} previewSrc={svgToDataUrl(svg)} />
-          </div>
 
-          {/* Desktop right carousel: plain top-to-bottom */}
-          <div className="hidden lg:block">
-            <VerticalCarousel
-              thumbs={plainThumbs}
-              activeId={templateId}
-              onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
-              direction="ttb"
-              label="Plain"
-            />
+            {/* QR preview */}
+            <div className="flex flex-col items-center gap-3 p-5 sm:p-8">
+              <div className="rounded-2xl border border-border bg-surface p-4">
+                <img
+                  src={svgToDataUrl(svg)}
+                  alt="QR Code preview"
+                  width={224}
+                  height={224}
+                  className="size-56 rounded-lg"
+                />
+              </div>
+              {isEmpty && (
+                <p className="text-xs text-muted-foreground">
+                  Showing a sample code — start typing to make it yours
+                </p>
+              )}
+              <FormatDialog onDownload={handleDownload} previewSrc={svgToDataUrl(svg)} />
+            </div>
+
+            {/* Plain carousel — right of QR */}
+            <div className="hidden lg:block">
+              <VerticalCarousel
+                thumbs={plainThumbs}
+                activeId={templateId}
+                onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+                direction="ttb"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -502,18 +502,16 @@ function VerticalCarousel({
   activeId,
   onSelect,
   direction = "ttb",
-  label,
 }: {
   thumbs: { id: number; src: string }[];
   activeId: number;
   onSelect: (id: number) => void;
   direction?: "ttb" | "btt";
-  label: string;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
   const dragRef = useRef({ dragging: false, startY: 0, scrollTop: 0 });
-  const speed = 0.5;
+  const speed = 0.4;
 
   useEffect(() => {
     const el = trackRef.current;
@@ -557,22 +555,24 @@ function VerticalCarousel({
 
   return (
     <div
-      className="relative flex flex-col overflow-hidden border-x border-border"
-      style={{ width: 88 }}
+      className="relative flex flex-col overflow-hidden"
+      style={{ width: 72, height: 304 }}
       onMouseEnter={() => { pausedRef.current = true; }}
       onMouseLeave={() => { pausedRef.current = false; }}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-brand/5 via-brand/10 to-brand/5 pointer-events-none" />
-      <p className="relative text-center pt-2 pb-1 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">{label}</p>
+      {/* fade edges */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-card to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-card to-transparent z-10" />
+
       <div
         ref={trackRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        className="relative flex-1 overflow-y-auto cursor-grab select-none"
+        className="flex-1 overflow-y-auto cursor-grab select-none"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        <div className="flex flex-col items-center gap-2 py-2 px-1.5">
+        <div className="flex flex-col items-center gap-1.5 py-1 px-1">
           {doubled.map((t, i) => (
             <button
               key={`${t.id}-${i}`}
@@ -580,7 +580,7 @@ function VerticalCarousel({
               onClick={() => onSelect(t.id)}
               onPointerDown={(e) => e.stopPropagation()}
               aria-label={`QR template ${t.id}`}
-              className={`shrink-0 overflow-hidden rounded-lg border-2 p-0.5 transition-all hover:scale-105 ${
+              className={`shrink-0 overflow-hidden rounded-lg border-2 p-0.5 transition-all hover:scale-110 ${
                 t.id === activeId
                   ? "border-brand ring-2 ring-brand/25 shadow-md"
                   : "border-border hover:border-brand/50"
@@ -589,7 +589,7 @@ function VerticalCarousel({
               <img
                 src={t.src}
                 alt={`QR template ${t.id}`}
-                className="size-14 rounded-md"
+                className="size-12 rounded-md"
               />
             </button>
           ))}
