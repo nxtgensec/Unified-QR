@@ -475,39 +475,14 @@ function VerticalCarousel({
   onSelect: (id: number) => void;
   direction?: "ttb" | "btt";
 }) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const pausedRef = useRef(false);
-  const offsetRef = useRef(0);
-  const dir = direction === "btt" ? -1 : 1;
-  const speed = 0.6;
-
-  useEffect(() => {
-    let raf: number;
-    function tick() {
-      const el = trackRef.current;
-      if (el && !pausedRef.current && el.isConnected) {
-        const items = el.firstElementChild;
-        if (items) {
-          const half = items.scrollHeight / 2;
-          if (half > 0) {
-            offsetRef.current += dir * speed;
-            if (offsetRef.current >= half) offsetRef.current -= half;
-            if (offsetRef.current <= -half) offsetRef.current += half;
-            el.style.transform = `translateY(${-offsetRef.current}px)`;
-          }
-        }
-      }
-      raf = requestAnimationFrame(tick);
-    }
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [dir]);
+  const [paused, setPaused] = useState(false);
 
   const doubled = [...thumbs, ...thumbs];
+  const singleH = thumbs.length * 48;
 
   return (
     <div
-      className="shrink-0 overflow-hidden"
+      className="shrink-0"
       style={{
         width: 52,
         height: 280,
@@ -517,13 +492,19 @@ function VerticalCarousel({
           "linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent)",
       }}
       onMouseEnter={() => {
-        pausedRef.current = true;
+        setPaused(true);
       }}
       onMouseLeave={() => {
-        pausedRef.current = false;
+        setPaused(false);
       }}
     >
-      <div ref={trackRef} className="flex flex-col items-center gap-1 py-1 px-0.5">
+      <div
+        className="flex flex-col items-center gap-1 py-1 px-0.5"
+        style={{
+          animation: `carousel-${direction === "btt" ? "up" : "down"} ${singleH / 36}s linear infinite`,
+          animationPlayState: paused ? "paused" : "running",
+        }}
+      >
         {doubled.map((t, i) => (
           <button
             key={`${t.id}-${i}`}

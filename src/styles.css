@@ -174,3 +174,21 @@
     color: var(--color-foreground);
   }
 }
+
+@keyframes carousel-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes carousel-up {
+  from {
+    transform: translateY(-50%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
