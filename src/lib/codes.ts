@@ -48,29 +48,13 @@ export async function listCodes(userId?: string) {
   }
   if (!uid) return [] as SavedCode[];
 
-  let teamIds: string[] = [];
-  try {
-    const { data: memberships } = await supabase
-      .from("team_members")
-      .select("team_id")
-      .eq("user_id", uid);
-    teamIds = (memberships ?? []).map((m) => m.team_id);
-  } catch {
-    /* team lookup failed — fall back to user's own codes only */
-  }
-
-  let query = supabase
+  const query = supabase
     .from("qr_codes")
     .select(
       "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,created_at",
     )
+    .eq("user_id", uid)
     .order("created_at", { ascending: false });
-
-  if (teamIds.length > 0) {
-    query = query.or(`user_id.eq.${uid},team_id.in.(${teamIds.join(",")})`);
-  } else {
-    query = query.eq("user_id", uid);
-  }
 
   const { data, error } = await query;
   if (error) throw error;

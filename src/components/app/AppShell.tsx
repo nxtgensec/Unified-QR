@@ -14,18 +14,16 @@ import {
   Plus,
   QrCode,
   Settings,
-  Users,
   X,
 } from "lucide-react";
 import unifiedQrLogo from "@/assets/UnifiedQR_Logo.png";
 
-const nav = [
+const nav: { to: string; label: string; icon: React.ReactNode; beta?: boolean }[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutGrid className="size-4" /> },
   { to: "/create", label: "Create QR Code", icon: <Plus className="size-4" /> },
-  { to: "/links", label: "Link Pages", icon: <Link2 className="size-4" /> },
-  { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" /> },
-  { to: "/bulk", label: "Bulk import", icon: <Layers className="size-4" /> },
-  { to: "/team", label: "Team", icon: <Users className="size-4" /> },
+  { to: "/links", label: "Workspace", icon: <Link2 className="size-4" /> },
+  { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" />, beta: true },
+  { to: "/bulk", label: "Bulk Import", icon: <Layers className="size-4" />, beta: true },
   { to: "/billing", label: "Billing", icon: <CreditCard className="size-4" /> },
   { to: "/settings", label: "Settings", icon: <Settings className="size-4" /> },
 ];
@@ -33,7 +31,7 @@ const nav = [
 const bottomNav = [
   { to: "/dashboard", label: "Home", icon: LayoutGrid },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/links", label: "Links", icon: Link2 },
+  { to: "/links", label: "Workspace", icon: Link2 },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -109,6 +107,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 {item.icon}
                 <span className="flex-1">{item.label}</span>
+                {item.beta && (
+                  <span className="rounded-full bg-premium/10 px-2 py-0.5 text-[10px] font-bold text-premium">
+                    Beta
+                  </span>
+                )}
               </Link>
             );
           })}

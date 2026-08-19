@@ -20,9 +20,12 @@ import {
 export const Route = createFileRoute("/_authenticated/links")({
   head: () => ({
     meta: [
-      { title: "Link Pages — UnifiedQR" },
-      { name: "description", content: "Create and manage your multi-link pages." },
-      { property: "og:title", content: "Link Pages — UnifiedQR" },
+      { title: "Workspace — UnifiedQR" },
+      {
+        name: "description",
+        content: "Create and manage your workspace — one QR code for all destinations.",
+      },
+      { property: "og:title", content: "Workspace — UnifiedQR" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -281,8 +284,8 @@ function LinksEditor() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
-        title="Link Pages"
-        description="Create a beautiful page with all your links — one QR code for everything."
+        title="Workspace"
+        description="One QR code, many destinations — your multi-link workspace."
         actions={
           <div className="flex gap-2">
             {selectedPageId && (
@@ -310,9 +313,9 @@ function LinksEditor() {
       {pages.length === 0 ? (
         <div className="mt-12 rounded-2xl border border-dashed border-border p-10 text-center">
           <Link2 className="mx-auto size-8 text-muted-foreground/40" />
-          <p className="mt-3 font-semibold">No link pages yet</p>
+          <p className="mt-3 font-semibold">No workspace pages yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create your first multi-link page and share it with a single QR code.
+            Create your first multi-link page — one QR code for everything.
           </p>
           <button
             type="button"

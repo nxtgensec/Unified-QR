@@ -26,7 +26,6 @@ import {
   Download,
   Save,
   Sparkles,
-  Users,
   Upload,
   ChevronDown,
   ChevronRight,
@@ -85,36 +84,11 @@ export function QrWidget() {
 
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
-  const [teamId, setTeamId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!user) {
-      setTeamId(null);
-      return;
-    }
-    let active = true;
-    supabase
-      .from("team_members")
-      .select("team_id")
-      .eq("user_id", user.id)
-      .limit(1)
-      .then(
-        ({ data, error }) => {
-          if (active) setTeamId(error ? null : (data?.[0]?.team_id ?? null));
-        },
-        () => {
-          if (active) setTeamId(null);
-        },
-      );
-    return () => {
-      active = false;
-    };
-  }, [user]);
 
   const data = debounced.trim() || PLACEHOLDER;
   const isEmpty = !debounced.trim();
 
-  async function save(dynamic: boolean, toTeam = false) {
+  async function save(dynamic: boolean) {
     if (!user || isEmpty) return;
 
     if (dynamic) {
@@ -156,7 +130,7 @@ export function QrWidget() {
     const slug = dynamic ? makeSlug() : null;
     const { error } = await supabase.from("qr_codes").insert({
       user_id: user.id,
-      team_id: toTeam ? teamId : null,
+      team_id: null,
       name: `${type.toUpperCase()} code`,
       type,
       content: payload,
@@ -183,12 +157,9 @@ export function QrWidget() {
       });
       return;
     }
-    toast.success(
-      dynamic ? "Dynamic code created" : toTeam ? "Saved to your team" : "Saved to your account",
-      {
-        description: dynamic && slug ? shortUrl(slug) : "Find it in your dashboard.",
-      },
-    );
+    toast.success(dynamic ? "Dynamic code created" : "Saved to your account", {
+      description: dynamic && slug ? shortUrl(slug) : "Find it in your dashboard.",
+    });
   }
 
   const svg = useMemo(() => renderQrSvg(data, template, { size: 512 }), [data, template]);
@@ -316,10 +287,8 @@ export function QrWidget() {
                   saving={saving}
                   isEmpty={isEmpty}
                   type={type}
-                  teamId={teamId}
                   onSaveStatic={() => void save(false)}
                   onSaveDynamic={() => void save(true)}
-                  onSaveTeam={() => void save(false, true)}
                 />
               </>
             ) : (
@@ -357,11 +326,11 @@ export function QrWidget() {
 
           {/* QR preview center */}
           <div className="flex flex-col items-center gap-2 px-2 sm:px-4 lg:px-6">
-            <div className="rounded-2xl border border-border bg-background p-2 sm:p-4">
+            <div className="rounded-2xl border border-border bg-background p-3 sm:p-5">
               <img
                 src={svgToDataUrl(svg)}
                 alt="QR Code preview"
-                className="size-40 rounded-lg sm:size-44 lg:size-56"
+                className="aspect-square w-40 rounded-lg sm:w-44 lg:w-52"
               />
             </div>
             {isEmpty && (
@@ -507,15 +476,16 @@ function VerticalCarousel({
   direction?: "ttb" | "btt";
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
   const dragRef = useRef({ dragging: false, startY: 0, scrollTop: 0 });
-  const speed = 1;
+  const speed = 0.6;
 
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
     let raf: number;
     function tick() {
-      if (el && !dragRef.current.dragging && el.isConnected) {
+      if (el && !pausedRef.current && !dragRef.current.dragging && el.isConnected) {
         const half = el.scrollHeight / 2;
         if (direction === "ttb") {
           el.scrollTop = Math.round(el.scrollTop + speed);
@@ -555,6 +525,12 @@ function VerticalCarousel({
     <div
       className="relative flex flex-col overflow-clip shrink-0"
       style={{ width: 52, height: 280 }}
+      onMouseEnter={() => {
+        pausedRef.current = true;
+      }}
+      onMouseLeave={() => {
+        pausedRef.current = false;
+      }}
     >
       {/* fade edges */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-white to-transparent z-10" />
@@ -670,18 +646,14 @@ function SaveSection({
   saving,
   isEmpty,
   type,
-  teamId,
   onSaveStatic,
   onSaveDynamic,
-  onSaveTeam,
 }: {
   saving: boolean;
   isEmpty: boolean;
   type: QrType;
-  teamId: string | null;
   onSaveStatic: () => void;
   onSaveDynamic: () => void;
-  onSaveTeam: () => void;
 }) {
   const [mode, setMode] = useState<"static" | "dynamic">("static");
   const dynamicDisabled = type !== "url";
@@ -740,17 +712,6 @@ function SaveSection({
         )}
         {saving ? "Saving…" : mode === "static" ? "Save QR Code" : "Create Dynamic Link"}
       </button>
-
-      {teamId && (
-        <button
-          type="button"
-          onClick={onSaveTeam}
-          disabled={saving || isEmpty}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-brand/40 bg-brand-soft/40 px-5 py-2 text-xs font-bold text-brand transition-colors hover:bg-brand-soft/60 disabled:opacity-60"
-        >
-          <Users className="size-3.5" /> Save to team library
-        </button>
-      )}
 
       {mode === "dynamic" && (
         <p className="mt-2 text-[11px] text-muted-foreground">
