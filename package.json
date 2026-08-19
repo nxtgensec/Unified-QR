@@ -1,6 +1,6 @@
 {
   "name": "unified-qr",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Design, generate and track professional QR codes — static and dynamic — with a TanStack Start web app.",
   "license": "MIT",
