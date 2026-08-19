@@ -325,14 +325,6 @@ function Home() {
               ))}
             </div>
           </div>
-          <div className="mt-10">
-            <Link
-              to="/pricing"
-              className="inline-flex items-center gap-2 text-sm font-bold text-brand"
-            >
-              {t("home.features.cta")} <ArrowRight className="size-4" />
-            </Link>
-          </div>
         </div>
       </section>
 

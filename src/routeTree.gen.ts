@@ -15,8 +15,11 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as HowToCreateRouteImport } from './routes/how-to-create'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as QrCodeTypesRouteImport } from './routes/qr-code-types'
@@ -61,6 +64,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -69,6 +77,16 @@ const ContactRoute = ContactRouteImport.update({
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowToCreateRoute = HowToCreateRouteImport.update({
+  id: '/how-to-create',
+  path: '/how-to-create',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -148,8 +166,11 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
+  '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/qr-code-types': typeof QrCodeTypesRoute
@@ -171,8 +192,11 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
+  '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/qr-code-types': typeof QrCodeTypesRoute
@@ -196,8 +220,11 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/faq': typeof FaqRoute
+  '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/qr-code-types': typeof QrCodeTypesRoute
@@ -221,8 +248,11 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/auth'
+    | '/compare'
     | '/contact'
     | '/cookies'
+    | '/faq'
+    | '/how-to-create'
     | '/pricing'
     | '/privacy'
     | '/qr-code-types'
@@ -244,8 +274,11 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/auth'
+    | '/compare'
     | '/contact'
     | '/cookies'
+    | '/faq'
+    | '/how-to-create'
     | '/pricing'
     | '/privacy'
     | '/qr-code-types'
@@ -268,8 +301,11 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/auth'
+    | '/compare'
     | '/contact'
     | '/cookies'
+    | '/faq'
+    | '/how-to-create'
     | '/pricing'
     | '/privacy'
     | '/qr-code-types'
@@ -293,8 +329,11 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
+  CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
+  FaqRoute: typeof FaqRoute
+  HowToCreateRoute: typeof HowToCreateRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   QrCodeTypesRoute: typeof QrCodeTypesRoute
@@ -348,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compare': {
+      id: '/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
@@ -360,6 +406,20 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/cookies'
       preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-to-create': {
+      id: '/how-to-create'
+      path: '/how-to-create'
+      fullPath: '/how-to-create'
+      preLoaderRoute: typeof HowToCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -493,8 +553,11 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
+  CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
+  FaqRoute: FaqRoute,
+  HowToCreateRoute: HowToCreateRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   QrCodeTypesRoute: QrCodeTypesRoute,

@@ -7,9 +7,9 @@ const columns: { title: MessageKey; links: { label: string; to: string }[] }[] =
     title: "footer.product",
     links: [
       { label: "QR Code types", to: "/qr-code-types" },
-      { label: "Pricing", to: "/pricing" },
+      { label: "Compare plans", to: "/compare" },
       { label: "Free QR generator", to: "/" },
-      { label: "Contact sales", to: "/contact" },
+      { label: "How to create", to: "/how-to-create" },
     ],
   },
   {
@@ -25,9 +25,9 @@ const columns: { title: MessageKey; links: { label: string; to: string }[] }[] =
     title: "footer.company",
     links: [
       { label: "About us", to: "/about" },
-      { label: "Support", to: "/contact" },
+      { label: "FAQs", to: "/faq" },
       { label: "All QR Code types", to: "/qr-code-types" },
-      { label: "Pricing", to: "/pricing" },
+      { label: "Contact", to: "/contact" },
     ],
   },
   {
