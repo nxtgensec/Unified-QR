@@ -270,104 +270,125 @@ export function QrWidget() {
         <TypeForm type={type} form={form} setForm={setForm} />
       </div>
 
-      {/* ── Template carousel ── */}
-      <TemplateCarousel
-        thumbs={plainThumbs}
-        activeId={templateId}
-        onSelect={(id) => {
-          setTemplateId(id);
-          resetAllCustom();
-        }}
-        direction="ltr"
-        label="Plain Templates"
-      />
-      <TemplateCarousel
-        thumbs={gradientThumbs}
-        activeId={templateId}
-        onSelect={(id) => {
-          setTemplateId(id);
-          resetAllCustom();
-        }}
-        direction="rtl"
-        label="Premium Templates"
-      />
+      {/* ── Mobile: horizontal carousels ── */}
+      <div className="lg:hidden">
+        <TemplateCarousel
+          thumbs={plainThumbs}
+          activeId={templateId}
+          onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+          direction="ltr"
+          label="Plain Templates"
+        />
+        <TemplateCarousel
+          thumbs={gradientThumbs}
+          activeId={templateId}
+          onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+          direction="rtl"
+          label="Premium Templates"
+        />
+      </div>
 
-      <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
-        {/* ── Left column: design controls + save ── */}
-        <div className="order-2 lg:order-1">
-          <div className="flex items-center justify-center gap-6">
-            <ColorPicker label="Code" value={fg ?? template.fg} onChange={setFg} />
-            <ColorPicker label="Background" value={bg ?? template.bg} onChange={setBg} />
+      <div className="flex flex-col lg:flex-row">
+        {/* ── Desktop left: gradient vertical (bottom-to-top) ── */}
+        <div className="hidden lg:block">
+          <VerticalCarousel
+            thumbs={gradientThumbs}
+            activeId={templateId}
+            onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+            direction="btt"
+            label="Premium"
+          />
+        </div>
+
+        {/* ── Center: controls + preview + download ── */}
+        <div className="flex-1 grid gap-8 p-5 sm:p-8 lg:grid-cols-[1.1fr_0.9fr]">
+          {/* ── Left column: design controls + save ── */}
+          <div className="order-2 lg:order-1">
+            <div className="flex items-center justify-center gap-6">
+              <ColorPicker label="Code" value={fg ?? template.fg} onChange={setFg} />
+              <ColorPicker label="Background" value={bg ?? template.bg} onChange={setBg} />
+            </div>
+
+            <DesignControls
+              bodyShape={bodyShape}
+              setBodyShape={setBodyShape}
+              eyeShape={eyeShape}
+              setEyeShape={setEyeShape}
+              gradient={gradient}
+              setGradient={setGradient}
+              logo={logo}
+              onLogoUpload={handleLogoUpload}
+              onLogoRemove={() => setLogo(null)}
+              logoInputRef={logoInputRef}
+              frame={frame}
+              setFrame={setFrame}
+            />
+
+            <div className="mt-6 space-y-3">
+              {user ? (
+                <>
+                  <SaveSection
+                    saving={saving}
+                    isEmpty={isEmpty}
+                    type={type}
+                    teamId={teamId}
+                    onSaveStatic={() => void save(false)}
+                    onSaveDynamic={() => void save(true)}
+                    onSaveTeam={() => void save(false, true)}
+                  />
+                </>
+              ) : (
+                <div className="rounded-xl border border-border bg-surface p-4">
+                  <p className="flex items-center gap-2 text-sm font-bold">
+                    <Sparkles className="size-4 text-premium" /> Save & track your codes
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Sign in with Google to store your codes, create editable dynamic links and see
+                    scan counts. Downloads are always free and never watermarked.
+                  </p>
+                  <Link
+                    to="/auth"
+                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+                  >
+                    Sign in with Google
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
 
-          <DesignControls
-            bodyShape={bodyShape}
-            setBodyShape={setBodyShape}
-            eyeShape={eyeShape}
-            setEyeShape={setEyeShape}
-            gradient={gradient}
-            setGradient={setGradient}
-            logo={logo}
-            onLogoUpload={handleLogoUpload}
-            onLogoRemove={() => setLogo(null)}
-            logoInputRef={logoInputRef}
-            frame={frame}
-            setFrame={setFrame}
-          />
-
-          <div className="mt-6 space-y-3">
-            {user ? (
-              <>
-                <SaveSection
-                  saving={saving}
-                  isEmpty={isEmpty}
-                  type={type}
-                  teamId={teamId}
-                  onSaveStatic={() => void save(false)}
-                  onSaveDynamic={() => void save(true)}
-                  onSaveTeam={() => void save(false, true)}
-                />
-              </>
-            ) : (
-              <div className="rounded-xl border border-border bg-surface p-4">
-                <p className="flex items-center gap-2 text-sm font-bold">
-                  <Sparkles className="size-4 text-premium" /> Save & track your codes
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Sign in with Google to store your codes, create editable dynamic links and see
-                  scan counts. Downloads are always free and never watermarked.
-                </p>
-                <Link
-                  to="/auth"
-                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
-                >
-                  Sign in with Google
-                </Link>
-              </div>
+          {/* ── Right column: preview + download ── */}
+          <div className="order-1 flex flex-col items-center lg:order-2">
+            <div className="rounded-2xl border border-border bg-surface p-4">
+              <img
+                src={svgToDataUrl(svg)}
+                alt="QR Code preview"
+                width={224}
+                height={224}
+                className="size-56 rounded-lg"
+              />
+            </div>
+            {isEmpty && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Showing a sample code — start typing to make it yours
+              </p>
             )}
+
+            <div className="mt-6">
+              <FormatDialog onDownload={handleDownload} previewSrc={svgToDataUrl(svg)} />
+            </div>
           </div>
         </div>
 
-        {/* ── Right column: preview + download ── */}
-        <div className="order-1 flex flex-col items-center lg:order-2">
-          <div className="rounded-2xl border border-border bg-surface p-4">
-            <img
-              src={svgToDataUrl(svg)}
-              alt="QR Code preview"
-              width={224}
-              height={224}
-              className="size-56 rounded-lg"
-            />
-          </div>
-          {isEmpty && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Showing a sample code — start typing to make it yours
-            </p>
-          )}
-
-          <div className="mt-6">
-            <FormatDialog onDownload={handleDownload} previewSrc={svgToDataUrl(svg)} />
-          </div>
+        {/* ── Desktop right: plain vertical (top-to-bottom) ── */}
+        <div className="hidden lg:block">
+          <VerticalCarousel
+            thumbs={plainThumbs}
+            activeId={templateId}
+            onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+            direction="ttb"
+            label="Plain"
+          />
         </div>
       </div>
     </div>
@@ -470,6 +491,108 @@ function TemplateCarousel({
                 src={t.src}
                 alt={`QR template ${t.id}`}
                 className="size-14 rounded-lg sm:size-16"
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VerticalCarousel({
+  thumbs,
+  activeId,
+  onSelect,
+  direction = "ttb",
+  label,
+}: {
+  thumbs: { id: number; src: string }[];
+  activeId: number;
+  onSelect: (id: number) => void;
+  direction?: "ttb" | "btt";
+  label: string;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
+  const dragRef = useRef({ dragging: false, startY: 0, scrollTop: 0 });
+  const speed = 0.5;
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    let raf: number;
+    function tick() {
+      if (el && !pausedRef.current && !dragRef.current.dragging && el.isConnected) {
+        if (direction === "ttb") {
+          el.scrollTop += speed;
+          if (el.scrollTop >= el.scrollHeight / 2) el.scrollTop -= el.scrollHeight / 2;
+        } else {
+          el.scrollTop -= speed;
+          if (el.scrollTop <= 0) el.scrollTop += el.scrollHeight / 2;
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    }
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [direction]);
+
+  function onPointerDown(e: React.PointerEvent) {
+    const el = trackRef.current;
+    if (!el) return;
+    dragRef.current = { dragging: true, startY: e.clientY, scrollTop: el.scrollTop };
+    el.setPointerCapture(e.pointerId);
+    el.style.cursor = "grabbing";
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    const d = dragRef.current;
+    if (!d.dragging || !trackRef.current) return;
+    trackRef.current.scrollTop = d.scrollTop - (e.clientY - d.startY);
+  }
+  function onPointerUp(e: React.PointerEvent) {
+    dragRef.current.dragging = false;
+    if (trackRef.current) trackRef.current.style.cursor = "grab";
+    void e;
+  }
+
+  const doubled = [...thumbs, ...thumbs];
+
+  return (
+    <div
+      className="relative flex flex-col overflow-hidden border-x border-border"
+      style={{ width: 88 }}
+      onMouseEnter={() => { pausedRef.current = true; }}
+      onMouseLeave={() => { pausedRef.current = false; }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-brand/5 via-brand/10 to-brand/5 pointer-events-none" />
+      <p className="relative text-center pt-2 pb-1 text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">{label}</p>
+      <div
+        ref={trackRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        className="relative flex-1 overflow-y-auto cursor-grab select-none"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        <div className="flex flex-col items-center gap-2 py-2 px-1.5">
+          {doubled.map((t, i) => (
+            <button
+              key={`${t.id}-${i}`}
+              type="button"
+              onClick={() => onSelect(t.id)}
+              onPointerDown={(e) => e.stopPropagation()}
+              aria-label={`QR template ${t.id}`}
+              className={`shrink-0 overflow-hidden rounded-lg border-2 p-0.5 transition-all hover:scale-105 ${
+                t.id === activeId
+                  ? "border-brand ring-2 ring-brand/25 shadow-md"
+                  : "border-border hover:border-brand/50"
+              }`}
+            >
+              <img
+                src={t.src}
+                alt={`QR template ${t.id}`}
+                className="size-14 rounded-md"
               />
             </button>
           ))}
