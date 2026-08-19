@@ -270,27 +270,10 @@ export function QrWidget() {
         <TypeForm type={type} form={form} setForm={setForm} />
       </div>
 
-      {/* ── Mobile: horizontal carousels ── */}
-      <div className="lg:hidden">
-        <TemplateCarousel
-          thumbs={plainThumbs}
-          activeId={templateId}
-          onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
-          direction="ltr"
-          label="Plain"
-        />
-        <TemplateCarousel
-          thumbs={gradientThumbs}
-          activeId={templateId}
-          onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
-          direction="rtl"
-          label="Premium"
-        />
-      </div>
-
+      {/* ── QR section: carousels + preview ── */}
       <div className="flex flex-col lg:flex-row">
         {/* ── Left: design controls + save ── */}
-        <div className="order-2 p-5 sm:p-8 lg:order-1 lg:w-[45%]">
+        <div className="order-2 p-4 sm:p-6 lg:order-1 lg:w-[45%]">
           <div className="flex items-center justify-center gap-6">
             <ColorPicker label="Code" value={fg ?? template.fg} onChange={setFg} />
             <ColorPicker label="Background" value={bg ?? template.bg} onChange={setBg} />
@@ -344,48 +327,40 @@ export function QrWidget() {
           </div>
         </div>
 
-        {/* ── Right: carousels flanking QR preview ── */}
-        <div className="order-1 flex flex-col items-center lg:order-2 lg:w-[55%]">
-          <div className="flex items-center justify-center gap-0">
-            {/* Gradient carousel — left of QR */}
-            <div className="hidden lg:block">
-              <VerticalCarousel
-                thumbs={gradientThumbs}
-                activeId={templateId}
-                onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
-                direction="btt"
+        {/* ── Right: carousels + QR preview (all screens) ── */}
+        <div className="order-1 flex items-center justify-center gap-0 py-4 pr-2 lg:order-2 lg:w-[55%] lg:py-8 lg:pr-0">
+          {/* Premium carousel — left of QR, scrolls bottom-to-top */}
+          <VerticalCarousel
+            thumbs={gradientThumbs}
+            activeId={templateId}
+            onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+            direction="btt"
+          />
+
+          {/* QR preview center */}
+          <div className="flex flex-col items-center gap-2 px-2 sm:px-4 lg:px-6">
+            <div className="rounded-2xl border border-border bg-surface p-2 sm:p-4">
+              <img
+                src={svgToDataUrl(svg)}
+                alt="QR Code preview"
+                className="size-32 rounded-lg sm:size-40 lg:size-56"
               />
             </div>
-
-            {/* QR preview */}
-            <div className="flex flex-col items-center gap-3 p-5 sm:p-8">
-              <div className="rounded-2xl border border-border bg-surface p-4">
-                <img
-                  src={svgToDataUrl(svg)}
-                  alt="QR Code preview"
-                  width={224}
-                  height={224}
-                  className="size-56 rounded-lg"
-                />
-              </div>
-              {isEmpty && (
-                <p className="text-xs text-muted-foreground">
-                  Showing a sample code — start typing to make it yours
-                </p>
-              )}
-              <FormatDialog onDownload={handleDownload} previewSrc={svgToDataUrl(svg)} />
-            </div>
-
-            {/* Plain carousel — right of QR */}
-            <div className="hidden lg:block">
-              <VerticalCarousel
-                thumbs={plainThumbs}
-                activeId={templateId}
-                onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
-                direction="ttb"
-              />
-            </div>
+            {isEmpty && (
+              <p className="text-[10px] text-muted-foreground sm:text-xs">
+                Showing a sample — start typing
+              </p>
+            )}
+            <FormatDialog onDownload={handleDownload} previewSrc={svgToDataUrl(svg)} />
           </div>
+
+          {/* Plain carousel — right of QR, scrolls top-to-bottom */}
+          <VerticalCarousel
+            thumbs={plainThumbs}
+            activeId={templateId}
+            onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+            direction="ttb"
+          />
         </div>
       </div>
     </div>
@@ -555,14 +530,14 @@ function VerticalCarousel({
 
   return (
     <div
-      className="relative flex flex-col overflow-hidden"
-      style={{ width: 72, height: 304 }}
+      className="relative flex flex-col overflow-hidden shrink-0"
+      style={{ width: 52, height: 280 }}
       onMouseEnter={() => { pausedRef.current = true; }}
       onMouseLeave={() => { pausedRef.current = false; }}
     >
       {/* fade edges */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-card to-transparent z-10" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-card to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-card to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-card to-transparent z-10" />
 
       <div
         ref={trackRef}
@@ -572,7 +547,7 @@ function VerticalCarousel({
         className="flex-1 overflow-y-auto cursor-grab select-none"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        <div className="flex flex-col items-center gap-1.5 py-1 px-1">
+        <div className="flex flex-col items-center gap-1 py-1 px-0.5">
           {doubled.map((t, i) => (
             <button
               key={`${t.id}-${i}`}
@@ -580,16 +555,16 @@ function VerticalCarousel({
               onClick={() => onSelect(t.id)}
               onPointerDown={(e) => e.stopPropagation()}
               aria-label={`QR template ${t.id}`}
-              className={`shrink-0 overflow-hidden rounded-lg border-2 p-0.5 transition-all hover:scale-110 ${
+              className={`shrink-0 overflow-hidden rounded-md border-[1.5px] p-px transition-all hover:scale-110 ${
                 t.id === activeId
-                  ? "border-brand ring-2 ring-brand/25 shadow-md"
+                  ? "border-brand ring-1 ring-brand/25 shadow-md"
                   : "border-border hover:border-brand/50"
               }`}
             >
               <img
                 src={t.src}
                 alt={`QR template ${t.id}`}
-                className="size-12 rounded-md"
+                className="size-10 rounded sm:size-12 lg:size-12"
               />
             </button>
           ))}
