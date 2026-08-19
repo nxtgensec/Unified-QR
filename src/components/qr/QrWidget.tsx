@@ -508,7 +508,7 @@ function VerticalCarousel({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({ dragging: false, startY: 0, scrollTop: 0 });
-  const speed = 0.4;
+  const speed = 1;
 
   useEffect(() => {
     const el = trackRef.current;
@@ -516,12 +516,13 @@ function VerticalCarousel({
     let raf: number;
     function tick() {
       if (el && !dragRef.current.dragging && el.isConnected) {
+        const half = el.scrollHeight / 2;
         if (direction === "ttb") {
-          el.scrollTop += speed;
-          if (el.scrollTop >= el.scrollHeight / 2) el.scrollTop -= el.scrollHeight / 2;
+          el.scrollTop = Math.round(el.scrollTop + speed);
+          if (el.scrollTop >= half) el.scrollTop = Math.round(el.scrollTop - half);
         } else {
-          el.scrollTop -= speed;
-          if (el.scrollTop <= 0) el.scrollTop += el.scrollHeight / 2;
+          el.scrollTop = Math.round(el.scrollTop - speed);
+          if (el.scrollTop <= 0) el.scrollTop = Math.round(el.scrollTop + half);
         }
       }
       raf = requestAnimationFrame(tick);
@@ -552,7 +553,7 @@ function VerticalCarousel({
 
   return (
     <div
-      className="relative flex flex-col overflow-hidden shrink-0"
+      className="relative flex flex-col overflow-clip shrink-0"
       style={{ width: 52, height: 280 }}
     >
       {/* fade edges */}
@@ -564,8 +565,8 @@ function VerticalCarousel({
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        className="flex-1 overflow-y-auto cursor-grab select-none"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        className="flex-1 overflow-y-scroll cursor-grab select-none"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none", willChange: "scroll-position" }}
       >
         <div className="flex flex-col items-center gap-1 py-1 px-0.5">
           {doubled.map((t, i) => (
