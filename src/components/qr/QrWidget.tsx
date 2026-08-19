@@ -477,57 +477,40 @@ function VerticalCarousel({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
-  const dragRef = useRef({ dragging: false, startY: 0, scrollTop: 0 });
+  const offsetRef = useRef(0);
+  const dir = direction === "btt" ? -1 : 1;
   const speed = 0.6;
 
   useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
     let raf: number;
     function tick() {
-      if (el && !pausedRef.current && !dragRef.current.dragging && el.isConnected) {
-        const half = el.scrollHeight / 2;
-        if (direction === "ttb") {
-          el.scrollTop = Math.round(el.scrollTop + speed);
-          if (el.scrollTop >= half) el.scrollTop = Math.round(el.scrollTop - half);
-        } else {
-          el.scrollTop = Math.round(el.scrollTop - speed);
-          if (el.scrollTop <= 0) el.scrollTop = Math.round(el.scrollTop + half);
+      const el = trackRef.current;
+      if (el && !pausedRef.current && el.isConnected) {
+        const items = el.firstElementChild;
+        if (items) {
+          const half = items.scrollHeight / 2;
+          if (half > 0) {
+            offsetRef.current += dir * speed;
+            if (offsetRef.current >= half) offsetRef.current -= half;
+            if (offsetRef.current <= -half) offsetRef.current += half;
+            el.style.transform = `translateY(${-offsetRef.current}px)`;
+          }
         }
       }
       raf = requestAnimationFrame(tick);
     }
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [direction]);
-
-  function onPointerDown(e: React.PointerEvent) {
-    const el = trackRef.current;
-    if (!el) return;
-    dragRef.current = { dragging: true, startY: e.clientY, scrollTop: el.scrollTop };
-    el.setPointerCapture(e.pointerId);
-    el.style.cursor = "grabbing";
-  }
-  function onPointerMove(e: React.PointerEvent) {
-    const d = dragRef.current;
-    if (!d.dragging || !trackRef.current) return;
-    trackRef.current.scrollTop = d.scrollTop - (e.clientY - d.startY);
-  }
-  function onPointerUp(e: React.PointerEvent) {
-    dragRef.current.dragging = false;
-    if (trackRef.current) trackRef.current.style.cursor = "grab";
-    void e;
-  }
+  }, [dir]);
 
   const doubled = [...thumbs, ...thumbs];
 
   return (
     <div
-      className="relative flex flex-col shrink-0"
+      className="shrink-0 overflow-hidden"
       style={{
         width: 52,
         height: 280,
-        overflow: "hidden",
         maskImage:
           "linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent)",
         WebkitMaskImage:
@@ -540,36 +523,26 @@ function VerticalCarousel({
         pausedRef.current = false;
       }}
     >
-      <div
-        ref={trackRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        className="flex-1 cursor-grab select-none"
-        style={{ overflowY: "scroll", scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        <div className="flex flex-col items-center gap-1 py-1 px-0.5">
-          {doubled.map((t, i) => (
-            <button
-              key={`${t.id}-${i}`}
-              type="button"
-              onClick={() => onSelect(t.id)}
-              onPointerDown={(e) => e.stopPropagation()}
-              aria-label={`QR template ${t.id}`}
-              className={`shrink-0 overflow-hidden rounded-md border-[1.5px] p-px transition-all hover:scale-110 ${
-                t.id === activeId
-                  ? "border-brand ring-1 ring-brand/25 shadow-md"
-                  : "border-border hover:border-brand/50"
-              }`}
-            >
-              <img
-                src={t.src}
-                alt={`QR template ${t.id}`}
-                className="size-10 rounded sm:size-12 lg:size-12"
-              />
-            </button>
-          ))}
-        </div>
+      <div ref={trackRef} className="flex flex-col items-center gap-1 py-1 px-0.5">
+        {doubled.map((t, i) => (
+          <button
+            key={`${t.id}-${i}`}
+            type="button"
+            onClick={() => onSelect(t.id)}
+            aria-label={`QR template ${t.id}`}
+            className={`shrink-0 overflow-hidden rounded-md border-[1.5px] p-px transition-all hover:scale-110 ${
+              t.id === activeId
+                ? "border-brand ring-1 ring-brand/25 shadow-md"
+                : "border-border hover:border-brand/50"
+            }`}
+          >
+            <img
+              src={t.src}
+              alt={`QR template ${t.id}`}
+              className="size-10 rounded sm:size-12 lg:size-12"
+            />
+          </button>
+        ))}
       </div>
     </div>
   );
