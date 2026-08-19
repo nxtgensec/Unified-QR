@@ -392,8 +392,8 @@ function TemplateCarousel({
     let raf: number;
     function tick() {
       if (el && !pausedRef.current && !dragRef.current.dragging && el.isConnected) {
-        el.scrollLeft += speed;
-        if (el.scrollLeft >= el.scrollWidth / 2) el.scrollLeft -= el.scrollWidth / 2;
+        el.scrollLeft -= speed;
+        if (el.scrollLeft <= 0) el.scrollLeft += el.scrollWidth / 2;
       }
       raf = requestAnimationFrame(tick);
     }
