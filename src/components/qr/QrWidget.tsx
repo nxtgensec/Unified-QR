@@ -523,8 +523,16 @@ function VerticalCarousel({
 
   return (
     <div
-      className="relative flex flex-col overflow-clip shrink-0"
-      style={{ width: 52, height: 280 }}
+      className="relative flex flex-col shrink-0"
+      style={{
+        width: 52,
+        height: 280,
+        overflow: "hidden",
+        maskImage:
+          "linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent)",
+        WebkitMaskImage:
+          "linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent)",
+      }}
       onMouseEnter={() => {
         pausedRef.current = true;
       }}
@@ -532,17 +540,13 @@ function VerticalCarousel({
         pausedRef.current = false;
       }}
     >
-      {/* fade edges */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-white to-transparent z-10" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent z-10" />
-
       <div
         ref={trackRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        className="flex-1 overflow-y-scroll cursor-grab select-none"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none", willChange: "scroll-position" }}
+        className="flex-1 cursor-grab select-none"
+        style={{ overflowY: "scroll", scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         <div className="flex flex-col items-center gap-1 py-1 px-0.5">
           {doubled.map((t, i) => (

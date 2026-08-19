@@ -16,7 +16,6 @@ import {
   Headphones,
   Wallet,
   Star,
-  QrCode,
   ArrowRight,
   MessageSquare,
   Mail,
@@ -291,21 +290,6 @@ function Home() {
               ))}
             </ol>
           </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="flex flex-col items-center gap-6 rounded-3xl bg-foreground px-6 py-12 text-center text-background md:flex-row md:justify-between md:text-left">
-          <div className="max-w-xl">
-            <h2 className="text-2xl font-extrabold sm:text-3xl">{t("home.dashboard.title")}</h2>
-            <p className="mt-3 text-sm opacity-80">{t("home.dashboard.body")}</p>
-          </div>
-          <a
-            href="#generator"
-            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-background px-6 py-3.5 text-sm font-bold text-foreground"
-          >
-            <QrCode className="size-4" /> {t("home.dashboard.cta")}
-          </a>
         </div>
       </section>
 
