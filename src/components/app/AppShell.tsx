@@ -70,10 +70,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex min-h-screen bg-surface">
+    <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-card transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-background transition-transform lg:static lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -146,7 +146,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center gap-3 border-b border-border bg-card px-4 lg:hidden">
+        <header className="flex h-16 items-center gap-3 border-b border-border bg-background px-4 lg:hidden">
           <button type="button" onClick={() => setOpen(true)} aria-label="Open menu">
             <Menu className="size-5" />
           </button>
@@ -159,7 +159,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Mobile bottom nav — PhonePe style */}
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 backdrop-blur-lg lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 backdrop-blur-lg lg:hidden">
         <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
           {bottomNav.slice(0, 2).map((item) => {
             const active = pathname === item.to || pathname.startsWith(`${item.to}/`);

@@ -19,7 +19,7 @@ function AuthenticatedLayout() {
 
   if (loading || !user) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface px-4">
+      <div className="grid min-h-screen place-items-center bg-background px-4">
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" /> Checking your session…
         </p>

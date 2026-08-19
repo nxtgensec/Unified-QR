@@ -206,7 +206,7 @@ function TeamPage() {
       {!data.ok ? (
         <EmptyState icon={<Users className="size-8" />} title={data.message} />
       ) : !data.data.team ? (
-        <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="mt-8 rounded-2xl border border-border bg-background p-6 shadow-card">
           <h2 className="text-lg font-extrabold">Create your team</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Teams let everyone see and manage the same code library. You'll be the owner.
@@ -255,7 +255,7 @@ function TeamPage() {
 
 function EmptyState({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-10 text-center shadow-card">
+    <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-border bg-background p-10 text-center shadow-card">
       <span className="text-muted-foreground">{icon}</span>
       <p className="mt-3 text-sm text-muted-foreground">{title}</p>
     </div>
@@ -308,11 +308,11 @@ function TeamDashboard({
   return (
     <>
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+        <section className="overflow-hidden rounded-2xl border border-border bg-background shadow-card">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <h2 className="flex items-center gap-2 text-sm font-bold">
               <Users className="size-4 text-brand" /> {team.name}
-              <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
+              <span className="rounded-full bg-background px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
                 {data.members.length} {data.members.length === 1 ? "member" : "members"}
               </span>
             </h2>
@@ -337,7 +337,7 @@ function TeamDashboard({
                   type="button"
                   onClick={onLeave}
                   disabled={busyId === "leave"}
-                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-surface"
+                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold hover:bg-background"
                 >
                   {busyId === "leave" ? (
                     <Loader2 className="size-3 animate-spin" />
@@ -371,7 +371,7 @@ function TeamDashboard({
                       Joined {new Date(m.joinedAt).toLocaleDateString()}
                     </span>
                   </span>
-                  <span className="flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[11px] font-bold uppercase text-muted-foreground">
+                  <span className="flex items-center gap-1 rounded-full bg-background px-3 py-1 text-[11px] font-bold uppercase text-muted-foreground">
                     {m.role === "owner" ? (
                       <Crown className="size-3 text-premium" />
                     ) : (
@@ -400,7 +400,7 @@ function TeamDashboard({
           </ul>
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-card">
+        <section className="rounded-2xl border border-border bg-background p-5 shadow-card">
           <h2 className="flex items-center gap-2 text-sm font-bold">
             <Mail className="size-4 text-brand" /> Invite a member
           </h2>
@@ -510,7 +510,7 @@ function InviteActions({
             }
             setExpanded(false);
           }}
-          className="rounded-full bg-surface px-3 py-1 text-xs font-bold hover:bg-brand-soft hover:text-brand"
+          className="rounded-full bg-background px-3 py-1 text-xs font-bold hover:bg-brand-soft hover:text-brand"
         >
           Copy link
         </button>
@@ -518,7 +518,7 @@ function InviteActions({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-xs font-bold hover:bg-brand-soft hover:text-brand"
+          className="flex items-center gap-1 rounded-full bg-background px-3 py-1 text-xs font-bold hover:bg-brand-soft hover:text-brand"
         >
           <Copy className="size-3" /> Link
         </button>

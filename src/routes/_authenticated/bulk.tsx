@@ -194,7 +194,7 @@ function BulkPage() {
           const f = e.dataTransfer.files?.[0];
           if (f) handleFile(f);
         }}
-        className="mt-8 rounded-2xl border border-dashed border-border bg-card p-10 text-center"
+        className="mt-8 rounded-2xl border border-dashed border-border bg-background p-10 text-center"
       >
         <FileSpreadsheet className="mx-auto size-8 text-brand" />
         <p className="mt-3 font-semibold">Drop a CSV here</p>
@@ -222,7 +222,7 @@ function BulkPage() {
       </div>
 
       {rows.length > 0 && (
-        <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+        <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-background shadow-card">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
             <p className="text-sm font-bold">
               {rows.length} rows from {fileName}
@@ -252,7 +252,7 @@ function BulkPage() {
         </div>
       )}
 
-      <div className="mt-8 rounded-2xl border border-border bg-card p-5 shadow-card">
+      <div className="mt-8 rounded-2xl border border-border bg-background p-5 shadow-card">
         <h2 className="flex items-center gap-2 text-sm font-bold">
           <FolderTree className="size-4 text-brand" /> Campaigns, folders & branded frames
         </h2>

@@ -44,7 +44,7 @@ const columns: { title: MessageKey; links: { label: string; to: string }[] }[] =
 export function Footer() {
   const { locale, setLocale, t } = useLocale();
   return (
-    <footer className="border-t border-border bg-surface">
+    <footer className="border-t border-border bg-background">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-6">
           <div className="lg:col-span-2">

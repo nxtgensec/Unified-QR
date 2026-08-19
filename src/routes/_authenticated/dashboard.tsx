@@ -160,18 +160,18 @@ const CodeCard = memo(function CodeCard({
   }, []);
 
   return (
-    <li className="flex gap-4 rounded-2xl border border-border bg-card p-4 shadow-card">
+    <li className="flex gap-4 rounded-2xl border border-border bg-background p-4 shadow-card">
       <img
         src={svgDataUrl}
         alt={`${code.name} QR Code`}
-        className="size-24 rounded-lg border border-border bg-surface"
+        className="size-24 rounded-lg border border-border bg-background"
         width={96}
         height={96}
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h2 className="truncate font-bold">{code.name}</h2>
-          <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold uppercase text-muted-foreground">
+          <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-semibold uppercase text-muted-foreground">
             {code.is_dynamic ? "dynamic" : code.type}
           </span>
           {code.team_id && code.user_id !== userId && (
@@ -213,7 +213,7 @@ const CodeCard = memo(function CodeCard({
               />
             </Action>
             {dlOpen && (
-              <div className="absolute left-0 top-full z-40 mt-1 w-44 overflow-hidden rounded-xl border border-border bg-card shadow-float">
+              <div className="absolute left-0 top-full z-40 mt-1 w-44 overflow-hidden rounded-xl border border-border bg-background shadow-float">
                 {[
                   { label: "PNG", icon: FileImage, handler: handlePng },
                   { label: "SVG", icon: FileType, handler: handleSvg },
@@ -228,7 +228,7 @@ const CodeCard = memo(function CodeCard({
                       void f.handler();
                       setDlOpen(false);
                     }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition-colors hover:bg-surface"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition-colors hover:bg-background"
                   >
                     <f.icon className="size-3.5 text-muted-foreground" /> {f.label}
                   </button>
@@ -394,7 +394,7 @@ function Dashboard() {
               void refresh();
             }}
             disabled={loading}
-            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-surface disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-background disabled:opacity-50"
           >
             <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -458,7 +458,7 @@ function Dashboard() {
             <button
               type="button"
               onClick={() => setConfirmDelete(null)}
-              className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-surface"
+              className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-background"
             >
               Cancel
             </button>
@@ -488,7 +488,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-float"
+        className="w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-float"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -532,13 +532,13 @@ function PromptDialog({
           autoFocus
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:border-brand"
+          className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand"
         />
         <div className="mt-6 flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-surface"
+            className="rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-background"
           >
             Cancel
           </button>
@@ -557,7 +557,7 @@ function PromptDialog({
 
 function Stat({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+    <div className="rounded-2xl border border-border bg-background p-5 shadow-card">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {icon} {label}
       </p>
@@ -571,7 +571,7 @@ function Action({ children, onClick }: { children: React.ReactNode; onClick: () 
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 transition-colors hover:bg-surface"
+      className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 transition-colors hover:bg-background"
     >
       {children}
     </button>

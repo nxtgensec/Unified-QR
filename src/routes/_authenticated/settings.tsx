@@ -128,7 +128,7 @@ function SettingsPage() {
         description="Your workspace profile, default QR style and a full export of your data."
       />
 
-      <div className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className="mt-8 space-y-4 rounded-2xl border border-border bg-background p-6 shadow-card">
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Signed in as
@@ -136,7 +136,7 @@ function SettingsPage() {
           <input
             readOnly
             value={user?.email ?? ""}
-            className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-muted-foreground outline-none"
+            className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground outline-none"
           />
         </label>
 
@@ -148,7 +148,7 @@ function SettingsPage() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Your name"
-            className="mt-2 w-full rounded-xl border border-border bg-card px-4 py-3 text-sm outline-none focus:border-brand"
+            className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand"
           />
         </label>
 
@@ -159,7 +159,7 @@ function SettingsPage() {
           <select
             value={defaultTemplate}
             onChange={(e) => setDefaultTemplate(Number(e.target.value))}
-            className="mt-2 w-full rounded-xl border border-border bg-card px-4 py-3 text-sm outline-none focus:border-brand"
+            className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand"
           >
             {templates.map((t, i) => (
               <option key={t.id} value={t.id}>
@@ -185,7 +185,7 @@ function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-card">
+      <div className="mt-6 rounded-2xl border border-border bg-background p-5 shadow-card">
         <h2 className="text-sm font-bold">Export your data</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           A CSV of every saved code, its short link and total scans.
@@ -205,7 +205,7 @@ function SettingsPage() {
         </button>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-card">
+      <div className="mt-6 rounded-2xl border border-border bg-background p-5 shadow-card">
         <h2 className="text-sm font-bold">Branded short-link domain</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Custom domains for your short links are still being built. Links currently use this

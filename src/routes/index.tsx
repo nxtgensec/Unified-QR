@@ -195,7 +195,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="border-y border-border bg-surface py-8">
+      <section className="border-y border-border bg-background py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 text-center sm:px-6 md:flex-row md:justify-between md:text-left">
           <div className="flex items-center gap-3">
             <span className="text-2xl font-extrabold">4.8</span>
@@ -221,7 +221,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="bg-surface py-20">
+      <section className="bg-background py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <h2 className="text-center text-2xl font-extrabold tracking-tight sm:text-4xl">
             {t("home.steps.title")}
@@ -278,7 +278,7 @@ function Home() {
               <p className="mt-2 text-muted-foreground">{t("home.explained.why.body")}</p>
             </div>
           </div>
-          <div className="mt-10 rounded-2xl border border-border bg-card p-6 shadow-card">
+          <div className="mt-10 rounded-2xl border border-border bg-background p-6 shadow-card">
             <h3 className="text-lg font-bold">{t("home.explained.how.title")}</h3>
             <ol className="mt-4 space-y-3">
               {scanSteps.map((n) => (
@@ -309,13 +309,13 @@ function Home() {
         </div>
       </section>
 
-      <section className="bg-surface py-20">
+      <section className="bg-background py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <h2 className="max-w-3xl text-2xl font-extrabold tracking-tight sm:text-4xl">
             {t("home.features.title")}
           </h2>
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-card lg:col-span-2">
+            <div className="rounded-3xl border border-border bg-background p-6 shadow-card lg:col-span-2">
               <BarChart3 className="size-8 text-brand" />
               <h3 className="mt-4 text-lg font-bold">{t("home.features.track.title")}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{t("home.features.track.body")}</p>
@@ -332,7 +332,7 @@ function Home() {
               {featureCards.map((f) => (
                 <div
                   key={f.titleKey}
-                  className="rounded-3xl border border-border bg-card p-6 shadow-card"
+                  className="rounded-3xl border border-border bg-background p-6 shadow-card"
                 >
                   <f.icon className="size-7 text-brand" />
                   <h3 className="mt-3 font-bold">{t(f.titleKey)}</h3>
@@ -361,7 +361,7 @@ function Home() {
             {qrTypes.map((qt) => (
               <div
                 key={qt.id}
-                className="rounded-2xl border border-border bg-card p-6 shadow-card transition-transform hover:-translate-y-1"
+                className="rounded-2xl border border-border bg-background p-6 shadow-card transition-transform hover:-translate-y-1"
               >
                 <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
                   <qt.icon className="size-5" />
@@ -382,7 +382,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="bg-surface py-20">
+      <section className="bg-background py-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <h2 className="text-center text-2xl font-extrabold tracking-tight sm:text-4xl">
             {t("home.faq.title")}
@@ -404,7 +404,7 @@ function Home() {
 
       <section className="py-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6">
-          <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-card">
+          <div className="overflow-hidden rounded-3xl border border-border bg-background shadow-card">
             <div className="grid items-center gap-8 p-8 sm:p-12 lg:grid-cols-[1fr_auto]">
               <div>
                 <span className="grid size-12 place-items-center rounded-2xl bg-brand-soft">

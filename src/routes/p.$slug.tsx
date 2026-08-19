@@ -105,7 +105,7 @@ function LinkPage() {
 
   if (loading) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface">
+      <div className="grid min-h-screen place-items-center bg-background">
         <p className="text-sm text-muted-foreground">Loading…</p>
       </div>
     );
@@ -113,7 +113,7 @@ function LinkPage() {
 
   if (error || !page) {
     return (
-      <div className="grid min-h-screen place-items-center bg-surface px-4 text-center">
+      <div className="grid min-h-screen place-items-center bg-background px-4 text-center">
         <p className="text-sm text-muted-foreground">{error ?? "Not found"}</p>
       </div>
     );

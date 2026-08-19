@@ -134,7 +134,7 @@ function AuthPage() {
             type="button"
             onClick={signIn}
             disabled={busy}
-            className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-card px-6 py-3.5 text-sm font-bold shadow-card transition-colors hover:bg-surface disabled:opacity-60"
+            className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-background px-6 py-3.5 text-sm font-bold shadow-card transition-colors hover:bg-background disabled:opacity-60"
           >
             <svg viewBox="0 0 48 48" className="size-5" aria-hidden>
               <path

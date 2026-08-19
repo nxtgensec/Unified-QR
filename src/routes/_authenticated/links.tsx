@@ -299,7 +299,7 @@ function LinksEditor() {
             <button
               type="button"
               onClick={() => void createPage()}
-              className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold transition-colors hover:bg-surface"
+              className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold transition-colors hover:bg-background"
             >
               <Plus className="size-4" /> New Page
             </button>
@@ -333,7 +333,7 @@ function LinksEditor() {
                 className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
                   selectedPageId === p.id
                     ? "bg-brand-soft text-brand"
-                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                    : "text-muted-foreground hover:bg-background hover:text-foreground"
                 }`}
               >
                 <span className="flex-1 truncate">{p.title || p.slug}</span>
@@ -344,7 +344,7 @@ function LinksEditor() {
 
           {selectedPageId && (
             <div className="space-y-6">
-              <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+              <div className="rounded-2xl border border-border bg-background p-5 shadow-card">
                 <h2 className="mb-4 text-sm font-bold">Page settings</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block">
@@ -448,7 +448,7 @@ function LinksEditor() {
                         </button>
                       </>
                     ) : (
-                      <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-surface/50 px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-surface">
+                      <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-background px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-background">
                         <Upload className="size-4" /> Upload avatar
                         <input
                           type="file"
@@ -479,7 +479,7 @@ function LinksEditor() {
                 {sections.map((sec) => (
                   <div
                     key={sec.id}
-                    className="rounded-2xl border border-border bg-card p-4 shadow-card"
+                    className="rounded-2xl border border-border bg-background p-4 shadow-card"
                   >
                     <div className="flex items-center gap-2">
                       <GripVertical className="size-4 text-muted-foreground/40" />
@@ -492,7 +492,7 @@ function LinksEditor() {
                       <button
                         type="button"
                         onClick={() => updateSection(sec.id, { visible: !sec.visible })}
-                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-surface"
+                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-background"
                         title={sec.visible ? "Hide section" : "Show section"}
                       >
                         {sec.visible ? (
@@ -517,7 +517,7 @@ function LinksEditor() {
                         .map((item) => (
                           <div
                             key={item.id}
-                            className="flex items-center gap-2 rounded-xl border border-border bg-surface/50 px-3 py-2"
+                            className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2"
                           >
                             <span className="text-muted-foreground/40">⋮⋮</span>
                             <input
@@ -568,7 +568,7 @@ function LinksEditor() {
                     <button
                       type="button"
                       onClick={() => void addItem(sec.id)}
-                      className="mt-2 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+                      className="mt-2 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
                     >
                       <Plus className="size-3" /> Add link
                     </button>

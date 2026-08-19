@@ -60,7 +60,7 @@ function LanguageSwitcher({ className = "" }: { className?: string }) {
         <div
           role="listbox"
           aria-label={t("nav.language")}
-          className="absolute right-0 top-full z-50 mt-1.5 w-52 max-h-80 overflow-y-auto rounded-xl border border-border bg-card shadow-float"
+          className="absolute right-0 top-full z-50 mt-1.5 w-52 max-h-80 overflow-y-auto rounded-xl border border-border bg-background shadow-float"
         >
           <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t("nav.language")}

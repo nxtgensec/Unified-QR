@@ -110,7 +110,7 @@ function ContentPage() {
         ))}
       </div>
 
-      <div className="mt-12 rounded-2xl border border-border bg-card p-8 text-center shadow-card">
+      <div className="mt-12 rounded-2xl border border-border bg-background p-8 text-center shadow-card">
         <h2 className="text-xl font-bold sm:text-2xl">{page.cta}</h2>
         <Link
           to="/"
@@ -145,7 +145,7 @@ function ContentPage() {
                 <Link
                   key={slug}
                   to={`/${slug}` as never}
-                  className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium hover:bg-accent"
+                  className="rounded-full border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
                 >
                   {related?.h1 ?? slug}
                 </Link>

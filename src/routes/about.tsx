@@ -91,7 +91,10 @@ function AboutPage() {
               body: "Available in 40 languages. Free for personal and commercial use. No watermarks on downloads.",
             },
           ].map((v) => (
-            <div key={v.title} className="rounded-2xl border border-border bg-card p-6 shadow-card">
+            <div
+              key={v.title}
+              className="rounded-2xl border border-border bg-background p-6 shadow-card"
+            >
               <v.icon className="size-7 text-brand" />
               <h3 className="mt-3 font-bold">{v.title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground">{v.body}</p>
@@ -111,7 +114,7 @@ function AboutPage() {
           ].map((s) => (
             <div
               key={s.label}
-              className="rounded-2xl border border-border bg-card p-5 text-center shadow-card"
+              className="rounded-2xl border border-border bg-background p-5 text-center shadow-card"
             >
               <p className="text-2xl font-extrabold text-brand">{s.value}</p>
               <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
@@ -120,7 +123,7 @@ function AboutPage() {
         </div>
       </section>
 
-      <section className="mt-16 rounded-2xl border border-border bg-card p-8 text-center shadow-card">
+      <section className="mt-16 rounded-2xl border border-border bg-background p-8 text-center shadow-card">
         <h2 className="text-xl font-extrabold">Get in Touch</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Have a question, partnership inquiry or just want to say hello?
@@ -136,7 +139,7 @@ function AboutPage() {
             href="https://github.com/nxtgensec/Unified-QR"
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full border border-border px-6 py-2.5 text-sm font-bold transition-colors hover:bg-surface"
+            className="rounded-full border border-border px-6 py-2.5 text-sm font-bold transition-colors hover:bg-background"
           >
             View on GitHub
           </a>

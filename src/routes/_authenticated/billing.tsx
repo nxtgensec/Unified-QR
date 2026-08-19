@@ -190,7 +190,9 @@ function BillingPage() {
             <div
               key={planId}
               className={`rounded-2xl border p-6 shadow-card ${
-                isCurrent ? "border-brand bg-card ring-2 ring-brand/15" : "border-border bg-card"
+                isCurrent
+                  ? "border-brand bg-background ring-2 ring-brand/15"
+                  : "border-border bg-background"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -260,7 +262,7 @@ function BillingPage() {
                       type="button"
                       disabled={isBusy}
                       onClick={cancelAmountInput}
-                      className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-surface"
+                      className="rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-background"
                     >
                       Cancel
                     </button>

@@ -22,7 +22,22 @@ import {
 } from "@/lib/qr";
 import { TypeTabs, qrTypes } from "./TypeTabs";
 import { TypeForm } from "./TypeForm";
-import { Download, Save, Sparkles, Users, Upload, ChevronDown, ChevronRight, Palette, Image, Frame, Loader2, FileImage, FileType, FileText } from "lucide-react";
+import {
+  Download,
+  Save,
+  Sparkles,
+  Users,
+  Upload,
+  ChevronDown,
+  ChevronRight,
+  Palette,
+  Image,
+  Frame,
+  Loader2,
+  FileImage,
+  FileType,
+  FileText,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -258,7 +273,7 @@ export function QrWidget() {
   return (
     <div
       id="generator"
-      className="overflow-hidden rounded-3xl border border-border bg-card shadow-float"
+      className="overflow-hidden rounded-3xl border border-border bg-background shadow-float"
     >
       <div className="border-b border-border px-4 pt-4 sm:px-6">
         <TypeTabs active={type} onChange={setType} />
@@ -308,7 +323,7 @@ export function QrWidget() {
                 />
               </>
             ) : (
-              <div className="rounded-xl border border-border bg-surface p-4">
+              <div className="rounded-xl border border-border bg-background p-4">
                 <p className="flex items-center gap-2 text-sm font-bold">
                   <Sparkles className="size-4 text-premium" /> Save & track your codes
                 </p>
@@ -333,13 +348,16 @@ export function QrWidget() {
           <VerticalCarousel
             thumbs={gradientThumbs}
             activeId={templateId}
-            onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+            onSelect={(id) => {
+              setTemplateId(id);
+              resetAllCustom();
+            }}
             direction="btt"
           />
 
           {/* QR preview center */}
           <div className="flex flex-col items-center gap-2 px-2 sm:px-4 lg:px-6">
-            <div className="rounded-2xl border border-border bg-surface p-2 sm:p-4">
+            <div className="rounded-2xl border border-border bg-background p-2 sm:p-4">
               <img
                 src={svgToDataUrl(svg)}
                 alt="QR Code preview"
@@ -358,7 +376,10 @@ export function QrWidget() {
           <VerticalCarousel
             thumbs={plainThumbs}
             activeId={templateId}
-            onSelect={(id) => { setTemplateId(id); resetAllCustom(); }}
+            onSelect={(id) => {
+              setTemplateId(id);
+              resetAllCustom();
+            }}
             direction="ttb"
           />
         </div>
@@ -436,7 +457,9 @@ function TemplateCarousel({
       }}
     >
       <div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-brand/10 to-brand/5 pointer-events-none" />
-      <p className="relative px-5 sm:px-8 pt-2 pb-0 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+      <p className="relative px-5 sm:px-8 pt-2 pb-0 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+        {label}
+      </p>
       <div
         ref={trackRef}
         onPointerDown={onPointerDown}
@@ -484,7 +507,6 @@ function VerticalCarousel({
   direction?: "ttb" | "btt";
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const pausedRef = useRef(false);
   const dragRef = useRef({ dragging: false, startY: 0, scrollTop: 0 });
   const speed = 0.4;
 
@@ -493,7 +515,7 @@ function VerticalCarousel({
     if (!el) return;
     let raf: number;
     function tick() {
-      if (el && !pausedRef.current && !dragRef.current.dragging && el.isConnected) {
+      if (el && !dragRef.current.dragging && el.isConnected) {
         if (direction === "ttb") {
           el.scrollTop += speed;
           if (el.scrollTop >= el.scrollHeight / 2) el.scrollTop -= el.scrollHeight / 2;
@@ -532,12 +554,10 @@ function VerticalCarousel({
     <div
       className="relative flex flex-col overflow-hidden shrink-0"
       style={{ width: 52, height: 280 }}
-      onMouseEnter={() => { pausedRef.current = true; }}
-      onMouseLeave={() => { pausedRef.current = false; }}
     >
       {/* fade edges */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-card to-transparent z-10" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-card to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-white to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent z-10" />
 
       <div
         ref={trackRef}
@@ -621,7 +641,7 @@ function FormatDialog({
                   onDownload(f.value);
                   setOpen(false);
                 }}
-                className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-md cursor-pointer"
+                className="flex flex-col items-center gap-2 rounded-xl border border-border bg-background p-4 transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-md cursor-pointer"
               >
                 <span className="grid size-10 place-items-center rounded-xl bg-brand-soft text-brand">
                   {f.value === "pdf" ? (
@@ -633,7 +653,9 @@ function FormatDialog({
                   )}
                 </span>
                 <span className="text-sm font-bold">{f.label}</span>
-                <span className="text-[11px] text-muted-foreground text-center leading-tight">{f.desc}</span>
+                <span className="text-[11px] text-muted-foreground text-center leading-tight">
+                  {f.desc}
+                </span>
               </button>
             ))}
           </div>
@@ -664,7 +686,7 @@ function SaveSection({
   const dynamicDisabled = type !== "url";
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="rounded-xl border border-border bg-background p-4">
       <div className="flex items-center gap-1.5">
         <button
           type="button"
@@ -672,7 +694,7 @@ function SaveSection({
           className={`flex-1 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${
             mode === "static"
               ? "bg-brand text-brand-foreground"
-              : "text-muted-foreground hover:bg-surface/80"
+              : "text-muted-foreground hover:bg-background/80"
           }`}
         >
           <Save className="mr-1 inline size-3" /> Static
@@ -689,7 +711,7 @@ function SaveSection({
               ? "bg-premium text-white"
               : dynamicDisabled
                 ? "cursor-not-allowed text-muted-foreground/40"
-                : "text-muted-foreground hover:bg-surface/80"
+                : "text-muted-foreground hover:bg-background/80"
           }`}
         >
           <Sparkles className="mr-1 inline size-3" /> Dynamic
@@ -792,7 +814,7 @@ function DesignControls({
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 bodyShape === opt.value
                   ? "bg-brand text-brand-foreground"
-                  : "bg-surface text-muted-foreground hover:bg-surface/80"
+                  : "bg-background text-muted-foreground hover:bg-background/80"
               }`}
             >
               {opt.label}
@@ -817,7 +839,7 @@ function DesignControls({
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 eyeShape === opt.value
                   ? "bg-brand text-brand-foreground"
-                  : "bg-surface text-muted-foreground hover:bg-surface/80"
+                  : "bg-background text-muted-foreground hover:bg-background/80"
               }`}
             >
               {opt.label}
@@ -847,7 +869,7 @@ function DesignControls({
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition-colors ${
                   gradient?.type === t
                     ? "bg-brand text-brand-foreground"
-                    : "bg-surface text-muted-foreground hover:bg-surface/80"
+                    : "bg-background text-muted-foreground hover:bg-background/80"
                 }`}
               >
                 {t}
@@ -920,7 +942,7 @@ function DesignControls({
             <button
               type="button"
               onClick={() => logoInputRef.current?.click()}
-              className="flex items-center gap-2 rounded-lg border border-dashed border-border bg-surface px-4 py-3 text-xs font-semibold text-muted-foreground hover:bg-surface/80"
+              className="flex items-center gap-2 rounded-lg border border-dashed border-border bg-background px-4 py-3 text-xs font-semibold text-muted-foreground hover:bg-background/80"
             >
               <Upload className="size-4" />
               Upload logo (max 2MB)
@@ -968,7 +990,7 @@ function DesignControls({
                   className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     frame.style === opt.value
                       ? "bg-brand text-brand-foreground"
-                      : "bg-surface text-muted-foreground hover:bg-surface/80"
+                      : "bg-background text-muted-foreground hover:bg-background/80"
                   }`}
                 >
                   {opt.label}
@@ -998,7 +1020,7 @@ function Collapsible({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-surface/50">
+    <div className="rounded-xl border border-border bg-background/50">
       <button
         type="button"
         onClick={onOpen}

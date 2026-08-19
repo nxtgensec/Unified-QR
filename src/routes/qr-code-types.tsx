@@ -68,7 +68,10 @@ function Types() {
 
       <div className="mt-12 grid gap-5 md:grid-cols-2">
         {qrTypes.map((t) => (
-          <div key={t.id} className="rounded-3xl border border-border bg-card p-7 shadow-card">
+          <div
+            key={t.id}
+            className="rounded-3xl border border-border bg-background p-7 shadow-card"
+          >
             <span className="grid size-12 place-items-center rounded-2xl bg-brand-soft text-brand">
               <t.icon className="size-6" />
             </span>

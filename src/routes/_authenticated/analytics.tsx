@@ -232,7 +232,7 @@ function AnalyticsPage() {
         />
       </div>
 
-      <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className="mt-8 rounded-2xl border border-border bg-background p-6 shadow-card">
         <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
           Scans over the last {DAYS} days
         </h2>
@@ -253,7 +253,7 @@ function AnalyticsPage() {
       </div>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="rounded-2xl border border-border bg-background p-6 shadow-card">
           <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
             Devices
           </h2>
@@ -267,7 +267,7 @@ function AnalyticsPage() {
                     <span>{label}</span>
                     <span className="text-muted-foreground">{count}</span>
                   </div>
-                  <div className="mt-1 h-2 rounded-full bg-surface">
+                  <div className="mt-1 h-2 rounded-full bg-background">
                     <div
                       className="h-2 rounded-full bg-brand"
                       style={{ width: `${(count / total) * 100}%` }}
@@ -279,7 +279,7 @@ function AnalyticsPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="rounded-2xl border border-border bg-background p-6 shadow-card">
           <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
             Top codes
           </h2>
@@ -310,7 +310,7 @@ function AnalyticsPage() {
       </div>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="rounded-2xl border border-border bg-background p-6 shadow-card">
           <div className="flex items-center gap-2">
             <Globe className="size-4 text-brand" />
             <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
@@ -327,7 +327,7 @@ function AnalyticsPage() {
                     <span className="truncate max-w-[200px]">{ref}</span>
                     <span className="text-muted-foreground">{count}</span>
                   </div>
-                  <div className="mt-1 h-1.5 rounded-full bg-surface">
+                  <div className="mt-1 h-1.5 rounded-full bg-background">
                     <div
                       className="h-1.5 rounded-full bg-brand/60"
                       style={{ width: `${(count / (referrers[0]?.[1] ?? 1)) * 100}%` }}
@@ -339,7 +339,7 @@ function AnalyticsPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="rounded-2xl border border-border bg-background p-6 shadow-card">
           <div className="flex items-center gap-2">
             <Clock className="size-4 text-brand" />
             <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
@@ -381,7 +381,7 @@ function Stat({
   trend?: number;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+    <div className="rounded-2xl border border-border bg-background p-5 shadow-card">
       <div className="flex items-center gap-2 text-muted-foreground">
         <span className="text-brand">{icon}</span>
         <span className="text-xs font-bold uppercase tracking-wide">{label}</span>

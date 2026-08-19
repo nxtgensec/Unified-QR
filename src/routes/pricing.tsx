@@ -82,7 +82,9 @@ function Pricing() {
             <div
               key={p.id}
               className={`flex flex-col rounded-3xl border p-7 shadow-card ${
-                p.highlight ? "border-brand bg-card ring-2 ring-brand/20" : "border-border bg-card"
+                p.highlight
+                  ? "border-brand bg-background ring-2 ring-brand/20"
+                  : "border-border bg-background"
               }`}
             >
               {p.highlight && (
@@ -109,7 +111,7 @@ function Pricing() {
                 className={`mt-7 rounded-full px-6 py-3 text-center text-sm font-bold ${
                   p.highlight
                     ? "bg-brand text-brand-foreground"
-                    : "border border-border text-foreground hover:bg-surface"
+                    : "border border-border text-foreground hover:bg-background"
                 }`}
               >
                 {t(p.ctaKey)}

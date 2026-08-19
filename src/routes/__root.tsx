@@ -201,7 +201,7 @@ function LanguageChooser() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-[60] flex justify-center px-4 pb-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-float">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-background p-5 shadow-float">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <span className="grid size-9 place-items-center rounded-xl bg-brand-soft">
@@ -218,7 +218,7 @@ function LanguageChooser() {
               markLanguageChosen();
               setDismissed(true);
             }}
-            className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-surface"
+            className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-background"
             aria-label="Dismiss"
           >
             <X className="size-4" />
@@ -235,7 +235,7 @@ function LanguageChooser() {
                   markLanguageChosen();
                   setDismissed(true);
                 }}
-                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-all hover:-translate-y-px hover:border-brand hover:bg-surface hover:shadow-card"
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-all hover:-translate-y-px hover:border-brand hover:bg-background hover:shadow-card"
               >
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-brand-soft text-[9px] font-bold text-brand">
                   {l.code.toUpperCase()}

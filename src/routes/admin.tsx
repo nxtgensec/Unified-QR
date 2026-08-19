@@ -111,7 +111,7 @@ function AdminPage() {
             type="button"
             onClick={signIn}
             disabled={busy}
-            className="mt-6 flex items-center gap-3 rounded-full border border-border bg-card px-6 py-3 text-sm font-bold shadow-card transition-colors hover:bg-surface disabled:opacity-60"
+            className="mt-6 flex items-center gap-3 rounded-full border border-border bg-background px-6 py-3 text-sm font-bold shadow-card transition-colors hover:bg-background disabled:opacity-60"
           >
             <GoogleIcon />
             {busy ? t("auth.busy") : t("auth.signInWith")}
@@ -133,7 +133,7 @@ function AdminPage() {
           <button
             type="button"
             onClick={signOut}
-            className="mt-6 flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-surface"
+            className="mt-6 flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold hover:bg-background"
           >
             <LogOut className="size-4" /> {t("auth.signOut")}
           </button>
@@ -176,7 +176,7 @@ function StatCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border p-6 shadow-card ${accent ? "border-brand bg-card" : "border-border bg-card"}`}
+      className={`rounded-2xl border p-6 shadow-card ${accent ? "border-brand bg-background" : "border-border bg-background"}`}
     >
       <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         {label}
@@ -197,7 +197,7 @@ function AdminDashboard({ data }: { data: AdminStats }) {
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <section className="rounded-2xl border border-border bg-background p-6 shadow-card">
           <h2 className="text-lg font-bold">Recent users</h2>
           <ul className="mt-4 divide-y divide-border">
             {data.recentUsers.length === 0 && (
@@ -214,7 +214,7 @@ function AdminDashboard({ data }: { data: AdminStats }) {
                   </p>
                 </div>
                 <span className="flex shrink-0 items-center gap-2 text-xs">
-                  <span className="rounded-full bg-surface px-2 py-0.5 font-semibold capitalize">
+                  <span className="rounded-full bg-background px-2 py-0.5 font-semibold capitalize">
                     {u.plan}
                   </span>
                   <span className="text-muted-foreground">{u.codeCount} codes</span>
@@ -224,7 +224,7 @@ function AdminDashboard({ data }: { data: AdminStats }) {
           </ul>
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <section className="rounded-2xl border border-border bg-background p-6 shadow-card">
           <h2 className="text-lg font-bold">Top codes by scans</h2>
           <ul className="mt-4 divide-y divide-border">
             {data.topCodes.length === 0 && (
