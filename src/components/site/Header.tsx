@@ -6,12 +6,6 @@ import unifiedQrLogo from "@/assets/UnifiedQR_Logo.png";
 
 const nav: { label: string; to: string }[] = [
   { label: "Home", to: "/" },
-  { label: "About", to: "/about" },
-  { label: "How to create", to: "/how-to-create" },
-  { label: "QR Code Types", to: "/qr-code-types" },
-  { label: "Compare", to: "/compare" },
-  { label: "FAQs", to: "/faq" },
-  { label: "Contact", to: "/contact" },
 ];
 
 export function Logo() {

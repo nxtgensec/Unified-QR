@@ -10,21 +10,22 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  BarChart3,
-  RefreshCcw,
   Users,
-  Headphones,
-  Wallet,
   Star,
   ArrowRight,
   MessageSquare,
   Mail,
   ExternalLink,
+  Zap,
+  Shield,
+  Globe,
+  Crown,
+  Check,
+  X,
 } from "lucide-react";
 import step1 from "@/assets/step-1-choose-type.jpg";
 import step2 from "@/assets/step-2-customize.jpg";
 import step3 from "@/assets/step-3-download.jpg";
-import analytics from "@/assets/feature-analytics.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -147,31 +148,6 @@ const steps = [
 
 const faqKeys = ["1", "2", "3", "4", "5"] as const;
 
-const scanSteps = [1, 2, 3, 4] as const;
-
-const featureCards = [
-  {
-    icon: RefreshCcw,
-    titleKey: "home.features.dynamic.title" as const,
-    bodyKey: "home.features.dynamic.body" as const,
-  },
-  {
-    icon: Users,
-    titleKey: "home.features.collab.title" as const,
-    bodyKey: "home.features.collab.body" as const,
-  },
-  {
-    icon: Headphones,
-    titleKey: "home.features.support.title" as const,
-    bodyKey: "home.features.support.body" as const,
-  },
-  {
-    icon: Wallet,
-    titleKey: "home.features.pay.title" as const,
-    bodyKey: "home.features.pay.body" as const,
-  },
-];
-
 function Home() {
   const { t } = useLocale();
   return (
@@ -220,10 +196,93 @@ function Home() {
         </div>
       </section>
 
+      <section id="about" className="py-20">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <section className="text-center">
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-5xl">About UnifiedQR</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
+              We're building the simplest, most powerful QR Code platform — free for everyone.
+            </p>
+          </section>
+
+          <section className="mt-16">
+            <h3 className="text-2xl font-extrabold tracking-tight">Our Mission</h3>
+            <p className="mt-4 text-muted-foreground">
+              UnifiedQR was created with one goal: make QR Code generation accessible to everyone,
+              without paywalls, watermarks or complexity. Whether you're a small business owner
+              printing menus, a marketer running campaigns, or a developer integrating QR flows — we
+              want you to have a tool that just works.
+            </p>
+            <p className="mt-3 text-muted-foreground">
+              We believe the core QR Code experience should always be free. Dynamic codes, analytics
+              and team features are available for users who need more, at honest prices with no
+              hidden fees.
+            </p>
+          </section>
+
+          <section className="mt-16">
+            <h3 className="text-2xl font-extrabold tracking-tight">What We Stand For</h3>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2">
+              {[
+                {
+                  icon: Zap,
+                  title: "Speed & Simplicity",
+                  body: "Generate a QR Code in seconds. No sign-up required for static codes. The generator just works.",
+                },
+                {
+                  icon: Shield,
+                  title: "Privacy First",
+                  body: "No advertising trackers. No third-party analytics. Minimal cookies. Your data stays yours.",
+                },
+                {
+                  icon: Users,
+                  title: "Built for Teams",
+                  body: "Collaborate on shared QR code libraries. Invite team members with role-based access controls.",
+                },
+                {
+                  icon: Globe,
+                  title: "For Everyone",
+                  body: "Available in 29 languages. Free for personal and commercial use. No watermarks on downloads.",
+                },
+              ].map((v) => (
+                <div
+                  key={v.title}
+                  className="rounded-2xl border border-border bg-background p-6 shadow-card"
+                >
+                  <v.icon className="size-7 text-brand" />
+                  <h4 className="mt-3 font-bold">{v.title}</h4>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{v.body}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-16">
+            <h3 className="text-2xl font-extrabold tracking-tight">By the Numbers</h3>
+            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {[
+                { value: "4K+", label: "Users worldwide" },
+                { value: "Free", label: "Static QR codes" },
+                { value: "29", label: "Languages supported" },
+                { value: "34", label: "Templates" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-2xl border border-border bg-background p-5 text-center shadow-card"
+                >
+                  <p className="text-2xl font-extrabold text-brand">{s.value}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </section>
+
       <section className="bg-background py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <h2 className="text-center text-2xl font-extrabold tracking-tight sm:text-4xl">
-            {t("home.steps.title")}
+            How to create a free QR Code in 3 simple steps
           </h2>
           <div className="mt-12 space-y-14">
             {steps.map((s, i) => (
@@ -262,79 +321,14 @@ function Home() {
         </div>
       </section>
 
-      <section className="py-20">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <h2 className="text-2xl font-extrabold tracking-tight sm:text-4xl">
-            {t("home.explained.title")}
-          </h2>
-          <div className="mt-8 grid gap-8 md:grid-cols-2">
-            <div>
-              <h3 className="text-lg font-bold">{t("home.explained.what.title")}</h3>
-              <p className="mt-2 text-muted-foreground">{t("home.explained.what.body")}</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold">{t("home.explained.why.title")}</h3>
-              <p className="mt-2 text-muted-foreground">{t("home.explained.why.body")}</p>
-            </div>
-          </div>
-          <div className="mt-10 rounded-2xl border border-border bg-background p-6 shadow-card">
-            <h3 className="text-lg font-bold">{t("home.explained.how.title")}</h3>
-            <ol className="mt-4 space-y-3">
-              {scanSteps.map((n) => (
-                <li key={n} className="flex gap-3 text-sm text-muted-foreground">
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-soft text-xs font-bold text-brand">
-                    {n}
-                  </span>
-                  {t(`home.explained.how.${n}`)}
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-background py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <h2 className="max-w-3xl text-2xl font-extrabold tracking-tight sm:text-4xl">
-            {t("home.features.title")}
-          </h2>
-          <div className="mt-10 grid gap-5 lg:grid-cols-3">
-            <div className="rounded-3xl border border-border bg-background p-6 shadow-card lg:col-span-2">
-              <BarChart3 className="size-8 text-brand" />
-              <h3 className="mt-4 text-lg font-bold">{t("home.features.track.title")}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{t("home.features.track.body")}</p>
-              <img
-                src={analytics}
-                alt={t("home.features.track.title")}
-                loading="lazy"
-                width={1280}
-                height={720}
-                className="mt-6 w-full rounded-xl border border-border"
-              />
-            </div>
-            <div className="grid gap-5">
-              {featureCards.map((f) => (
-                <div
-                  key={f.titleKey}
-                  className="rounded-3xl border border-border bg-background p-6 shadow-card"
-                >
-                  <f.icon className="size-7 text-brand" />
-                  <h3 className="mt-3 font-bold">{t(f.titleKey)}</h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{t(f.bodyKey)}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <h2 className="text-2xl font-extrabold tracking-tight sm:text-4xl">
-            {t("home.types.title")}
-          </h2>
+      <section id="qr-types" className="py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center">
+          <h2 className="text-2xl font-extrabold tracking-tight sm:text-4xl">QR Code types</h2>
+          <p className="mt-3 text-muted-foreground">
+            Every type below is free to create, has no scan limit and downloads as PNG or SVG.
+          </p>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {qrTypes.map((qt) => (
+            {qrTypes.slice(0, 6).map((qt) => (
               <div
                 key={qt.id}
                 className="rounded-2xl border border-border bg-background p-6 shadow-card transition-transform hover:-translate-y-1"
@@ -342,7 +336,7 @@ function Home() {
                 <span className="grid size-11 place-items-center rounded-xl bg-brand-soft text-brand">
                   <qt.icon className="size-5" />
                 </span>
-                <h3 className="mt-4 font-bold">{qt.label}</h3>
+                <h3 className="mt-4 font-bold">{qt.label} QR Code</h3>
                 <p className="mt-1.5 text-sm text-muted-foreground">{qt.tagline}</p>
               </div>
             ))}
@@ -350,15 +344,95 @@ function Home() {
           <div className="mt-10">
             <Link
               to="/qr-code-types"
-              className="inline-flex items-center gap-2 text-sm font-bold text-brand"
+              className="inline-flex items-center gap-2 rounded-full bg-brand px-7 py-3 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
             >
-              {t("home.types.cta")} <ArrowRight className="size-4" />
+              Explore all QR Code types <ArrowRight className="size-4" />
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="bg-background py-20">
+      <section id="compare" className="bg-background py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-extrabold tracking-tight sm:text-4xl">
+              Why UnifiedQR is better
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
+              Unlimited free QR codes, no watermarks, no sign-up. See how we compare to the top
+              alternatives.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { name: "UnifiedQR", price: "Free", badge: "Best value", hl: true },
+              { name: "Competitor A", price: "₹1,200/yr", hl: false },
+              { name: "Competitor B", price: "₹3,500/yr", hl: false },
+              { name: "Competitor C", price: "₹5,000/yr", hl: false },
+            ].map((c) => (
+              <div
+                key={c.name}
+                className={`relative rounded-2xl border p-6 shadow-card ${
+                  c.hl ? "border-brand bg-brand-soft/30" : "border-border bg-background"
+                }`}
+              >
+                {c.hl && (
+                  <span className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-xs font-bold text-brand-foreground">
+                    <Crown className="size-3" /> {c.badge}
+                  </span>
+                )}
+                <h3 className={`text-lg font-extrabold ${c.hl ? "text-brand" : ""}`}>{c.name}</h3>
+                <p className="mt-1 text-2xl font-extrabold">{c.price}</p>
+                <ul className="mt-4 space-y-2">
+                  {[
+                    { ok: true, text: "Unlimited static QR codes" },
+                    { ok: true, text: "34 templates" },
+                    { ok: true, text: "No watermarks" },
+                    { ok: true, text: "No sign-up needed" },
+                    { ok: c.hl, text: "Logo upload free" },
+                    { ok: c.hl, text: "Gradient designs" },
+                  ].map((item) => (
+                    <li key={item.text} className="flex items-center gap-2 text-sm">
+                      {item.ok ? (
+                        <Check className="size-4 shrink-0 text-green-600" />
+                      ) : (
+                        <X className="size-4 shrink-0 text-red-400/70" />
+                      )}
+                      <span className={item.ok ? "text-foreground/80" : "text-muted-foreground/60"}>
+                        {item.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                {c.hl ? (
+                  <a
+                    href="#hero"
+                    className="mt-6 block rounded-full bg-brand px-5 py-2.5 text-center text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+                  >
+                    Try it free
+                  </a>
+                ) : (
+                  <p className="mt-6 text-xs text-muted-foreground">
+                    Paid plans required for most features
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <Link
+              to="/compare"
+              className="inline-flex items-center gap-2 text-sm font-bold text-brand"
+            >
+              See full comparison <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <h2 className="text-center text-2xl font-extrabold tracking-tight sm:text-4xl">
             {t("home.faq.title")}

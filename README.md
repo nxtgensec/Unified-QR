@@ -18,6 +18,21 @@
 
 <br />
 
+### Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 19 + TypeScript |
+| **Routing** | TanStack Router (file-based) |
+| **Styling** | Tailwind CSS 4 + shadcn/ui |
+| **QR Engine** | `qr-code-styling` (canvas/SVG) |
+| **Auth & DB** | Supabase (Auth + PostgreSQL) |
+| **Payments** | Cashfree (fixed-price orders) |
+| **Bundler** | Vite 8 |
+| **i18n** | Custom React context (29 languages) |
+
+<br />
+
 <div align="center">
   <a href="#quick-start"><img src="src/assets/step-1-choose-type.jpg" width="240" alt="Choose type" /></a>&nbsp;&nbsp;
   <a href="#quick-start"><img src="src/assets/step-2-customize.jpg" width="240" alt="Customize" /></a>&nbsp;&nbsp;
