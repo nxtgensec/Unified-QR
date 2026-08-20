@@ -1,20 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, X } from "lucide-react";
+import { Check, X, Crown, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/compare")({
   head: () => ({
     meta: [
-      { title: "Compare QR Code Features — Free vs Paid Plans | UnifiedQR" },
+      {
+        title:
+          "UnifiedQR vs QR Tiger vs QR Code Generator vs Beaconstac — Why UnifiedQR Is the Best Free Alternative",
+      },
       {
         name: "description",
         content:
-          "Compare UnifiedQR free and paid plans side by side. See what's included: static codes, dynamic codes, analytics, bulk import, custom designs and more.",
+          "See how UnifiedQR compares to QR Tiger, QR Code Generator and Beaconstac. Unlimited free static QR codes, no watermarks, no sign-up — features others lock behind expensive plans.",
       },
-      { property: "og:title", content: "Compare QR Code Features — Free vs Paid Plans" },
+      {
+        property: "og:title",
+        content: "UnifiedQR vs Top QR Code Generators — 100% Free, No Watermarks",
+      },
       {
         property: "og:description",
         content:
-          "Free unlimited static QR codes, or upgrade for dynamic codes, analytics and premium exports.",
+          "Unlimited free static QR codes, custom designs, 5 export formats — all free. Competitors charge ₹1,200–₹5,000/yr for the same.",
       },
       { property: "og:url", content: "https://qr.nxtgensec.org/compare" },
       { property: "og:type", content: "website" },
@@ -22,7 +28,11 @@ export const Route = createFileRoute("/compare")({
     ],
     links: [
       { rel: "canonical", href: "https://qr.nxtgensec.org/compare" },
-      { rel: "alternate", hreflang: "en", href: "https://qr.nxtgensec.org/compare" },
+      {
+        rel: "alternate",
+        hreflang: "en",
+        href: "https://qr.nxtgensec.org/compare",
+      },
     ],
     scripts: [
       {
@@ -30,8 +40,9 @@ export const Route = createFileRoute("/compare")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: "Compare UnifiedQR Plans",
-          description: "Compare UnifiedQR free and paid plans side by side.",
+          name: "UnifiedQR vs Top QR Code Alternatives",
+          description:
+            "Compare UnifiedQR with QR Tiger, QR Code Generator and Beaconstac. Free unlimited QR codes with no watermarks.",
           url: "https://qr.nxtgensec.org/compare",
         }),
       },
@@ -40,116 +51,247 @@ export const Route = createFileRoute("/compare")({
   component: Compare,
 });
 
-const features = [
-  { category: "QR Code Generation", name: "Static QR Codes", free: true, paid: true },
+const competitors = [
   {
-    category: "QR Code Generation",
-    name: "Dynamic QR Codes",
-    free: "Up to 2",
-    paid: "Up to unlimited",
+    name: "UnifiedQR",
+    badge: "Best value",
+    highlighted: true,
+    price: "Free",
+    priceNote: "Paid plans from ₹9",
+    staticQR: true,
+    dynamicQR: true,
+    templates: "34",
+    customDesign: true,
+    logoUpload: true,
+    gradientDesigns: true,
+    exports: "5 formats",
+    analytics: true,
+    noWatermark: true,
+    noSignupRequired: true,
+    linkPage: true,
+    languages: "29",
   },
   {
-    category: "QR Code Generation",
-    name: "QR Code types",
-    free: "All 10 types",
-    paid: "All 10 types",
+    name: "QR Tiger",
+    highlighted: false,
+    price: "₹1,200/yr",
+    priceNote: "Starter plan",
+    staticQR: true,
+    dynamicQR: true,
+    templates: "~20",
+    customDesign: true,
+    logoUpload: "Paid only",
+    gradientDesigns: "Paid only",
+    exports: "3 formats",
+    analytics: true,
+    noWatermark: "Paid only",
+    noSignupRequired: false,
+    linkPage: "Paid only",
+    languages: "8",
   },
-  { category: "QR Code Generation", name: "Bulk CSV import", free: false, paid: true },
-  { category: "Design", name: "Templates (27 plain)", free: true, paid: true },
-  { category: "Design", name: "Premium gradient templates (7)", free: false, paid: true },
-  { category: "Design", name: "Custom colours & body shapes", free: true, paid: true },
-  { category: "Design", name: "Gradients & angle control", free: false, paid: true },
-  { category: "Design", name: "Custom logo upload", free: true, paid: true },
-  { category: "Design", name: "Decorative frames", free: true, paid: true },
-  { category: "Downloads", name: "PNG export", free: true, paid: true },
-  { category: "Downloads", name: "SVG export", free: true, paid: true },
-  { category: "Downloads", name: "JPG export", free: false, paid: true },
-  { category: "Downloads", name: "WebP export", free: false, paid: true },
-  { category: "Downloads", name: "PDF export", free: false, paid: true },
-  { category: "Analytics", name: "Total scan count", free: true, paid: true },
-  { category: "Analytics", name: "Today / yesterday breakdown", free: false, paid: true },
-  { category: "Analytics", name: "Device & browser stats", free: false, paid: true },
-  { category: "Analytics", name: "Referrer tracking", free: false, paid: true },
-  { category: "Analytics", name: "Peak hours heatmap", free: false, paid: true },
-  { category: "Links", name: "Link page (bio link)", free: true, paid: true },
-  { category: "Links", name: "Custom avatar", free: true, paid: true },
-  { category: "Links", name: "Unlimited link items", free: true, paid: true },
+  {
+    name: "QR Code Generator",
+    highlighted: false,
+    price: "₹3,500/yr",
+    priceNote: "Pro plan",
+    staticQR: true,
+    dynamicQR: true,
+    templates: "~15",
+    customDesign: "Limited",
+    logoUpload: "Paid only",
+    gradientDesigns: false,
+    exports: "2 formats",
+    analytics: true,
+    noWatermark: "Paid only",
+    noSignupRequired: false,
+    linkPage: "Paid only",
+    languages: "6",
+  },
+  {
+    name: "Beaconstac",
+    highlighted: false,
+    price: "₹5,000/yr",
+    priceNote: "Starter plan",
+    staticQR: true,
+    dynamicQR: true,
+    templates: "~10",
+    customDesign: "Limited",
+    logoUpload: "Paid only",
+    gradientDesigns: false,
+    exports: "2 formats",
+    analytics: true,
+    noWatermark: "Paid only",
+    noSignupRequired: false,
+    linkPage: "Paid only",
+    languages: "5",
+  },
 ];
 
-function Cell({ value }: { value: boolean | string }) {
-  if (value === true) return <Check className="size-4 text-green-600" />;
-  if (value === false) return <X className="size-4 text-muted-foreground/50" />;
-  return <span className="text-xs font-medium text-foreground/80">{value}</span>;
+const comparisonRows: {
+  label: string;
+  key: keyof (typeof competitors)[number];
+  format?: (val: unknown) => React.ReactNode;
+}[] = [
+  { label: "Price to start", key: "price" },
+  { label: "Static QR Codes", key: "staticQR" },
+  { label: "Dynamic QR Codes", key: "dynamicQR" },
+  { label: "Templates", key: "templates" },
+  { label: "Custom design", key: "customDesign" },
+  { label: "Logo upload", key: "logoUpload" },
+  { label: "Gradient designs", key: "gradientDesigns" },
+  { label: "Export formats", key: "exports" },
+  { label: "Scan analytics", key: "analytics" },
+  { label: "No watermarks", key: "noWatermark" },
+  { label: "No sign-up required", key: "noSignupRequired" },
+  { label: "Link page (bio link)", key: "linkPage" },
+  { label: "Languages", key: "languages" },
+];
+
+function CellValue({ val }: { val: unknown }) {
+  if (val === true) return <Check className="mx-auto size-4 text-green-600" />;
+  if (val === false) return <X className="mx-auto size-4 text-red-400/70" />;
+  return <span className="text-xs font-medium text-foreground/80">{String(val)}</span>;
+}
+
+function CompetitorCard({ c }: { c: (typeof competitors)[number] }) {
+  return (
+    <div
+      className={`relative rounded-2xl border p-6 shadow-card ${
+        c.highlighted ? "border-brand bg-brand-soft/30" : "border-border bg-background"
+      }`}
+    >
+      {c.highlighted && (
+        <span className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-xs font-bold text-brand-foreground">
+          <Crown className="size-3" /> {c.badge}
+        </span>
+      )}
+      <h3 className={`text-lg font-extrabold ${c.highlighted ? "text-brand" : ""}`}>{c.name}</h3>
+      <p className="mt-1 text-2xl font-extrabold">{c.price}</p>
+      <p className="text-xs text-muted-foreground">{c.priceNote}</p>
+      <ul className="mt-4 space-y-2">
+        {[
+          { ok: c.staticQR, text: "Unlimited static QR codes" },
+          { ok: c.dynamicQR, text: "Dynamic QR codes" },
+          { ok: c.noWatermark === true, text: "No watermarks" },
+          { ok: c.noSignupRequired === true, text: "No sign-up needed" },
+          { ok: c.logoUpload === true, text: "Free logo upload" },
+          { ok: c.gradientDesigns === true, text: "Gradient designs" },
+          { ok: c.linkPage === true, text: "Link page (bio link)" },
+        ].map((item) => (
+          <li key={item.text} className="flex items-center gap-2 text-sm">
+            {item.ok ? (
+              <Check className="size-4 shrink-0 text-green-600" />
+            ) : (
+              <X className="size-4 shrink-0 text-red-400/70" />
+            )}
+            <span className={item.ok ? "text-foreground/80" : "text-muted-foreground/60"}>
+              {item.text}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {c.highlighted ? (
+        <Link
+          to="/"
+          className="mt-6 block rounded-full bg-brand px-5 py-2.5 text-center text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+        >
+          Try it free
+        </Link>
+      ) : (
+        <p className="mt-6 text-xs text-muted-foreground">Paid plans required for most features</p>
+      )}
+    </div>
+  );
 }
 
 function Compare() {
-  const categories = [...new Set(features.map((f) => f.category))];
-
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
       <section className="text-center">
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">Compare plans</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">
+          UnifiedQR vs the competition
+        </h1>
         <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
-          Everything you get for free, and what the paid plans unlock.
+          Unlimited free QR codes, no watermarks, no sign-up. See how we compare to QR Tiger, QR
+          Code Generator and Beaconstac.
         </p>
       </section>
 
-      <section className="mt-12 overflow-x-auto">
+      <section className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {competitors.map((c) => (
+          <CompetitorCard key={c.name} c={c} />
+        ))}
+      </section>
+
+      <section className="mt-16 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-border">
               <th className="pb-3 pr-4 font-semibold text-muted-foreground">Feature</th>
-              <th className="pb-3 px-4 text-center font-bold">Free</th>
-              <th className="pb-3 pl-4 text-center font-bold text-brand">Paid plans</th>
+              {competitors.map((c) => (
+                <th
+                  key={c.name}
+                  className={`pb-3 px-3 text-center text-xs ${c.highlighted ? "font-extrabold text-brand" : "font-bold"}`}
+                >
+                  {c.name}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {categories.map((cat) => (
-              <>
-                <tr key={cat}>
-                  <td
-                    colSpan={3}
-                    className="pb-2 pt-6 text-xs font-bold uppercase tracking-wider text-muted-foreground"
-                  >
-                    {cat}
-                  </td>
-                </tr>
-                {features
-                  .filter((f) => f.category === cat)
-                  .map((f) => (
-                    <tr key={f.name} className="border-b border-border/50">
-                      <td className="py-3 pr-4 text-foreground/80">{f.name}</td>
-                      <td className="py-3 px-4 text-center">
-                        <Cell value={f.free} />
-                      </td>
-                      <td className="py-3 pl-4 text-center">
-                        <Cell value={f.paid} />
-                      </td>
-                    </tr>
-                  ))}
-              </>
+            {comparisonRows.map((row) => (
+              <tr key={row.label} className="border-b border-border/50">
+                <td className="py-3 pr-4 text-foreground/80">{row.label}</td>
+                {competitors.map((c) => {
+                  const val = c[row.key];
+                  const isUs = c.highlighted;
+                  const isGood = val === true;
+                  const isBad = val === false;
+                  return (
+                    <td
+                      key={c.name}
+                      className={`py-3 px-3 text-center ${
+                        isUs && isGood
+                          ? "bg-brand-soft/20"
+                          : isUs && isBad
+                            ? "bg-destructive/5"
+                            : ""
+                      }`}
+                    >
+                      <CellValue val={val} />
+                    </td>
+                  );
+                })}
+              </tr>
             ))}
           </tbody>
         </table>
       </section>
 
-      <section className="mt-12 rounded-2xl border border-border bg-background p-8 text-center shadow-card">
-        <h2 className="text-xl font-extrabold">Start for free today</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          No credit card. No sign-up for static codes. Upgrade when you're ready.
+      <section className="mt-16 rounded-3xl border border-border bg-background p-8 text-center shadow-card sm:p-12">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand">
+          <Crown className="size-3" /> Why UnifiedQR wins
+        </span>
+        <h2 className="mt-4 text-2xl font-extrabold tracking-tight sm:text-3xl">
+          Everything others charge for, we give you for free.
+        </h2>
+        <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+          Unlimited static QR codes with no watermarks. 34 templates. Custom colours, gradients,
+          logos and frames. 5 export formats. No sign-up required. Competitors lock all of this
+          behind ₹1,200 – ₹5,000/year plans.
         </p>
-        <div className="mt-5 flex flex-wrap justify-center gap-3">
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
             to="/"
-            className="rounded-full bg-brand px-6 py-2.5 text-sm font-bold text-brand-foreground shadow-card"
+            className="inline-flex items-center gap-2 rounded-full bg-brand px-7 py-3 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
           >
-            Create a QR Code
+            Create a QR Code free <ArrowRight className="size-4" />
           </Link>
           <Link
             to="/pricing"
-            className="rounded-full border border-border px-6 py-2.5 text-sm font-bold transition-colors hover:bg-background"
+            className="rounded-full border border-border px-7 py-3 text-sm font-bold transition-colors hover:bg-background"
           >
-            View pricing
+            See our pricing
           </Link>
         </div>
       </section>
