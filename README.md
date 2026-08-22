@@ -34,9 +34,9 @@
 <br />
 
 <div align="center">
-  <a href="#quick-start"><img src="src/assets/step-1-choose-type.jpg" width="240" alt="Choose type" /></a>&nbsp;&nbsp;
-  <a href="#quick-start"><img src="src/assets/step-2-customize.jpg" width="240" alt="Customize" /></a>&nbsp;&nbsp;
-  <a href="#quick-start"><img src="src/assets/step-3-download.jpg" width="240" alt="Download" /></a>
+  <a href="#quick-start"><img src="src/assets/step-1-choose-type.png" width="240" alt="Choose type" /></a>&nbsp;&nbsp;
+  <a href="#quick-start"><img src="src/assets/step-2-customize.png" width="240" alt="Customize" /></a>&nbsp;&nbsp;
+  <a href="#quick-start"><img src="src/assets/step-3-download.png" width="240" alt="Download" /></a>
 </div>
 
 <br />
@@ -217,7 +217,7 @@ Visitor lands on your current destination URL.
   <sub><strong>Tailwind v4</strong></sub>
 </td>
 <td align="center" width="12%">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tanstack/tanstack-original.svg" width="36" alt="TanStack" /><br />
+  <img src="https://cdn.simpleicons.org/tanstack/00C9A7" width="36" alt="TanStack" /><br />
   <sub><strong>TanStack Router</strong></sub>
 </td>
 <td align="center" width="12%">
