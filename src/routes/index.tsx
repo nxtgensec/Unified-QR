@@ -78,7 +78,7 @@ export const Route = createFileRoute("/")({
               "Dynamic QR codes with editable destinations",
               "Real-time scan analytics with device and referrer tracking",
               "Team collaboration with role-based access",
-              "CSV bulk import for enterprise workflows",
+              "CSV bulk create for enterprise workflows",
               "PNG, SVG, JPG, WebP and PDF downloads",
               "29 language support with auto-detection",
               "Custom colours, body shapes, eye styles, gradients, logos and frames",

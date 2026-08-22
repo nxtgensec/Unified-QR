@@ -104,7 +104,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "Generate, customise and download high-quality QR Codes for URLs, PDFs, vCards, SMS and email. Dynamic codes with real-time scan analytics, team collaboration and CSV bulk import.",
+          "Generate, customise and download high-quality QR Codes for URLs, PDFs, vCards, SMS and email. Dynamic codes with real-time scan analytics, team collaboration and CSV bulk create.",
       },
       {
         property: "og:image",

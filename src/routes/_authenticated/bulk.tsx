@@ -24,14 +24,14 @@ import {
 export const Route = createFileRoute("/_authenticated/bulk")({
   head: () => ({
     meta: [
-      { title: "Bulk QR Generation — UnifiedQR Workspace" },
+      { title: "Bulk Create — UnifiedQR Workspace" },
       {
         name: "description",
         content:
-          "Import a CSV of names and destinations to generate dynamic, trackable QR Codes in bulk with UnifiedQR.",
+          "Upload a CSV of names and destinations to create dynamic, trackable QR Codes in bulk with UnifiedQR.",
       },
-      { property: "og:title", content: "Bulk QR Generation — UnifiedQR" },
-      { property: "og:description", content: "CSV bulk generation of dynamic trackable QR Codes." },
+      { property: "og:title", content: "Bulk Create — UnifiedQR" },
+      { property: "og:description", content: "CSV bulk creation of dynamic trackable QR Codes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -55,7 +55,7 @@ const STEPS: { id: StepId; label: string; icon: typeof Upload }[] = [
   { id: "review", label: "Review", icon: Eye },
   { id: "design", label: "Design", icon: Sparkles },
   { id: "preview", label: "Preview", icon: Eye },
-  { id: "import", label: "Import", icon: Package },
+  { id: "import", label: "Create", icon: Package },
   { id: "results", label: "Results", icon: Check },
 ];
 
@@ -295,8 +295,8 @@ function BulkPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
-        title="Bulk generation"
-        description="Upload a CSV, pick a design, preview and import dynamic QR Codes in one go."
+        title="Bulk create"
+        description="Upload a CSV, pick a design, preview and create dynamic QR Codes in one go."
         actions={
           <button
             type="button"
@@ -347,7 +347,7 @@ function BulkPage() {
           <FileSpreadsheet className="mx-auto size-8 text-brand" />
           <p className="mt-3 font-semibold">Drop a CSV here</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Columns: <code>name</code>, <code>destination</code>. Up to 200 rows per import.
+            Columns: <code>name</code>, <code>destination</code>. Up to 200 rows per batch.
           </p>
           <input
             ref={inputRef}
@@ -528,7 +528,7 @@ function BulkPage() {
               className="flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-bold text-brand-foreground disabled:opacity-60"
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-              Import {rows.length} codes
+              Create {rows.length} codes
             </button>
           </div>
         </div>
@@ -566,7 +566,7 @@ function BulkPage() {
         <div className="mt-8 rounded-2xl border border-border bg-background p-8 shadow-card">
           <div className="text-center">
             <Check className="mx-auto size-10 text-emerald-500" />
-            <h2 className="mt-3 text-lg font-extrabold">Import complete</h2>
+            <h2 className="mt-3 text-lg font-extrabold">Creation complete</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {results.filter((r) => r.ok).length} codes created
               {results.filter((r) => !r.ok).length > 0 &&

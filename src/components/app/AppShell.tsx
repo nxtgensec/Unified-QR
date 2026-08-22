@@ -23,7 +23,7 @@ const nav: { to: string; label: string; icon: React.ReactNode; beta?: boolean }[
   { to: "/create", label: "Create QR Code", icon: <Plus className="size-4" /> },
   { to: "/links", label: "Workspace", icon: <Link2 className="size-4" />, beta: true },
   { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" />, beta: true },
-  { to: "/bulk", label: "Bulk Import", icon: <Layers className="size-4" />, beta: true },
+  { to: "/bulk", label: "Bulk Create", icon: <Layers className="size-4" />, beta: true },
   { to: "/billing", label: "Billing", icon: <CreditCard className="size-4" /> },
   { to: "/settings", label: "Settings", icon: <Settings className="size-4" /> },
 ];
