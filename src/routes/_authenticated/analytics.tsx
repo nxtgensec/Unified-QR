@@ -11,13 +11,14 @@ import {
   type SavedCode,
   type ScanRow,
 } from "@/lib/codes";
+import { supabase } from "@/integrations/supabase/client";
+import { effectivePlan, type PlanId } from "@/lib/plans";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
   BarChart3,
   Download,
   Loader2,
-  Smartphone,
   TrendingUp,
   Link2,
   Globe,
@@ -25,6 +26,9 @@ import {
   Zap,
   ArrowUpRight,
   ArrowDownRight,
+  Lock,
+  MapPin,
+  Crown,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
@@ -47,6 +51,58 @@ export const Route = createFileRoute("/_authenticated/analytics")({
 
 const DAYS = 30;
 
+const COUNTRY_FLAGS: Record<string, string> = {
+  IN: "🇮🇳",
+  US: "🇺🇸",
+  GB: "🇬🇧",
+  DE: "🇩🇪",
+  FR: "🇫🇷",
+  JP: "🇯🇵",
+  BR: "🇧🇷",
+  AU: "🇦🇺",
+  CA: "🇨🇦",
+  SG: "🇸🇬",
+  AE: "🇦🇪",
+  SA: "🇸🇦",
+  ZA: "🇿🇦",
+  NG: "🇳🇬",
+  KE: "🇰🇪",
+  PK: "🇵🇰",
+  BD: "🇧🇩",
+  PH: "🇵🇭",
+  ID: "🇮🇩",
+  MY: "🇲🇾",
+  TH: "🇹🇭",
+  VN: "🇻🇳",
+  KR: "🇰🇷",
+  CN: "🇨🇳",
+  MX: "🇲🇽",
+  IT: "🇮🇹",
+  ES: "🇪🇸",
+  NL: "🇳🇱",
+  SE: "🇸🇪",
+  PL: "🇵🇱",
+  RU: "🇷🇺",
+  TR: "🇹🇷",
+  EG: "🇪🇬",
+  NZ: "🇳🇿",
+  IE: "🇮🇪",
+  CH: "🇨🇭",
+  AT: "🇦🇹",
+  PT: "🇵🇹",
+  GR: "🇬🇷",
+  CZ: "🇨🇿",
+  RO: "🇷🇴",
+  HU: "🇭🇺",
+  FI: "🇫🇮",
+  NO: "🇳🇴",
+  DK: "🇩🇰",
+};
+
+function flag(code: string | null | undefined): string {
+  return (code && COUNTRY_FLAGS[code.toUpperCase()]) || "🌍";
+}
+
 function dayKey(d: Date) {
   return d.toISOString().slice(0, 10);
 }
@@ -55,6 +111,7 @@ function AnalyticsPage() {
   const { user } = useAuth();
   const [codes, setCodes] = useState<SavedCode[]>([]);
   const [scans, setScans] = useState<ScanRow[]>([]);
+  const [plan, setPlan] = useState<PlanId>("free");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,6 +127,14 @@ function AnalyticsPage() {
         setLoading(false);
       }
     })();
+    void supabase
+      .from("profiles")
+      .select("plan, plan_expires_at")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setPlan(effectivePlan(data?.plan, data?.plan_expires_at));
+      });
   }, [user]);
 
   const series = useMemo(() => {
@@ -165,9 +230,50 @@ function AnalyticsPage() {
     return set.size;
   }, [codes, scans]);
 
+  const countries = useMemo(() => {
+    const out = new Map<string, { count: number; code: string | null }>();
+    for (const s of scans) {
+      const name = s.country ?? "Unknown";
+      const prev = out.get(name);
+      out.set(name, { count: (prev?.count ?? 0) + 1, code: s.country_code });
+    }
+    return [...out.entries()]
+      .map(([country, { count, code }]) => ({ country, count, code }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15);
+  }, [scans]);
+
+  const cities = useMemo(() => {
+    const out = new Map<
+      string,
+      { count: number; country: string | null; countryCode: string | null }
+    >();
+    for (const s of scans) {
+      const key = `${s.city}|${s.country}`;
+      const prev = out.get(key);
+      out.set(key, {
+        count: (prev?.count ?? 0) + 1,
+        country: s.country,
+        countryCode: s.country_code,
+      });
+    }
+    return [...out.entries()]
+      .map(([key, { count, country, countryCode }]) => ({
+        city: key.split("|")[0] ?? "Unknown",
+        count,
+        country,
+        countryCode,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15);
+  }, [scans]);
+
+  const totalCountries = countries.length;
+  const isPro = plan !== "free";
+
   function exportCsv() {
     const rows: (string | number)[][] = [
-      ["scanned_at", "code_name", "short_link", "device", "referrer"],
+      ["scanned_at", "code_name", "short_link", "device", "referrer", "country", "city"],
     ];
     const byId = new Map(codes.map((c) => [c.id, c]));
     for (const s of scans) {
@@ -178,6 +284,8 @@ function AnalyticsPage() {
         c?.slug ? shortUrl(c.slug) : "",
         s.device ?? "",
         s.referrer ?? "",
+        s.country ?? "",
+        s.city ?? "",
       ]);
     }
     downloadCsv("unifiedqr-scans.csv", toCsv(rows));
@@ -226,9 +334,9 @@ function AnalyticsPage() {
         />
         <Stat icon={<Link2 className="size-4" />} label="Active codes" value={activeCount} />
         <Stat
-          icon={<Smartphone className="size-4" />}
-          label="Top device"
-          value={devices[0]?.[0] ?? "—"}
+          icon={<Globe className="size-4" />}
+          label="Countries reached"
+          value={totalCountries}
         />
       </div>
 
@@ -312,25 +420,28 @@ function AnalyticsPage() {
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-background p-6 shadow-card">
           <div className="flex items-center gap-2">
-            <Globe className="size-4 text-brand" />
+            <MapPin className="size-4 text-brand" />
             <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
-              Top referrers
+              Top countries
             </h2>
           </div>
-          {referrers.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">No referrer data yet.</p>
+          {countries.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">No location data yet.</p>
           ) : (
             <ul className="mt-4 space-y-2.5">
-              {referrers.map(([ref, count]) => (
-                <li key={ref}>
+              {countries.map(({ country, count, code }) => (
+                <li key={country}>
                   <div className="flex justify-between text-sm font-semibold">
-                    <span className="truncate max-w-[200px]">{ref}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span aria-hidden>{flag(code)}</span>
+                      <span className="truncate">{country}</span>
+                    </span>
                     <span className="text-muted-foreground">{count}</span>
                   </div>
                   <div className="mt-1 h-1.5 rounded-full bg-background">
                     <div
                       className="h-1.5 rounded-full bg-brand/60"
-                      style={{ width: `${(count / (referrers[0]?.[1] ?? 1)) * 100}%` }}
+                      style={{ width: `${(count / (countries[0]?.count ?? 1)) * 100}%` }}
                     />
                   </div>
                 </li>
@@ -363,6 +474,92 @@ function AnalyticsPage() {
             <span>18:00</span>
             <span>23:00</span>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        {isPro ? (
+          <div className="rounded-2xl border border-border bg-background p-6 shadow-card">
+            <div className="flex items-center gap-2">
+              <MapPin className="size-4 text-brand" />
+              <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                Top cities
+              </h2>
+            </div>
+            {cities.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">No city data yet.</p>
+            ) : (
+              <ul className="mt-4 space-y-2.5">
+                {cities.map(({ city, count, country, countryCode }) => (
+                  <li key={`${city}|${country}`}>
+                    <div className="flex justify-between text-sm font-semibold">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span aria-hidden>{flag(countryCode)}</span>
+                        <span className="truncate">{city}</span>
+                        <span className="truncate text-xs font-normal text-muted-foreground">
+                          {country ?? ""}
+                        </span>
+                      </span>
+                      <span className="text-muted-foreground">{count}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 rounded-full bg-background">
+                      <div
+                        className="h-1.5 rounded-full bg-brand/60"
+                        style={{ width: `${(count / (cities[0]?.count ?? 1)) * 100}%` }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-start justify-center rounded-2xl border border-dashed border-border bg-background p-6 shadow-card">
+            <span className="flex size-9 items-center justify-center rounded-full bg-brand-soft text-brand">
+              <Lock className="size-4" />
+            </span>
+            <h2 className="mt-4 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+              City-level analytics
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Upgrade to Pro to see city breakdowns across your QR codes.
+            </p>
+            <Link
+              to="/billing"
+              className="mt-4 flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-bold text-brand transition-colors hover:bg-brand-soft"
+            >
+              <Crown className="size-4" /> Upgrade to Pro
+            </Link>
+          </div>
+        )}
+
+        <div className="rounded-2xl border border-border bg-background p-6 shadow-card">
+          <div className="flex items-center gap-2">
+            <Globe className="size-4 text-brand" />
+            <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+              Top referrers
+            </h2>
+          </div>
+          {referrers.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">No referrer data yet.</p>
+          ) : (
+            <ul className="mt-4 space-y-2.5">
+              {referrers.map(([ref, count]) => (
+                <li key={ref}>
+                  <div className="flex justify-between text-sm font-semibold">
+                    <span className="truncate max-w-[200px]">{ref}</span>
+                    <span className="text-muted-foreground">{count}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-background">
+                    <div
+                      className="h-1.5 rounded-full bg-brand/60"
+                      style={{ width: `${(count / (referrers[0]?.[1] ?? 1)) * 100}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>

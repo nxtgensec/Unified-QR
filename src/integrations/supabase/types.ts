@@ -33,6 +33,127 @@ export type Database = {
   };
   public: {
     Tables: {
+      link_items: {
+        Row: {
+          created_at: string;
+          icon_emoji: string | null;
+          icon_url: string | null;
+          id: string;
+          section_id: string;
+          sort_order: number;
+          title: string;
+          url: string;
+          visible: boolean;
+        };
+        Insert: {
+          created_at?: string;
+          icon_emoji?: string | null;
+          icon_url?: string | null;
+          id?: string;
+          section_id: string;
+          sort_order?: number;
+          title?: string;
+          url?: string;
+          visible?: boolean;
+        };
+        Update: {
+          created_at?: string;
+          icon_emoji?: string | null;
+          icon_url?: string | null;
+          id?: string;
+          section_id?: string;
+          sort_order?: number;
+          title?: string;
+          url?: string;
+          visible?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "link_items_section_id_fkey";
+            columns: ["section_id"];
+            isOneToOne: false;
+            referencedRelation: "link_sections";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      link_pages: {
+        Row: {
+          avatar_url: string | null;
+          created_at: string;
+          id: string;
+          slug: string;
+          subtitle: string | null;
+          theme_bg: string;
+          theme_color: string;
+          theme_font: string;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          avatar_url?: string | null;
+          created_at?: string;
+          id?: string;
+          slug: string;
+          subtitle?: string | null;
+          theme_bg?: string;
+          theme_color?: string;
+          theme_font?: string;
+          title?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          avatar_url?: string | null;
+          created_at?: string;
+          id?: string;
+          slug?: string;
+          subtitle?: string | null;
+          theme_bg?: string;
+          theme_color?: string;
+          theme_font?: string;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      link_sections: {
+        Row: {
+          created_at: string;
+          id: string;
+          page_id: string;
+          sort_order: number;
+          title: string;
+          visible: boolean;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          page_id: string;
+          sort_order?: number;
+          title?: string;
+          visible?: boolean;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          page_id?: string;
+          sort_order?: number;
+          title?: string;
+          visible?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "link_sections_page_id_fkey";
+            columns: ["page_id"];
+            isOneToOne: false;
+            referencedRelation: "link_pages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -151,21 +272,30 @@ export type Database = {
       };
       scans: {
         Row: {
+          city: string | null;
           code_id: string;
+          country: string | null;
+          country_code: string | null;
           device: string | null;
           id: string;
           referrer: string | null;
           scanned_at: string;
         };
         Insert: {
+          city?: string | null;
           code_id: string;
+          country?: string | null;
+          country_code?: string | null;
           device?: string | null;
           id?: string;
           referrer?: string | null;
           scanned_at?: string;
         };
         Update: {
+          city?: string | null;
           code_id?: string;
+          country?: string | null;
+          country_code?: string | null;
           device?: string | null;
           id?: string;
           referrer?: string | null;
@@ -275,127 +405,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      link_pages: {
-        Row: {
-          created_at: string;
-          id: string;
-          slug: string;
-          subtitle: string | null;
-          theme_bg: string;
-          theme_color: string;
-          theme_font: string;
-          title: string;
-          updated_at: string;
-          user_id: string;
-          avatar_url: string | null;
-        };
-        Insert: {
-          avatar_url?: string | null;
-          created_at?: string;
-          id?: string;
-          slug: string;
-          subtitle?: string | null;
-          theme_bg?: string;
-          theme_color?: string;
-          theme_font?: string;
-          title?: string;
-          updated_at?: string;
-          user_id: string;
-        };
-        Update: {
-          avatar_url?: string | null;
-          created_at?: string;
-          id?: string;
-          slug?: string;
-          subtitle?: string | null;
-          theme_bg?: string;
-          theme_color?: string;
-          theme_font?: string;
-          title?: string;
-          updated_at?: string;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
-      link_sections: {
-        Row: {
-          created_at: string;
-          id: string;
-          page_id: string;
-          sort_order: number;
-          title: string;
-          visible: boolean;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          page_id: string;
-          sort_order?: number;
-          title?: string;
-          visible?: boolean;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          page_id?: string;
-          sort_order?: number;
-          title?: string;
-          visible?: boolean;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "link_sections_page_id_fkey";
-            columns: ["page_id"];
-            isOneToOne: false;
-            referencedRelation: "link_pages";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      link_items: {
-        Row: {
-          created_at: string;
-          icon_emoji: string | null;
-          icon_url: string | null;
-          id: string;
-          section_id: string;
-          sort_order: number;
-          title: string;
-          url: string;
-          visible: boolean;
-        };
-        Insert: {
-          created_at?: string;
-          icon_emoji?: string | null;
-          icon_url?: string | null;
-          id?: string;
-          section_id: string;
-          sort_order?: number;
-          title?: string;
-          url?: string;
-          visible?: boolean;
-        };
-        Update: {
-          created_at?: string;
-          icon_emoji?: string | null;
-          icon_url?: string | null;
-          id?: string;
-          section_id?: string;
-          sort_order?: number;
-          title?: string;
-          url?: string;
-          visible?: boolean;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "link_items_section_id_fkey";
-            columns: ["section_id"];
-            isOneToOne: false;
-            referencedRelation: "link_sections";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       visitor_counts: {
         Row: {
           count: number;
@@ -416,8 +425,22 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      delete_my_account: { Args: never; Returns: undefined };
+      get_team_members: {
+        Args: { p_team_id: string };
+        Returns: {
+          joined_at: string;
+          role: string;
+          team_id: string;
+          user_id: string;
+        }[];
+      };
+      get_total_visitor_count: { Args: never; Returns: number };
       increment_visitor_count: { Args: { p_day: string }; Returns: number };
-      get_total_visitor_count: { Args: Record<string, never>; Returns: number };
+      remove_team_member: {
+        Args: { p_team_id: string; p_user_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

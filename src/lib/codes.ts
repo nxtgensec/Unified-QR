@@ -79,6 +79,9 @@ export type ScanRow = {
   device: string | null;
   referrer: string | null;
   scanned_at: string;
+  city: string | null;
+  country: string | null;
+  country_code: string | null;
 };
 
 export async function scanCounts(ids: string[]) {
@@ -94,7 +97,7 @@ export async function listScans(ids: string[]) {
   if (ids.length === 0) return [] as ScanRow[];
   const { data, error } = await supabase
     .from("scans")
-    .select("code_id, device, referrer, scanned_at")
+    .select("code_id, device, referrer, scanned_at, city, country, country_code")
     .in("code_id", ids)
     .order("scanned_at", { ascending: false })
     .limit(5000);

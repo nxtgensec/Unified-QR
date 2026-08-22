@@ -15,12 +15,13 @@ export const PLANS: Record<PlanId, PlanDef> = {
     label: "Free",
     amount: 0,
     durationDays: null,
-    dynamicLimit: 2,
+    dynamicLimit: 3,
     features: [
       "Unlimited static QR codes",
-      "2 dynamic QR codes",
+      "3 dynamic QR codes",
       "Basic scan totals",
-      "PNG & SVG export",
+      "PNG & JPG export",
+      "Country-level analytics",
     ],
   },
   day: {
@@ -35,6 +36,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
       "All 5 export formats",
       "Custom colours & frames",
       "Logo embedding",
+      "City-level analytics",
       "Valid for 24 hours",
     ],
   },
@@ -51,6 +53,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
       "Custom colours, gradients & frames",
       "Logo embedding",
       "Bulk CSV import",
+      "City-level analytics",
       "Valid for 7 days",
     ],
   },
@@ -67,6 +70,8 @@ export const PLANS: Record<PlanId, PlanDef> = {
       "Custom colours, gradients & frames",
       "Logo embedding",
       "Bulk CSV import",
+      "City-level analytics",
+      "Priority support",
       "Valid for 30 days",
     ],
   },
@@ -83,6 +88,9 @@ export const PLANS: Record<PlanId, PlanDef> = {
       "Custom colours, gradients & frames",
       "Logo embedding",
       "Bulk CSV import",
+      "City-level analytics",
+      "Priority support",
+      "Best value — save 17%",
       "Valid for 365 days",
     ],
   },
@@ -97,7 +105,7 @@ export function getDynamicLimit(plan: string | null | undefined): number {
   if (plan === "week") return 15;
   if (plan === "month") return 50;
   if (plan === "year") return Infinity;
-  return 2;
+  return 3;
 }
 
 export function isPlanActive(

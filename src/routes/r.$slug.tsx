@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { recordScan } from "@/lib/recordScan.functions";
 
 export const Route = createFileRoute("/r/$slug")({
   ssr: false,
@@ -38,10 +39,12 @@ function RedirectPage() {
         setError("This link is inactive or does not exist.");
         return;
       }
-      await supabase.from("scans").insert({
-        code_id: data.id,
-        device: navigator.userAgent.slice(0, 200),
-        referrer: document.referrer || null,
+      void recordScan({
+        data: {
+          codeId: data.id,
+          device: navigator.userAgent.slice(0, 200),
+          referrer: document.referrer || null,
+        },
       });
       let dest = /^https?:\/\//i.test(data.destination)
         ? data.destination

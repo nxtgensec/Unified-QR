@@ -1,12 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { createServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { listCodes, listScans, shortUrl, toCsv, downloadCsv } from "@/lib/codes";
 import { templates } from "@/lib/qr";
+import { effectivePlan, PLANS, type PlanId } from "@/lib/plans";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Download, Loader2, Save } from "lucide-react";
+import { Download, FileJson, Loader2, Save, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -15,10 +28,10 @@ export const Route = createFileRoute("/_authenticated/settings")({
       {
         name: "description",
         content:
-          "Manage your UnifiedQR profile, default QR style and export every saved code and scan as CSV.",
+          "Manage your UnifiedQR profile, default QR style, export every saved code and scan as CSV or JSON, and manage your plan.",
       },
       { property: "og:title", content: "Workspace Settings — UnifiedQR" },
-      { property: "og:description", content: "Profile, default style and data export." },
+      { property: "og:description", content: "Profile, plan, data export and account controls." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -26,17 +39,31 @@ export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
 });
 
+const deleteAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { error } = await context.supabase.rpc("delete_my_account");
+    return { ok: !error, message: error?.message };
+  });
+
 const TEMPLATE_KEY = "unifiedqr:default-template";
 
 function SettingsPage() {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState("");
-  const [plan, setPlan] = useState("free");
+  const [plan, setPlan] = useState<PlanId>("free");
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [defaultTemplate, setDefaultTemplate] = useState(1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exportingCsv, setExportingCsv] = useState(false);
+  const [exportingJson, setExportingJson] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const activePlan = effectivePlan(plan, planExpiresAt);
+  const hasPaidPlan = activePlan !== "free";
 
   useEffect(() => {
     if (!user) return;
@@ -47,7 +74,7 @@ function SettingsPage() {
         .eq("id", user.id)
         .maybeSingle();
       setDisplayName(data?.display_name ?? "");
-      setPlan(data?.plan ?? "free");
+      setPlan((data?.plan as PlanId) ?? "free");
       setPlanExpiresAt(data?.plan_expires_at ?? null);
       const stored = Number(localStorage.getItem(TEMPLATE_KEY));
       if (stored) setDefaultTemplate(stored);
@@ -70,9 +97,9 @@ function SettingsPage() {
     toast.success("Settings saved");
   }
 
-  async function exportData() {
+  async function exportCsv() {
     if (!user) return;
-    setExporting(true);
+    setExportingCsv(true);
     try {
       const codes = await listCodes(user.id);
       const scans = await listScans(codes.map((c) => c.id));
@@ -105,11 +132,69 @@ function SettingsPage() {
           ]),
         ]),
       );
-      toast.success("Export downloaded");
+      toast.success("CSV export downloaded");
     } catch {
       toast.error("Export failed.");
     } finally {
-      setExporting(false);
+      setExportingCsv(false);
+    }
+  }
+
+  async function exportJson() {
+    if (!user) return;
+    setExportingJson(true);
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, plan, plan_expires_at")
+        .eq("id", user.id)
+        .maybeSingle();
+      const codes = await listCodes(user.id);
+      const scans = await listScans(codes.map((c) => c.id));
+      const payload = {
+        profile: profile ?? {
+          display_name: displayName.trim() || null,
+          plan,
+          plan_expires_at: planExpiresAt,
+        },
+        codes,
+        scans,
+        exportedAt: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "unifiedqr-export.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("JSON export downloaded");
+    } catch {
+      toast.error("Export failed.");
+    } finally {
+      setExportingJson(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      const result = await deleteAccount();
+      if (!result.ok) {
+        toast.error(result.message ?? "Could not delete your account.");
+        setDeleteDialogOpen(false);
+        return;
+      }
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    } catch {
+      toast.error("Could not delete your account.");
+      setDeleteDialogOpen(false);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -127,7 +212,7 @@ function SettingsPage() {
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
         title="Settings"
-        description="Your workspace profile, default QR style and a full export of your data."
+        description="Your workspace profile, current plan, exports of your data and account controls."
       />
 
       <div className="mt-8 space-y-4 rounded-2xl border border-border bg-background p-6 shadow-card">
@@ -171,18 +256,27 @@ function SettingsPage() {
           </select>
         </label>
 
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-xs text-muted-foreground">
-            Plan: <span className="font-bold uppercase text-foreground">{plan}</span>
-            {planExpiresAt && (
-              <span className="ml-1 text-muted-foreground">
-                (expires {new Date(planExpiresAt).toLocaleDateString()})
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Plan</span>
+            <span
+              className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                hasPaidPlan
+                  ? "bg-brand text-brand-foreground"
+                  : "border border-border text-muted-foreground"
+              }`}
+            >
+              {PLANS[activePlan].label}
+            </span>
+            {hasPaidPlan && planExpiresAt && (
+              <span className="text-xs text-muted-foreground">
+                expires {new Date(planExpiresAt).toLocaleDateString()}
               </span>
             )}
-          </span>
+          </div>
           <button
             type="button"
-            onClick={saveProfile}
+            onClick={() => void saveProfile()}
             disabled={saving}
             className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground disabled:opacity-60"
           >
@@ -192,33 +286,124 @@ function SettingsPage() {
         </div>
       </div>
 
+      {hasPaidPlan && (
+        <div className="mt-6 rounded-2xl border border-border bg-background p-6 shadow-card">
+          <h2 className="text-sm font-bold">Your plan</h2>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <span className="rounded-full bg-brand px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-brand-foreground">
+              {PLANS[activePlan].label}
+            </span>
+            {planExpiresAt && (
+              <span className="text-sm text-muted-foreground">
+                Active until{" "}
+                {new Date(planExpiresAt).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+            )}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Upgrade, switch or renew any time from the Billing page.
+          </p>
+        </div>
+      )}
+
       <div className="mt-6 rounded-2xl border border-border bg-background p-5 shadow-card">
         <h2 className="text-sm font-bold">Export your data</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          A CSV of every saved code, its short link and total scans.
+          Every saved code, its short link and total scans as a CSV — or everything including your
+          profile and raw scan rows as JSON.
         </p>
-        <button
-          type="button"
-          onClick={exportData}
-          disabled={exporting}
-          className="mt-4 flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold disabled:opacity-60"
-        >
-          {exporting ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Download className="size-4" />
-          )}
-          Download CSV
-        </button>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void exportCsv()}
+            disabled={exportingCsv || exportingJson}
+            className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold disabled:opacity-60"
+          >
+            {exportingCsv ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Download className="size-4" />
+            )}
+            Download CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => void exportJson()}
+            disabled={exportingCsv || exportingJson}
+            className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold disabled:opacity-60"
+          >
+            {exportingJson ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <FileJson className="size-4" />
+            )}
+            Download JSON
+          </button>
+        </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-border bg-background p-5 shadow-card">
-        <h2 className="text-sm font-bold">Branded short-link domain</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Custom domains for your short links are still being built. Links currently use this
-          workspace domain.
+      <div className="mt-6 rounded-2xl border border-red-500/30 bg-background p-5 shadow-card">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-red-600">
+          <Trash2 className="size-4" /> Delete account
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Permanently delete your account and all associated data. This action cannot be undone.
         </p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            value={deleteConfirmation}
+            onChange={(e) => setDeleteConfirmation(e.target.value)}
+            placeholder="Type DELETE to confirm"
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-red-500 sm:max-w-xs"
+          />
+          <button
+            type="button"
+            onClick={() => setDeleteDialogOpen(true)}
+            disabled={deleteConfirmation !== "DELETE" || deleting}
+            className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-red-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+            Delete forever
+          </button>
+        </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your account, every saved QR code and all scan history will be permanently removed.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDeleteAccount();
+              }}
+              disabled={deleting}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" /> Deleting…
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-4" /> Yes, delete my account
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
