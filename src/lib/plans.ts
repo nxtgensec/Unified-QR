@@ -6,6 +6,7 @@ export type PlanDef = {
   amount: number;
   durationDays: number | null;
   dynamicLimit: number | null;
+  bulkLimit: number;
   features: string[];
 };
 
@@ -16,9 +17,11 @@ export const PLANS: Record<PlanId, PlanDef> = {
     amount: 0,
     durationDays: null,
     dynamicLimit: 3,
+    bulkLimit: 20,
     features: [
       "Unlimited static QR codes",
       "3 dynamic QR codes",
+      "20 bulk-created codes per batch",
       "Basic scan totals",
       "PNG & JPG export",
       "Country-level analytics",
@@ -30,8 +33,10 @@ export const PLANS: Record<PlanId, PlanDef> = {
     amount: 9,
     durationDays: 1,
     dynamicLimit: 5,
+    bulkLimit: 50,
     features: [
       "5 dynamic QR codes",
+      "50 bulk-created codes per batch",
       "Full scan analytics",
       "All 5 export formats",
       "Custom colours & frames",
@@ -46,8 +51,10 @@ export const PLANS: Record<PlanId, PlanDef> = {
     amount: 49,
     durationDays: 7,
     dynamicLimit: 15,
+    bulkLimit: 100,
     features: [
       "15 dynamic QR codes",
+      "100 bulk-created codes per batch",
       "Full scan analytics",
       "All 5 export formats",
       "Custom colours, gradients & frames",
@@ -63,8 +70,10 @@ export const PLANS: Record<PlanId, PlanDef> = {
     amount: 99,
     durationDays: 30,
     dynamicLimit: 50,
+    bulkLimit: 200,
     features: [
       "50 dynamic QR codes",
+      "200 bulk-created codes per batch",
       "Full scan analytics",
       "All 5 export formats",
       "Custom colours, gradients & frames",
@@ -81,8 +90,10 @@ export const PLANS: Record<PlanId, PlanDef> = {
     amount: 999,
     durationDays: 365,
     dynamicLimit: null,
+    bulkLimit: 500,
     features: [
       "Unlimited dynamic QR codes",
+      "500 bulk-created codes per batch",
       "Full scan analytics",
       "All 5 export formats",
       "Custom colours, gradients & frames",
@@ -106,6 +117,14 @@ export function getDynamicLimit(plan: string | null | undefined): number {
   if (plan === "month") return 50;
   if (plan === "year") return Infinity;
   return 3;
+}
+
+export function getBulkLimit(plan: string | null | undefined): number {
+  if (plan === "day") return 50;
+  if (plan === "week") return 100;
+  if (plan === "month") return 200;
+  if (plan === "year") return 500;
+  return 20;
 }
 
 export function isPlanActive(

@@ -18,12 +18,12 @@ import {
 } from "lucide-react";
 import unifiedQrLogo from "@/assets/UnifiedQR_Logo.png";
 
-const nav: { to: string; label: string; icon: React.ReactNode; beta?: boolean }[] = [
+const nav: { to: string; label: string; icon: React.ReactNode }[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutGrid className="size-4" /> },
   { to: "/create", label: "Create QR Code", icon: <Plus className="size-4" /> },
-  { to: "/links", label: "Workspace", icon: <Link2 className="size-4" />, beta: true },
-  { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" />, beta: true },
-  { to: "/bulk", label: "Bulk Create", icon: <Layers className="size-4" />, beta: true },
+  { to: "/links", label: "Workspace", icon: <Link2 className="size-4" /> },
+  { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" /> },
+  { to: "/bulk", label: "Bulk Create", icon: <Layers className="size-4" /> },
   { to: "/billing", label: "Billing", icon: <CreditCard className="size-4" /> },
   { to: "/settings", label: "Settings", icon: <Settings className="size-4" /> },
 ];
@@ -107,11 +107,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 {item.icon}
                 <span className="flex-1">{item.label}</span>
-                {item.beta && (
-                  <span className="rounded-full bg-premium/10 px-2 py-0.5 text-[10px] font-bold text-premium">
-                    Beta
-                  </span>
-                )}
               </Link>
             );
           })}

@@ -284,21 +284,9 @@ function Home() {
           <h2 className="text-center text-2xl font-extrabold tracking-tight sm:text-4xl">
             How to create a free QR Code in 3 simple steps
           </h2>
-          <div className="mt-12 space-y-14">
+          <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {steps.map((s, i) => (
-              <div
-                key={s.key}
-                className={`grid items-center gap-8 lg:grid-cols-2 ${i % 2 ? "lg:[&>div:first-child]:order-2" : ""}`}
-              >
-                <div>
-                  <span className="grid size-10 place-items-center rounded-full bg-brand text-lg font-extrabold text-brand-foreground">
-                    {i + 1}
-                  </span>
-                  <h3 className="mt-4 text-xl font-bold sm:text-2xl">
-                    {t(`home.steps.${s.key}.title`)}
-                  </h3>
-                  <p className="mt-3 text-muted-foreground">{t(`home.steps.${s.key}.body`)}</p>
-                </div>
+              <div key={s.key} className="flex flex-col items-center text-center">
                 <img
                   src={s.img}
                   alt={t(`home.steps.${s.key}.title`)}
@@ -307,6 +295,13 @@ function Home() {
                   height={784}
                   className="w-full rounded-2xl border border-border shadow-card"
                 />
+                <span className="mt-5 grid size-10 place-items-center rounded-full bg-brand text-lg font-extrabold text-brand-foreground">
+                  {i + 1}
+                </span>
+                <h3 className="mt-3 text-xl font-bold sm:text-2xl">
+                  {t(`home.steps.${s.key}.title`)}
+                </h3>
+                <p className="mt-2 text-muted-foreground">{t(`home.steps.${s.key}.body`)}</p>
               </div>
             ))}
           </div>
