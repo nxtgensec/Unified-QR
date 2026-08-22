@@ -71,7 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-background transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto border-r border-border bg-background transition-transform lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -148,7 +148,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-64">
         <header className="flex h-16 items-center gap-3 border-b border-border bg-background px-4 lg:hidden">
           <button type="button" onClick={() => setOpen(true)} aria-label="Open menu">
             <Menu className="size-5" />
