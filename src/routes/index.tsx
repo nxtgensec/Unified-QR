@@ -23,9 +23,9 @@ import {
   Check,
   X,
 } from "lucide-react";
-import step1 from "@/assets/step-1-choose-type.jpg";
-import step2 from "@/assets/step-2-customize.jpg";
-import step3 from "@/assets/step-3-download.jpg";
+import step1 from "@/assets/step-1-choose-type.png";
+import step2 from "@/assets/step-2-customize.png";
+import step3 from "@/assets/step-3-download.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
