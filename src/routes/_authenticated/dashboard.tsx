@@ -15,6 +15,7 @@ import {
 } from "@/lib/qr";
 import { listCodes, scanCounts, getCodeWithLogo, shortUrl, type SavedCode } from "@/lib/codes";
 import { useAuth } from "@/hooks/useAuth";
+import { effectivePlan, type PlanId } from "@/lib/plans";
 import { toast } from "sonner";
 import {
   BarChart3,
@@ -22,11 +23,13 @@ import {
   Download,
   Link2,
   Loader2,
+  Lock,
   Pencil,
   Plus,
   RefreshCw,
   Trash2,
   ChevronDown,
+  Crown,
   FileImage,
   FileType,
   FileText,
@@ -92,9 +95,19 @@ function buildCodeSvg(c: SavedCode, size = 256) {
   );
 }
 
+type DlFormat = {
+  label: string;
+  ext: string;
+  icon: typeof FileImage;
+  pro: boolean;
+  handler: () => Promise<void>;
+};
+
 const CodeCard = memo(function CodeCard({
   code,
   count,
+  countsLoading,
+  isPro,
   userId,
   onRename,
   onEditDest,
@@ -103,6 +116,8 @@ const CodeCard = memo(function CodeCard({
 }: {
   code: SavedCode;
   count: number;
+  countsLoading: boolean;
+  isPro: boolean;
   userId: string | undefined;
   onRename: (c: SavedCode) => void;
   onEditDest: (c: SavedCode) => void;
@@ -116,31 +131,67 @@ const CodeCard = memo(function CodeCard({
       toast.success("Short link copied");
     }
   }, [code.slug]);
-  const handlePng = useCallback(async () => {
+
+  const fetchFull = useCallback(async () => {
     const full = await getCodeWithLogo(code.id, userId);
-    const c = full ?? code;
-    await downloadPng(buildCodeSvg(c, 1024), `${code.name}.png`);
+    return full ?? code;
   }, [code, userId]);
-  const handleSvg = useCallback(async () => {
-    const full = await getCodeWithLogo(code.id, userId);
-    const c = full ?? code;
-    downloadSvg(buildCodeSvg(c, 1024), `${code.name}.svg`);
-  }, [code, userId]);
-  const handleJpg = useCallback(async () => {
-    const full = await getCodeWithLogo(code.id, userId);
-    const c = full ?? code;
-    await downloadJpg(buildCodeSvg(c, 1024), `${code.name}.jpg`);
-  }, [code, userId]);
-  const handleWebp = useCallback(async () => {
-    const full = await getCodeWithLogo(code.id, userId);
-    const c = full ?? code;
-    await downloadWebp(buildCodeSvg(c, 1024), `${code.name}.webp`);
-  }, [code, userId]);
-  const handlePdf = useCallback(async () => {
-    const full = await getCodeWithLogo(code.id, userId);
-    const c = full ?? code;
-    await downloadPdf(buildCodeSvg(c, 1024), `${code.name}.pdf`);
-  }, [code, userId]);
+
+  const dlFormats: DlFormat[] = useMemo(
+    () => [
+      {
+        label: "PNG",
+        ext: "png",
+        icon: FileImage,
+        pro: false,
+        handler: async () => {
+          const c = await fetchFull();
+          await downloadPng(buildCodeSvg(c, 1024), `${code.name}.png`);
+        },
+      },
+      {
+        label: "SVG",
+        ext: "svg",
+        icon: FileType,
+        pro: false,
+        handler: async () => {
+          const c = await fetchFull();
+          downloadSvg(buildCodeSvg(c, 1024), `${code.name}.svg`);
+        },
+      },
+      {
+        label: "JPG",
+        ext: "jpg",
+        icon: FileImage,
+        pro: true,
+        handler: async () => {
+          const c = await fetchFull();
+          await downloadJpg(buildCodeSvg(c, 1024), `${code.name}.jpg`);
+        },
+      },
+      {
+        label: "WebP",
+        ext: "webp",
+        icon: FileImage,
+        pro: true,
+        handler: async () => {
+          const c = await fetchFull();
+          await downloadWebp(buildCodeSvg(c, 1024), `${code.name}.webp`);
+        },
+      },
+      {
+        label: "PDF",
+        ext: "pdf",
+        icon: FileText,
+        pro: true,
+        handler: async () => {
+          const c = await fetchFull();
+          await downloadPdf(buildCodeSvg(c, 1024), `${code.name}.pdf`);
+        },
+      },
+    ],
+    [fetchFull, code],
+  );
 
   const [dlOpen, setDlOpen] = useState(false);
   const dlRef = useCallback((node: HTMLDivElement | null) => {
@@ -193,7 +244,15 @@ const CodeCard = memo(function CodeCard({
           </button>
         )}
         <p className="mt-2 text-xs font-semibold">
-          {count} scan{count === 1 ? "" : "s"}
+          {countsLoading ? (
+            <span className="inline-flex items-center gap-1 text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" /> loading scans…
+            </span>
+          ) : (
+            <>
+              {count} scan{count === 1 ? "" : "s"}
+            </>
+          )}
         </p>
         <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
           <Action onClick={() => onRename(code)}>Rename</Action>
@@ -213,26 +272,67 @@ const CodeCard = memo(function CodeCard({
               />
             </Action>
             {dlOpen && (
-              <div className="absolute left-0 top-full z-40 mt-1 w-44 overflow-hidden rounded-xl border border-border bg-background shadow-float">
-                {[
-                  { label: "PNG", icon: FileImage, handler: handlePng },
-                  { label: "SVG", icon: FileType, handler: handleSvg },
-                  { label: "JPG", icon: FileImage, handler: handleJpg },
-                  { label: "WebP", icon: FileImage, handler: handleWebp },
-                  { label: "PDF", icon: FileText, handler: handlePdf },
-                ].map((f) => (
-                  <button
-                    key={f.label}
-                    type="button"
-                    onClick={() => {
-                      void f.handler();
-                      setDlOpen(false);
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition-colors hover:bg-background"
-                  >
-                    <f.icon className="size-3.5 text-muted-foreground" /> {f.label}
-                  </button>
-                ))}
+              <div className="absolute left-0 top-full z-40 mt-1 w-52 overflow-hidden rounded-xl border border-border bg-background shadow-float">
+                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Free formats
+                </div>
+                {dlFormats
+                  .filter((f) => !f.pro)
+                  .map((f) => (
+                    <button
+                      key={f.label}
+                      type="button"
+                      onClick={() => {
+                        void f.handler();
+                        setDlOpen(false);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition-colors hover:bg-muted"
+                    >
+                      <f.icon className="size-3.5 text-muted-foreground" /> {f.label}
+                      <span className="ml-auto text-[10px] text-muted-foreground">Free</span>
+                    </button>
+                  ))}
+                <div className="mx-2 my-1 border-t border-border" />
+                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Pro formats
+                </div>
+                {dlFormats
+                  .filter((f) => f.pro)
+                  .map((f) => {
+                    const locked = !isPro;
+                    return (
+                      <button
+                        key={f.label}
+                        type="button"
+                        disabled={locked}
+                        onClick={() => {
+                          if (locked) {
+                            toast.error("Pro feature", {
+                              description: "Upgrade your plan to unlock JPG, WebP & PDF exports.",
+                            });
+                            return;
+                          }
+                          void f.handler();
+                          setDlOpen(false);
+                        }}
+                        className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition-colors ${
+                          locked ? "cursor-not-allowed text-muted-foreground/50" : "hover:bg-muted"
+                        }`}
+                      >
+                        {locked ? (
+                          <Lock className="size-3.5 text-muted-foreground/50" />
+                        ) : (
+                          <f.icon className="size-3.5 text-muted-foreground" />
+                        )}
+                        {f.label}
+                        {locked && (
+                          <span className="ml-auto inline-flex items-center gap-0.5 rounded-full bg-premium/10 px-1.5 py-0.5 text-[10px] font-bold text-premium">
+                            <Crown className="size-2.5" /> Pro
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -252,14 +352,28 @@ function Dashboard() {
   const [codes, setCodes] = useState<SavedCode[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [countsLoading, setCountsLoading] = useState(true);
+  const [plan, setPlan] = useState<PlanId>("free");
+
+  const isPro = plan !== "free";
 
   async function refresh() {
     if (!user) return;
     try {
       const rows = await listCodes(user.id);
-      const scanMap = await scanCounts(rows.map((r) => r.id));
       setCodes(rows);
-      setCounts(scanMap);
+      setLoading(false);
+      setCountsLoading(true);
+
+      scanCounts(rows.map((r) => r.id))
+        .then((scanMap) => {
+          setCounts(scanMap);
+          setCountsLoading(false);
+        })
+        .catch((e) => {
+          console.error("[Dashboard] scanCounts error:", e);
+          setCountsLoading(false);
+        });
     } catch (e) {
       console.error("[Dashboard] refresh error:", e);
       const msg =
@@ -275,7 +389,16 @@ function Dashboard() {
   }
 
   useEffect(() => {
+    if (!user) return;
     void refresh();
+    supabase
+      .from("profiles")
+      .select("plan, plan_expires_at")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setPlan(effectivePlan(data?.plan, data?.plan_expires_at));
+      });
   }, [user]);
 
   async function remove(id: string) {
@@ -381,7 +504,12 @@ function Dashboard() {
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <Stat label="Saved codes" value={codes.length} icon={<Link2 className="size-4" />} />
         <Stat label="Dynamic codes" value={dynamicCount} icon={<Pencil className="size-4" />} />
-        <Stat label="Total scans" value={totalScans} icon={<BarChart3 className="size-4" />} />
+        <Stat
+          label="Total scans"
+          value={totalScans}
+          loading={countsLoading}
+          icon={<BarChart3 className="size-4" />}
+        />
       </div>
 
       <section className="mt-10">
@@ -391,6 +519,7 @@ function Dashboard() {
             type="button"
             onClick={() => {
               setLoading(true);
+              setCountsLoading(true);
               void refresh();
             }}
             disabled={loading}
@@ -424,6 +553,8 @@ function Dashboard() {
                 key={c.id}
                 code={c}
                 count={counts[c.id] ?? 0}
+                countsLoading={countsLoading}
+                isPro={isPro}
                 userId={user?.id}
                 onRename={handleRename}
                 onEditDest={handleEditDest}
@@ -450,7 +581,7 @@ function Dashboard() {
 
       {confirmDelete && (
         <Modal onClose={() => setConfirmDelete(null)}>
-          <h2 className="text-lg font-extrabold">Delete “{confirmDelete.name}”?</h2>
+          <h2 className="text-lg font-extrabold">Delete "{confirmDelete.name}"?</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             This cannot be undone. Any printed version of this code will stop working.
           </p>
@@ -555,13 +686,31 @@ function PromptDialog({
   );
 }
 
-function Stat({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
+function Stat({
+  label,
+  value,
+  loading,
+  icon,
+}: {
+  label: string;
+  value: number;
+  loading?: boolean;
+  icon: React.ReactNode;
+}) {
   return (
     <div className="rounded-2xl border border-border bg-background p-5 shadow-card">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {icon} {label}
       </p>
-      <p className="mt-2 text-3xl font-extrabold">{value}</p>
+      <p className="mt-2 text-3xl font-extrabold">
+        {loading ? (
+          <span className="inline-flex items-center gap-1.5 text-lg text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> …
+          </span>
+        ) : (
+          value
+        )}
+      </p>
     </div>
   );
 }
