@@ -51,7 +51,7 @@ export async function listCodes(userId?: string) {
   const query = supabase
     .from("qr_codes")
     .select(
-      "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,created_at",
+      "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,logo_url,created_at",
     )
     .eq("user_id", uid)
     .order("created_at", { ascending: false });

@@ -4,8 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useLocale, SUPPORTED_LOCALES } from "@/lib/locale";
 import unifiedQrLogo from "@/assets/UnifiedQR_Logo.png";
 
-const nav: { label: string; to: string }[] = [
-  { label: "Home", to: "/" },
+const nav: { label: string; href: string }[] = [
+  { label: "Home", href: "/#hero" },
+  { label: "About", href: "/#about" },
+  { label: "How to create", href: "/#how-to-create" },
+  { label: "QR Types", href: "/#qr-types" },
+  { label: "FAQs", href: "/#faq" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export function Logo() {
@@ -98,14 +103,13 @@ export function Header() {
           <Logo />
           <nav className="hidden items-center gap-6 lg:flex">
             {nav.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                activeProps={{ className: "text-brand" }}
+              <a
+                key={item.href}
+                href={item.href}
                 className="text-sm font-semibold text-foreground/80 transition-colors hover:text-brand"
               >
                 {item.label}
-              </Link>
+              </a>
             ))}
           </nav>
         </div>
@@ -144,14 +148,14 @@ export function Header() {
         <div className="border-t border-border bg-background px-4 py-4 lg:hidden">
           <nav className="flex flex-col gap-3">
             {nav.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
+              <a
+                key={item.href}
+                href={item.href}
                 onClick={() => setOpen(false)}
                 className="text-sm font-semibold text-foreground/80"
               >
                 {item.label}
-              </Link>
+              </a>
             ))}
             <LanguageSwitcher className="py-1.5" />
             <Link

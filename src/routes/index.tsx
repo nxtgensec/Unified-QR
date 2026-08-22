@@ -153,7 +153,7 @@ function Home() {
   return (
     <>
       <VisitorBadge />
-      <section className="bg-gradient-to-b from-brand-soft/70 to-background pb-16 pt-12">
+      <section id="hero" className="bg-gradient-to-b from-brand-soft/70 to-background pb-16 pt-12">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
@@ -279,7 +279,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="bg-background py-20">
+      <section id="how-to-create" className="bg-background py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <h2 className="text-center text-2xl font-extrabold tracking-tight sm:text-4xl">
             How to create a free QR Code in 3 simple steps
@@ -432,7 +432,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="py-20">
+      <section id="faq" className="py-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <h2 className="text-center text-2xl font-extrabold tracking-tight sm:text-4xl">
             {t("home.faq.title")}
@@ -452,7 +452,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="py-20">
+      <section id="contact" className="py-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6">
           <div className="overflow-hidden rounded-3xl border border-border bg-background shadow-card">
             <div className="grid items-center gap-8 p-8 sm:p-12 lg:grid-cols-[1fr_auto]">
