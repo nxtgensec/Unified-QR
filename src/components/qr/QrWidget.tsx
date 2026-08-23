@@ -62,10 +62,12 @@ export type QrWidgetDesign = {
 export function QrWidget({
   onDesignChange,
   hideSaveSection,
+  hideTypeTabs,
   initialTemplateId,
 }: {
   onDesignChange?: (design: QrWidgetDesign) => void;
   hideSaveSection?: boolean;
+  hideTypeTabs?: boolean;
   initialTemplateId?: number | undefined;
 } = {}) {
   const [type, setType] = useState<QrType>("url");
@@ -284,15 +286,19 @@ export function QrWidget({
       id="generator"
       className="overflow-hidden rounded-3xl border border-border bg-background shadow-float"
     >
-      <div className="border-b border-border px-4 pt-4 sm:px-6">
-        <TypeTabs active={type} onChange={setType} />
-      </div>
+      {!hideTypeTabs && (
+        <div className="border-b border-border px-4 pt-4 sm:px-6">
+          <TypeTabs active={type} onChange={setType} />
+        </div>
+      )}
 
       {/* ── Input at top ── */}
-      <div className="border-b border-border px-5 pt-5 sm:px-8">
-        <p className="mb-2 text-sm font-semibold text-muted-foreground">{activeType.tagline}</p>
-        <TypeForm type={type} form={form} setForm={setForm} />
-      </div>
+      {!hideTypeTabs && (
+        <div className="border-b border-border px-5 pt-5 sm:px-8">
+          <p className="mb-2 text-sm font-semibold text-muted-foreground">{activeType.tagline}</p>
+          <TypeForm type={type} form={form} setForm={setForm} />
+        </div>
+      )}
 
       {/* ── QR section: carousels + preview ── */}
       <div className="flex flex-col lg:flex-row">

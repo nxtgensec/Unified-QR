@@ -624,6 +624,7 @@ function BulkPage() {
           <QrWidget
             onDesignChange={setBulkDesign}
             hideSaveSection
+            hideTypeTabs
             initialTemplateId={bulkDesign?.templateId}
           />
           <div className="mt-6 flex items-center justify-between">
