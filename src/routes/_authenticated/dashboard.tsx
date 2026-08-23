@@ -33,6 +33,8 @@ import {
   FileImage,
   FileType,
   FileText,
+  Layers,
+  QrCode,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
@@ -360,6 +362,23 @@ function Dashboard() {
   const [countsLoading, setCountsLoading] = useState(true);
   const [plan, setPlan] = useState<PlanId>("free");
 
+  const [bulkCodes, setBulkCodes] = useState<SavedCode[]>([]);
+  const [bulkCounts, setBulkCounts] = useState<Record<string, number>>({});
+
+  const [workspacePages, setWorkspacePages] = useState<
+    { id: string; title: string; slug: string }[]
+  >([]);
+  const [totalViews, setTotalViews] = useState(0);
+  const [totalClicks, setTotalClicks] = useState(0);
+
+  const [dialog, setDialog] = useState<{
+    title: string;
+    label: string;
+    value: string;
+    onSave: (v: string) => Promise<void>;
+  } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<SavedCode | null>(null);
+
   const isPro = plan !== "free";
 
   async function refresh() {
@@ -379,6 +398,51 @@ function Dashboard() {
           console.error("[Dashboard] scanCounts error:", e);
           setCountsLoading(false);
         });
+
+      const bulk = rows.filter((r) => r.source === "bulk");
+      setBulkCodes(bulk);
+      if (bulk.length > 0) {
+        scanCounts(bulk.map((r) => r.id))
+          .then(setBulkCounts)
+          .catch(() => {});
+      }
+
+      const { data: pagesData } = await supabase
+        .from("link_pages")
+        .select("id, title, slug")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      const pages = (pagesData ?? []) as { id: string; title: string; slug: string }[];
+      setWorkspacePages(pages);
+
+      if (pages.length > 0) {
+        const pageIds = pages.map((p) => p.id);
+        const [viewsData, clicksData] = await Promise.all([
+          supabase
+            .from("link_page_views")
+            .select("id", { count: "exact", head: true })
+            .in("page_id", pageIds),
+          supabase
+            .from("link_item_clicks")
+            .select("id", { count: "exact", head: true })
+            .in(
+              "item_id",
+              (
+                await supabase
+                  .from("link_items")
+                  .select("id")
+                  .in(
+                    "section_id",
+                    (
+                      await supabase.from("link_sections").select("id").in("page_id", pageIds)
+                    ).data?.map((s) => s.id) ?? [],
+                  )
+              ).data?.map((i) => i.id) ?? [],
+            ),
+        ]);
+        setTotalViews(viewsData.count ?? 0);
+        setTotalClicks(clicksData.count ?? 0);
+      }
     } catch (e) {
       console.error("[Dashboard] refresh error:", e);
       const msg =
@@ -387,7 +451,7 @@ function Dashboard() {
           : typeof e === "string"
             ? e
             : (JSON.stringify(e) ?? "Unknown error");
-      toast.error("Could not load your codes.", { description: msg });
+      toast.error("Could not load your data.", { description: msg });
     } finally {
       setLoading(false);
     }
@@ -454,92 +518,240 @@ function Dashboard() {
     setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, name: value } : r)));
     toast.success("Renamed");
   }
-  const handleRename = useCallback(
-    (c: SavedCode) =>
-      setDialog({
-        title: "Rename QR Code",
-        label: "Name",
-        value: c.name,
-        onSave: (v) => saveName(c, v),
-      }),
-    [],
-  );
-  const handleEditDest = useCallback(
-    (c: SavedCode) =>
-      setDialog({
-        title: "Edit destination",
-        label: "Destination URL",
-        value: c.destination ?? "",
-        onSave: (v) => saveDestination(c, v),
-      }),
-    [],
-  );
-  const handleToggleActive = useCallback((c: SavedCode) => void toggleActive(c), []);
-  const handleConfirmDelete = useCallback((c: SavedCode) => setConfirmDelete(c), []);
-
-  const [dialog, setDialog] = useState<{
-    title: string;
-    label: string;
-    value: string;
-    onSave: (v: string) => Promise<void>;
-  } | null>(null);
-
-  const [confirmDelete, setConfirmDelete] = useState<SavedCode | null>(null);
 
   const totalScans = Object.values(counts).reduce((a, b) => a + b, 0);
   const dynamicCount = codes.filter((c) => c.is_dynamic).length;
+  const regularCodes = codes.filter((c) => c.source !== "bulk");
+  const bulkTotalScans = Object.values(bulkCounts).reduce((a, b) => a + b, 0);
+  const batches = useMemo(() => {
+    const set = new Set<string>();
+    for (const c of bulkCodes) if (c.batch_id) set.add(c.batch_id);
+    return set.size;
+  }, [bulkCodes]);
+  const recentCodes = useMemo(() => codes.filter((c) => c.source !== "bulk").slice(0, 3), [codes]);
+  const recentBulk = useMemo(() => bulkCodes.slice(0, 3), [bulkCodes]);
+
+  if (loading) {
+    return (
+      <div className="grid min-h-[60vh] place-items-center">
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> Loading dashboard…
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Your QR Codes</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Saved codes, dynamic links and scan totals for {user?.email}
+            Overview of everything you've built — {user?.email}
           </p>
         </div>
-        <Link
-          to="/create"
-          className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card"
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            setCountsLoading(true);
+            void refresh();
+          }}
+          className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-background disabled:opacity-50"
         >
-          <Plus className="size-4" /> New QR Code
-        </Link>
+          <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Stat label="Saved codes" value={codes.length} icon={<Link2 className="size-4" />} />
-        <Stat label="Dynamic codes" value={dynamicCount} icon={<Pencil className="size-4" />} />
-        <Stat
-          label="Total scans"
-          value={totalScans}
-          loading={countsLoading}
-          icon={<BarChart3 className="size-4" />}
-        />
-      </div>
-
-      <section className="mt-10">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-extrabold tracking-tight">Your Codes</h2>
-          <button
-            type="button"
-            onClick={() => {
-              setLoading(true);
-              setCountsLoading(true);
-              void refresh();
-            }}
-            disabled={loading}
-            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-background disabled:opacity-50"
-          >
-            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
-        </div>
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Loading your codes…
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        {/* ── QR Codes Card ── */}
+        <div className="flex flex-col rounded-2xl border border-border bg-background p-6 shadow-card">
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-xl bg-brand-soft text-brand">
+              <QrCode className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-extrabold">QR Codes</h2>
+              <p className="text-xs text-muted-foreground">Create, manage & track scans</p>
+            </div>
           </div>
-        ) : codes.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            <MiniStat label="Codes" value={regularCodes.length} loading={loading} />
+            <MiniStat label="Dynamic" value={dynamicCount} loading={loading} />
+            <MiniStat label="Scans" value={totalScans} loading={countsLoading} />
+          </div>
+
+          {recentCodes.length > 0 && (
+            <div className="mt-5 space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Recent
+              </p>
+              {recentCodes.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center gap-2 rounded-lg border border-border/50 px-3 py-2"
+                >
+                  <span className="min-w-0 flex-1 truncate text-xs font-semibold">{c.name}</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {counts[c.id] ?? 0} scans
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-auto pt-5 flex gap-2">
+            <Link
+              to="/create"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground"
+            >
+              <Plus className="size-3" /> Create
+            </Link>
+            <Link
+              to="/analytics"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-bold transition-colors hover:bg-background"
+            >
+              <BarChart3 className="size-3" /> Analytics
+            </Link>
+          </div>
+        </div>
+
+        {/* ── Bulk Card ── */}
+        <div className="flex flex-col rounded-2xl border border-border bg-background p-6 shadow-card">
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-xl bg-blue-500/10 text-blue-500">
+              <Layers className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-extrabold">Bulk Creation</h2>
+              <p className="text-xs text-muted-foreground">Batch generate QR codes</p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            <MiniStat label="Codes" value={bulkCodes.length} loading={loading} />
+            <MiniStat label="Batches" value={batches} loading={loading} />
+            <MiniStat label="Scans" value={bulkTotalScans} loading={countsLoading} />
+          </div>
+
+          {recentBulk.length > 0 && (
+            <div className="mt-5 space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Recent
+              </p>
+              {recentBulk.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center gap-2 rounded-lg border border-border/50 px-3 py-2"
+                >
+                  <span className="min-w-0 flex-1 truncate text-xs font-semibold">{c.name}</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {bulkCounts[c.id] ?? 0} scans
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {bulkCodes.length === 0 && (
+            <div className="mt-5 flex-1 rounded-xl border border-dashed border-border p-4 text-center">
+              <p className="text-xs text-muted-foreground">
+                No bulk codes yet — create batches of QR codes at once.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-auto pt-5 flex gap-2">
+            <Link
+              to="/bulk"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground"
+            >
+              <Plus className="size-3" /> Bulk Create
+            </Link>
+            <Link
+              to="/bulk-analytics"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-bold transition-colors hover:bg-background"
+            >
+              <BarChart3 className="size-3" /> Analytics
+            </Link>
+          </div>
+        </div>
+
+        {/* ── Workspace Card ── */}
+        <div className="flex flex-col rounded-2xl border border-border bg-background p-6 shadow-card">
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600">
+              <Link2 className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-extrabold">Workspace</h2>
+              <p className="text-xs text-muted-foreground">Multi-link pages & bio links</p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            <MiniStat label="Pages" value={workspacePages.length} loading={loading} />
+            <MiniStat label="Views" value={totalViews} loading={loading} />
+            <MiniStat label="Clicks" value={totalClicks} loading={loading} />
+          </div>
+
+          {workspacePages.length > 0 && (
+            <div className="mt-5 space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Your pages
+              </p>
+              {workspacePages.slice(0, 3).map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-2 rounded-lg border border-border/50 px-3 py-2"
+                >
+                  <span className="min-w-0 flex-1 truncate text-xs font-semibold">{p.title}</span>
+                  <span className="text-[10px] text-muted-foreground">/{p.slug}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {workspacePages.length === 0 && (
+            <div className="mt-5 flex-1 rounded-xl border border-dashed border-border p-4 text-center">
+              <p className="text-xs text-muted-foreground">
+                No workspace pages yet — create a multi-link page with one QR code.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-auto pt-5 flex gap-2">
+            <Link
+              to="/links"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground"
+            >
+              <Plus className="size-3" /> Editor
+            </Link>
+            <Link
+              to="/workspace-analytics"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-bold transition-colors hover:bg-background"
+            >
+              <BarChart3 className="size-3" /> Analytics
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── All QR Codes Section ── */}
+      <section className="mt-12">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-extrabold tracking-tight">All QR Codes</h2>
+          <Link
+            to="/create"
+            className="flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground"
+          >
+            <Plus className="size-3" /> New QR Code
+          </Link>
+        </div>
+        {codes.length === 0 ? (
+          <div className="mt-4 rounded-2xl border border-dashed border-border p-10 text-center">
             <p className="font-semibold">No saved codes yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Build one on the generator and hit "Save to my account".
@@ -552,7 +764,7 @@ function Dashboard() {
             </Link>
           </div>
         ) : (
-          <ul className="grid gap-4 md:grid-cols-2">
+          <ul className="mt-4 grid gap-4 md:grid-cols-2">
             {codes.map((c) => (
               <CodeCard
                 key={c.id}
@@ -561,10 +773,24 @@ function Dashboard() {
                 countsLoading={countsLoading}
                 isPro={isPro}
                 userId={user?.id}
-                onRename={handleRename}
-                onEditDest={handleEditDest}
-                onToggleActive={handleToggleActive}
-                onConfirmDelete={handleConfirmDelete}
+                onRename={(c) =>
+                  setDialog({
+                    title: "Rename QR Code",
+                    label: "Name",
+                    value: c.name,
+                    onSave: (v) => saveName(c, v),
+                  })
+                }
+                onEditDest={(c) =>
+                  setDialog({
+                    title: "Edit destination",
+                    label: "Destination URL",
+                    value: c.destination ?? "",
+                    onSave: (v) => saveDestination(c, v),
+                  })
+                }
+                onToggleActive={(c) => void toggleActive(c)}
+                onConfirmDelete={(c) => setConfirmDelete(c)}
               />
             ))}
           </ul>
@@ -611,6 +837,25 @@ function Dashboard() {
           </div>
         </Modal>
       )}
+    </div>
+  );
+}
+
+function MiniStat({ label, value, loading }: { label: string; value: number; loading?: boolean }) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-background p-3 text-center">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 text-xl font-extrabold">
+        {loading ? (
+          <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+            <Loader2 className="size-3 animate-spin" />
+          </span>
+        ) : (
+          value.toLocaleString()
+        )}
+      </p>
     </div>
   );
 }
@@ -688,35 +933,6 @@ function PromptDialog({
         </div>
       </form>
     </Modal>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  loading,
-  icon,
-}: {
-  label: string;
-  value: number;
-  loading?: boolean;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-border bg-background p-5 shadow-card">
-      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {icon} {label}
-      </p>
-      <p className="mt-2 text-3xl font-extrabold">
-        {loading ? (
-          <span className="inline-flex items-center gap-1.5 text-lg text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> …
-          </span>
-        ) : (
-          value
-        )}
-      </p>
-    </div>
   );
 }
 

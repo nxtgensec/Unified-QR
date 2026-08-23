@@ -39,7 +39,14 @@ function isSection(item: NavEntry): item is NavSection {
 
 const nav: NavEntry[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutGrid className="size-4" /> },
-  { to: "/create", label: "Create QR Code", icon: <Plus className="size-4" /> },
+  {
+    label: "QR Codes",
+    icon: <QrCode className="size-4" />,
+    children: [
+      { to: "/create", label: "Create", icon: <Plus className="size-3" /> },
+      { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-3" /> },
+    ],
+  },
   {
     label: "Workspace",
     icon: <Link2 className="size-4" />,
@@ -48,7 +55,6 @@ const nav: NavEntry[] = [
       { to: "/workspace-analytics", label: "Analytics", icon: <BarChart3 className="size-3" /> },
     ],
   },
-  { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" /> },
   {
     label: "Bulk",
     icon: <Layers className="size-4" />,
@@ -104,6 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/bulk")) return "Bulk";
     if (pathname.startsWith("/links") || pathname.startsWith("/workspace-analytics"))
       return "Workspace";
+    if (pathname.startsWith("/create") || pathname.startsWith("/analytics")) return "QR Codes";
     return null;
   });
 
@@ -232,14 +239,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col lg:ml-64">
-        <header className="flex h-16 items-center gap-3 border-b border-border bg-background px-4 lg:hidden">
-          <button type="button" onClick={() => setOpen(true)} aria-label="Open menu">
-            <Menu className="size-5" />
-          </button>
+        <header className="flex h-16 items-center justify-between border-b border-border bg-background px-4 lg:hidden">
           <span className="flex items-center gap-2 font-extrabold tracking-tight">
             <img src={unifiedQrLogo} alt="UnifiedQR logo" className="size-6 shrink-0" />
             UnifiedQR
           </span>
+          <button type="button" onClick={() => setOpen(true)} aria-label="Open menu">
+            <Menu className="size-5" />
+          </button>
         </header>
         <main className="min-w-0 flex-1 pb-20 lg:pb-0">{children}</main>
       </div>
