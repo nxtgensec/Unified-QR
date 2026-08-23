@@ -1,45 +1,42 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { makeSlug, parseCsv, shortUrl, toCsv, downloadCsv } from "@/lib/codes";
+import {
+  makeSlug,
+  parseCsv,
+  shortUrl,
+  toCsv,
+  downloadCsv,
+  listScans,
+  type ScanRow,
+} from "@/lib/codes";
 import { getDynamicLimit, getBulkLimit, effectivePlan } from "@/lib/plans";
 import {
   renderQrSvg,
   svgToDataUrl,
-  templates,
-  bodyShapeOptions,
-  eyeShapeOptions,
-  frameStyleOptions,
   downloadPng,
   downloadSvg,
   downloadJpg,
   downloadWebp,
-  type QrDesign,
-  type BodyShape,
-  type EyeShape,
-  type GradientConfig,
-  type FrameConfig,
 } from "@/lib/qr";
+import { QrWidget, type QrWidgetDesign } from "@/components/qr/QrWidget";
 import { toast } from "sonner";
 import JSZip from "jszip";
 import {
   AlertTriangle,
+  BarChart3,
   Check,
   ChevronRight,
-  ChevronDown,
   FileSpreadsheet,
+  Globe,
   Loader2,
   Upload,
   Download,
   Eye,
-  Sparkles,
   Package,
   X,
-  Palette,
-  Image,
-  Frame,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/bulk")({
@@ -74,7 +71,7 @@ type StepId = "upload" | "review" | "design" | "preview" | "import" | "results";
 const STEPS: { id: StepId; label: string; icon: typeof Upload }[] = [
   { id: "upload", label: "Upload", icon: FileSpreadsheet },
   { id: "review", label: "Review", icon: Eye },
-  { id: "design", label: "Design", icon: Sparkles },
+  { id: "design", label: "Design", icon: Eye },
   { id: "preview", label: "Preview", icon: Eye },
   { id: "import", label: "Create", icon: Package },
   { id: "results", label: "Results", icon: Check },
@@ -98,18 +95,19 @@ function BulkPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
-  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<StepId>("upload");
   const [rows, setRows] = useState<Parsed[]>([]);
   const [fileName, setFileName] = useState("");
-  const [templateId, setTemplateId] = useState(1);
-  const [design, setDesign] = useState<Partial<QrDesign>>({});
+  const [bulkDesign, setBulkDesign] = useState<QrWidgetDesign | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [results, setResults] = useState<ImportResult[]>([]);
   const [bulkLimit, setBulkLimit] = useState(20);
   const [userPlan, setUserPlan] = useState("free");
+
+  const [bulkScans, setBulkScans] = useState<ScanRow[]>([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const stepIdx = STEPS.findIndex((s) => s.id === step);
 
@@ -126,6 +124,37 @@ function BulkPage() {
         setBulkLimit(getBulkLimit(plan));
       });
   });
+
+  const createdIds = results.filter((r) => r.ok).map((r) => r.name);
+
+  useEffect(() => {
+    if (step !== "results" || createdIds.length === 0) return;
+    setAnalyticsLoading(true);
+    const slugIds = results.filter((r) => r.ok && r.slug).map((r) => r.name);
+    if (slugIds.length === 0) {
+      setAnalyticsLoading(false);
+      return;
+    }
+
+    supabase
+      .from("qr_codes")
+      .select("id")
+      .eq("user_id", user?.id ?? "")
+      .eq("is_dynamic", true)
+      .order("created_at", { ascending: false })
+      .limit(500)
+      .then(async ({ data }) => {
+        const ids = (data ?? []).map((r) => r.id);
+        try {
+          const scans = await listScans(ids);
+          setBulkScans(scans);
+        } catch {
+          // ignore
+        } finally {
+          setAnalyticsLoading(false);
+        }
+      });
+  }, [step, user]);
 
   function handleFile(file: File) {
     const reader = new FileReader();
@@ -195,47 +224,23 @@ function BulkPage() {
     );
   }
 
-  const tplBase = templates.find((t) => t.id === templateId) ?? templates[0]!;
-  const fullDesign = {
-    templateId,
-    fg: design.fg ?? tplBase.fg,
-    bg: design.bg ?? tplBase.bg,
-    eye: design.eye ?? tplBase.eye,
-    bodyShape: design.bodyShape ?? tplBase.shape,
-    eyeShape: design.eyeShape ?? tplBase.eyeShape,
-    gradient: design.gradient ?? null,
-    logo: design.logo ?? null,
-    frame: design.frame ?? null,
-  };
+  function getDesign() {
+    if (!bulkDesign) return { templateId: 1 };
+    return {
+      templateId: bulkDesign.templateId,
+      fg: bulkDesign.fg,
+      bg: bulkDesign.bg,
+      eye: bulkDesign.eye,
+      bodyShape: bulkDesign.bodyShape,
+      eyeShape: bulkDesign.eyeShape,
+      gradient: bulkDesign.gradient,
+      logo: bulkDesign.logo,
+      frame: bulkDesign.frame,
+    };
+  }
 
   function renderSvgFor(destination: string, size: number, margin: number): string {
-    return renderQrSvg(destination, fullDesign, { size, margin });
-  }
-
-  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 500000) {
-      toast.error("Logo must be under 500KB.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result);
-      setDesign((prev) => ({ ...prev, logo: dataUrl }));
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  }
-
-  function removeLogo() {
-    setDesign((prev) => ({ ...prev, logo: null }));
-  }
-
-  function resetAllCustom() {
-    setDesign({});
-    const tpl = templates.find((t) => t.id === templateId) ?? templates[0]!;
-    setTemplateId(tpl.id);
+    return renderQrSvg(destination, getDesign(), { size, margin });
   }
 
   async function downloadSingleFormat(
@@ -295,7 +300,13 @@ function BulkPage() {
     }
     if (allowed.length < rows.length) {
       toast.warning(
-        "Only " + allowed.length + " of " + rows.length + " codes will be created (plan limit: " + limit + ").",
+        "Only " +
+          allowed.length +
+          " of " +
+          rows.length +
+          " codes will be created (plan limit: " +
+          limit +
+          ").",
       );
     }
 
@@ -310,6 +321,7 @@ function BulkPage() {
       }
     });
 
+    const d = getDesign();
     const batchSize = 25;
     const importResults: ImportResult[] = [];
 
@@ -323,7 +335,17 @@ function BulkPage() {
         is_dynamic: true,
         slug: makeSlug(),
         destination: r.destination,
-        template_id: templateId,
+        template_id: d.templateId,
+        fg: d.fg ?? null,
+        bg: d.bg ?? null,
+        body_shape: d.bodyShape ?? null,
+        eye_shape: d.eyeShape ?? null,
+        gradient_type: d.gradient?.type ?? null,
+        gradient_color: d.gradient?.color ?? null,
+        gradient_angle: d.gradient?.angle ?? null,
+        frame_text: d.frame?.text ?? null,
+        frame_style: d.frame?.style ?? null,
+        logo_url: d.logo ?? null,
       }));
 
       const { data, error } = await supabase.from("qr_codes").insert(payload).select("name, slug");
@@ -371,7 +393,7 @@ function BulkPage() {
       if (format === "svg") {
         zip.file(`${safeName}.svg`, svg);
       } else {
-        const img = window.Image ? new window.Image() : document.createElement("img");
+        const img = new Image();
         img.crossOrigin = "anonymous";
         await new Promise<void>((resolve, reject) => {
           img.onload = () => resolve();
@@ -404,7 +426,7 @@ function BulkPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `unifiedqr-bulk-codes.${format === "svg" ? "zip" : "zip"}`;
+    a.download = "unifiedqr-bulk-codes.zip";
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`ZIP (${format.toUpperCase()}) downloaded`);
@@ -422,8 +444,6 @@ function BulkPage() {
     );
     toast.success("CSV downloaded");
   }
-
-  const activeTpl = templates.find((t) => t.id === templateId) ?? templates[0]!;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
@@ -473,24 +493,24 @@ function BulkPage() {
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
             <div>
               <p className="font-semibold text-amber-800 dark:text-amber-200">
-                Bulk-created QR codes are static
+                Bulk-created QR codes are dynamic
               </p>
               <p className="mt-1 text-amber-700 dark:text-amber-300">
-                These codes encode your URL directly and do not track scans. For dynamic codes with
-                scan analytics, use the{" "}
-                <a href="/create" className="font-bold underline">
-                  Create QR Code
-                </a>{" "}
-                page instead.
+                These codes get short links you can update later. Track scans, change destinations
+                and manage everything from your{" "}
+                <a href="/dashboard" className="font-bold underline">
+                  Dashboard
+                </a>
+                .
               </p>
             </div>
           </div>
 
           <div className="flex items-start gap-3 rounded-xl border border-border bg-background p-4 text-sm">
             <p className="text-muted-foreground">
-              <span className="font-semibold text-foreground">How it works:</span> Prepare a CSV with
-              two columns &mdash; <code>name</code> and <code>destination</code> (URL). Upload it,
-              customise the QR design with colours, shapes and a logo, preview, then create up to{" "}
+              <span className="font-semibold text-foreground">How it works:</span> Prepare a CSV
+              with two columns &mdash; <code>name</code> and <code>destination</code> (URL). Upload
+              it, customise the QR design, preview, then create up to{" "}
               <span className="font-bold text-brand">{bulkLimit}</span> codes at once (
               <span className="capitalize">{userPlan}</span> plan).
             </p>
@@ -604,345 +624,26 @@ function BulkPage() {
           <p className="mb-4 text-sm text-muted-foreground">
             Design one QR code — this same design will be applied to all {rows.length} codes.
           </p>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
-                Template
-              </h2>
-              <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {templates.map((tpl, i) => (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    onClick={() => {
-                      setTemplateId(tpl.id);
-                      setDesign({});
-                    }}
-                    className={
-                      "relative flex flex-col items-center rounded-xl border p-2 transition-all " +
-                      (templateId === tpl.id
-                        ? "border-brand ring-2 ring-brand/15 bg-brand-soft/30"
-                        : "border-border hover:border-brand/40 bg-background") +
-                      (i === 0 ? " ring-1 ring-brand/20" : "")
-                    }
-                  >
-                    {i === 0 && (
-                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-brand px-2 py-0.5 text-[9px] font-bold text-brand-foreground">
-                        Recommended
-                      </span>
-                    )}
-                    <div className="size-16">
-                      <img
-                        src={svgToDataUrl(
-                          renderQrSvg(
-                            "https://example.com",
-                            { templateId: tpl.id },
-                            { size: 64, margin: 1 },
-                          ),
-                        )}
-                        alt={"Template " + tpl.id}
-                        className="size-full rounded-md"
-                      />
-                    </div>
-                    <span className="mt-1 text-[9px] font-semibold text-muted-foreground">
-                      #{tpl.id}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-5 flex items-center justify-center gap-6">
-                <label className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Code</span>
-                  <input
-                    type="color"
-                    value={design.fg ?? activeTpl.fg}
-                    onChange={(e) => setDesign((prev) => ({ ...prev, fg: e.target.value }))}
-                    className="size-8 cursor-pointer rounded-lg border border-border bg-background p-0.5"
-                  />
-                </label>
-                <label className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Background</span>
-                  <input
-                    type="color"
-                    value={design.bg ?? activeTpl.bg}
-                    onChange={(e) => setDesign((prev) => ({ ...prev, bg: e.target.value }))}
-                    className="size-8 cursor-pointer rounded-lg border border-border bg-background p-0.5"
-                  />
-                </label>
-                <label className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Eye</span>
-                  <input
-                    type="color"
-                    value={design.eye ?? activeTpl.eye}
-                    onChange={(e) => setDesign((prev) => ({ ...prev, eye: e.target.value }))}
-                    className="size-8 cursor-pointer rounded-lg border border-border bg-background p-0.5"
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-background p-5 shadow-card">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
-                Customise
-              </h2>
-              <div className="mt-3 space-y-1">
-                <BulkDesignCollapsible
-                  icon={<Palette className="size-4" />}
-                  label="Body Shape"
-                  value={design.bodyShape ?? null}
-                >
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {bodyShapeOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() =>
-                          setDesign((prev) => ({
-                            ...prev,
-                            bodyShape:
-                              prev.bodyShape === opt.value
-                                ? (undefined as unknown as BodyShape | null)
-                                : opt.value,
-                          }))
-                        }
-                        className={
-                          "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
-                          (design.bodyShape === opt.value
-                            ? "bg-brand text-brand-foreground"
-                            : "bg-background text-muted-foreground hover:bg-background/80")
-                        }
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </BulkDesignCollapsible>
-
-                <BulkDesignCollapsible
-                  icon={<Frame className="size-4" />}
-                  label="Eye Style"
-                  value={design.eyeShape ?? null}
-                >
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {eyeShapeOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() =>
-                          setDesign((prev) => ({
-                            ...prev,
-                            eyeShape:
-                              prev.eyeShape === opt.value
-                                ? (undefined as unknown as EyeShape | null)
-                                : opt.value,
-                          }))
-                        }
-                        className={
-                          "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
-                          (design.eyeShape === opt.value
-                            ? "bg-brand text-brand-foreground"
-                            : "bg-background text-muted-foreground hover:bg-background/80")
-                        }
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </BulkDesignCollapsible>
-
-                <BulkDesignCollapsible
-                  icon={<Palette className="size-4" />}
-                  label="Gradient"
-                  value={
-                    design.gradient
-                      ? `${design.gradient.type} gradient`
-                      : null
-                  }
-                >
-                  <div className="space-y-2 pt-1">
-                    <div className="flex gap-1.5">
-                      {(["linear", "radial"] as const).map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() =>
-                            setDesign((prev) => ({
-                              ...prev,
-                              gradient:
-                                prev.gradient?.type === t
-                                  ? (null as GradientConfig | null)
-                                  : { type: t, color: "#6366f1", angle: 135 },
-                            }))
-                          }
-                          className={
-                            "rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition-colors " +
-                            (design.gradient?.type === t
-                              ? "bg-brand text-brand-foreground"
-                              : "bg-background text-muted-foreground hover:bg-background/80")
-                          }
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                    {design.gradient && (
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                          <input
-                            type="color"
-                            value={design.gradient.color}
-                            onChange={(e) =>
-                              setDesign((prev) => ({
-                                ...prev,
-                                gradient: prev.gradient
-                                  ? { ...prev.gradient, color: e.target.value }
-                                  : null,
-                              }))
-                            }
-                            className="size-7 cursor-pointer rounded-lg border border-border bg-background p-0.5"
-                          />
-                          Colour
-                        </label>
-                        {design.gradient.type === "linear" && (
-                          <input
-                            type="number"
-                            min={0}
-                            max={360}
-                            value={design.gradient.angle ?? 135}
-                            onChange={(e) =>
-                              setDesign((prev) => ({
-                                ...prev,
-                                gradient: prev.gradient
-                                  ? { ...prev.gradient, angle: Number(e.target.value) }
-                                  : null,
-                              }))
-                            }
-                            className="h-8 w-20 rounded-lg border border-border bg-background px-2 text-xs"
-                            placeholder="Angle"
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </BulkDesignCollapsible>
-
-                <BulkDesignCollapsible
-                  icon={<Image className="size-4" />}
-                  label="Logo"
-                  value={design.logo ? "Logo added" : null}
-                >
-                  <div className="pt-1">
-                    <input
-                      ref={logoInputRef}
-                      type="file"
-                      accept="image/png,image/jpeg,image/svg+xml"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                    />
-                    {design.logo ? (
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={design.logo}
-                          alt="Logo preview"
-                          className="size-12 rounded-lg border border-border object-contain bg-background p-0.5"
-                        />
-                        <button
-                          type="button"
-                          onClick={removeLogo}
-                          className="rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => logoInputRef.current?.click()}
-                        className="flex items-center gap-2 rounded-lg border border-dashed border-border bg-background px-4 py-3 text-xs font-semibold text-muted-foreground hover:bg-background/80"
-                      >
-                        <Upload className="size-4" />
-                        Upload logo (max 500KB)
-                      </button>
-                    )}
-                    {design.logo && (
-                      <p className="mt-1.5 text-[10px] text-muted-foreground">
-                        Logo will be placed at the centre of each QR code.
-                      </p>
-                    )}
-                  </div>
-                </BulkDesignCollapsible>
-
-                <BulkDesignCollapsible
-                  icon={<Frame className="size-4" />}
-                  label="Frame & CTA"
-                  value={design.frame?.text || null}
-                >
-                  <div className="space-y-2 pt-1">
-                    <input
-                      type="text"
-                      value={design.frame?.text ?? ""}
-                      onChange={(e) =>
-                        setDesign((prev) => ({
-                          ...prev,
-                          frame: e.target.value
-                            ? {
-                                text: e.target.value,
-                                style: prev.frame?.style ?? "default",
-                              }
-                            : (null as FrameConfig | null),
-                        }))
-                      }
-                      placeholder="CTA text (e.g. Scan Me)"
-                      className="h-9 w-full rounded-lg border border-border bg-background px-3 text-xs"
-                    />
-                    {design.frame && (
-                      <div className="flex gap-1.5">
-                        {frameStyleOptions.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() =>
-                              setDesign((prev) => ({
-                                ...prev,
-                                frame: prev.frame
-                                  ? { ...prev.frame, style: opt.value }
-                                  : null,
-                              }))
-                            }
-                            className={
-                              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
-                              (design.frame?.style === opt.value
-                                ? "bg-brand text-brand-foreground"
-                                : "bg-background text-muted-foreground hover:bg-background/80")
-                            }
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </BulkDesignCollapsible>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setStep("review")}
-                  className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStep("preview")}
-                  className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground"
-                >
-                  Next: Preview <ChevronRight className="size-4" />
-                </button>
-              </div>
-            </div>
+          <QrWidget
+            onDesignChange={setBulkDesign}
+            hideSaveSection
+            initialTemplateId={bulkDesign?.templateId}
+          />
+          <div className="mt-6 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setStep("review")}
+              className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep("preview")}
+              className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground"
+            >
+              Next: Preview <ChevronRight className="size-4" />
+            </button>
           </div>
         </div>
       )}
@@ -954,7 +655,10 @@ function BulkPage() {
           </h2>
           <div className="mt-4 grid max-h-[500px] grid-cols-2 gap-3 overflow-auto rounded-2xl border border-border bg-background p-4 shadow-card sm:grid-cols-3 lg:grid-cols-4">
             {rows.slice(0, 50).map((r, i) => (
-              <div key={i} className="flex flex-col items-center rounded-xl border border-border p-3">
+              <div
+                key={i}
+                className="flex flex-col items-center rounded-xl border border-border p-3"
+              >
                 <img
                   src={svgToDataUrl(renderSvgFor(r.destination, 256, 2))}
                   alt={r.name}
@@ -1002,10 +706,7 @@ function BulkPage() {
                 {progress.done} of {progress.total}
               </span>
               <span>
-                {progress.total > 0
-                  ? Math.round((progress.done / progress.total) * 100)
-                  : 0}
-                %
+                {progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0}%
               </span>
             </div>
             <div className="mt-2 h-2 rounded-full bg-background">
@@ -1087,6 +788,8 @@ function BulkPage() {
             </div>
           </div>
 
+          <BulkAnalytics scans={bulkScans} loading={analyticsLoading} />
+
           {results.filter((r) => r.ok && r.slug).length > 0 && (
             <div className="rounded-2xl border border-border bg-background shadow-card">
               <div className="border-b border-border px-5 py-4">
@@ -1096,35 +799,35 @@ function BulkPage() {
                 </p>
               </div>
               <ul className="max-h-96 divide-y divide-border overflow-auto">
-                {results.filter((r) => r.ok && r.slug).map((r) => (
-                  <li key={r.name} className="flex items-center gap-3 px-5 py-3">
-                    <img
-                      src={svgToDataUrl(
-                        renderSvgFor(shortUrl(r.slug!), 48, 1),
-                      )}
-                      alt={r.name}
-                      className="size-10 shrink-0 rounded"
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold">{r.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {shortUrl(r.slug!)}
+                {results
+                  .filter((r) => r.ok && r.slug)
+                  .map((r) => (
+                    <li key={r.name} className="flex items-center gap-3 px-5 py-3">
+                      <img
+                        src={svgToDataUrl(renderSvgFor(shortUrl(r.slug!), 48, 1))}
+                        alt={r.name}
+                        className="size-10 shrink-0 rounded"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold">{r.name}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {shortUrl(r.slug!)}
+                        </span>
                       </span>
-                    </span>
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      {(["png", "svg", "jpg", "webp"] as const).map((fmt) => (
-                        <button
-                          key={fmt}
-                          type="button"
-                          onClick={() => void downloadSingleFormat(r.name, r.slug!, fmt)}
-                          className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-bold transition-colors hover:bg-surface"
-                        >
-                          <Download className="size-3" /> {fmt.toUpperCase()}
-                        </button>
-                      ))}
-                    </div>
-                  </li>
-                ))}
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        {(["png", "svg", "jpg", "webp"] as const).map((fmt) => (
+                          <button
+                            key={fmt}
+                            type="button"
+                            onClick={() => void downloadSingleFormat(r.name, r.slug!, fmt)}
+                            className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-bold transition-colors hover:bg-surface"
+                          >
+                            <Download className="size-3" /> {fmt.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </li>
+                  ))}
               </ul>
             </div>
           )}
@@ -1134,39 +837,133 @@ function BulkPage() {
   );
 }
 
-function BulkDesignCollapsible({
-  icon,
-  label,
-  value,
-  children,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | null;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
+function BulkAnalytics({ scans, loading }: { scans: ScanRow[]; loading: boolean }) {
+  const total = scans.length;
+
+  const devices = (() => {
+    const out = new Map<string, number>();
+    for (const s of scans) {
+      const ua = (s.device ?? "").toLowerCase();
+      const label = /iphone|ipad|ios/.test(ua)
+        ? "iOS"
+        : /android/.test(ua)
+          ? "Android"
+          : /windows|mac os|linux/.test(ua)
+            ? "Desktop"
+            : "Other";
+      out.set(label, (out.get(label) ?? 0) + 1);
+    }
+    return [...out.entries()].sort((a, b) => b[1] - a[1]);
+  })();
+
+  const countries = (() => {
+    const out = new Map<string, { count: number; code: string | null }>();
+    for (const s of scans) {
+      const name = s.country ?? "Unknown";
+      const prev = out.get(name);
+      out.set(name, { count: (prev?.count ?? 0) + 1, code: s.country_code });
+    }
+    return [...out.entries()]
+      .map(([country, { count, code }]) => ({ country, count, code }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+  })();
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-border bg-background p-6 shadow-card">
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> Loading analytics...
+        </p>
+      </div>
+    );
+  }
+
+  if (total === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border bg-background p-6 text-center shadow-card">
+        <BarChart3 className="mx-auto size-6 text-muted-foreground" />
+        <p className="mt-2 text-sm text-muted-foreground">
+          Analytics will appear here once your codes start getting scanned.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-xl border border-border bg-background/50">
-      <button
-        type="button"
-        onClick={() => setOpen((p) => !p)}
-        className="flex w-full items-center gap-2 px-3 py-2.5 text-left"
-      >
-        <span className="text-muted-foreground">{icon}</span>
-        <span className="flex-1 text-xs font-semibold">{label}</span>
-        {value && (
-          <span className="max-w-[80px] truncate rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">
-            {value}
-          </span>
-        )}
-        {open ? (
-          <ChevronDown className="size-3.5 text-muted-foreground" />
-        ) : (
-          <ChevronRight className="size-3.5 text-muted-foreground" />
-        )}
-      </button>
-      {open && <div className="border-t border-border px-3 py-2.5">{children}</div>}
+    <div className="rounded-2xl border border-border bg-background p-6 shadow-card">
+      <div className="flex items-center gap-2">
+        <BarChart3 className="size-4 text-brand" />
+        <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+          Bulk code analytics
+        </h3>
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-border bg-background p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Total scans
+          </p>
+          <p className="mt-1 text-2xl font-extrabold">{total}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-background p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Codes with scans
+          </p>
+          <p className="mt-1 text-2xl font-extrabold">
+            {new Set(scans.map((s) => s.code_id)).size}
+          </p>
+        </div>
+      </div>
+
+      {devices.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Devices</p>
+          <ul className="mt-2 space-y-2">
+            {devices.map(([label, count]) => (
+              <li key={label}>
+                <div className="flex justify-between text-sm font-semibold">
+                  <span>{label}</span>
+                  <span className="text-muted-foreground">{count}</span>
+                </div>
+                <div className="mt-1 h-1.5 rounded-full bg-background">
+                  <div
+                    className="h-1.5 rounded-full bg-brand"
+                    style={{ width: `${(count / total) * 100}%` }}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {countries.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Top countries
+          </p>
+          <ul className="mt-2 space-y-2">
+            {countries.map(({ country, count, code }) => (
+              <li key={country}>
+                <div className="flex justify-between text-sm font-semibold">
+                  <span className="flex items-center gap-2">
+                    <Globe className="size-3 text-muted-foreground" />
+                    {country}
+                  </span>
+                  <span className="text-muted-foreground">{count}</span>
+                </div>
+                <div className="mt-1 h-1.5 rounded-full bg-background">
+                  <div
+                    className="h-1.5 rounded-full bg-brand/60"
+                    style={{ width: `${(count / (countries[0]?.count ?? 1)) * 100}%` }}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

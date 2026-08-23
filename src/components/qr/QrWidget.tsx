@@ -47,10 +47,30 @@ import { getDynamicLimit, effectivePlan } from "@/lib/plans";
 
 const PLACEHOLDER = "https://qr.nxtgensec.org";
 
-export function QrWidget() {
+export type QrWidgetDesign = {
+  templateId: number;
+  fg: string;
+  bg: string;
+  eye: string;
+  bodyShape: BodyShape | null;
+  eyeShape: EyeShape | null;
+  gradient: GradientConfig | null;
+  logo: string | null;
+  frame: FrameConfig | null;
+};
+
+export function QrWidget({
+  onDesignChange,
+  hideSaveSection,
+  initialTemplateId,
+}: {
+  onDesignChange?: (design: QrWidgetDesign) => void;
+  hideSaveSection?: boolean;
+  initialTemplateId?: number | undefined;
+} = {}) {
   const [type, setType] = useState<QrType>("url");
   const [form, setForm] = useState<QrFormState>(initialForm);
-  const [templateId, setTemplateId] = useState(1);
+  const [templateId, setTemplateId] = useState(initialTemplateId ?? 1);
   const [fg, setFg] = useState<string | null>(null);
   const [bg, setBg] = useState<string | null>(null);
   const [bodyShape, setBodyShape] = useState<BodyShape | null>(null);
@@ -67,6 +87,23 @@ export function QrWidget() {
     const id = setTimeout(() => setDebounced(payload), 180);
     return () => clearTimeout(id);
   }, [payload]);
+
+  useEffect(() => {
+    if (onDesignChange) {
+      onDesignChange({
+        templateId,
+        fg: fg ?? (templates.find((t) => t.id === templateId) ?? templates[0]!).fg,
+        bg: bg ?? (templates.find((t) => t.id === templateId) ?? templates[0]!).bg,
+        eye: fg ?? (templates.find((t) => t.id === templateId) ?? templates[0]!).eye,
+        bodyShape: bodyShape ?? (templates.find((t) => t.id === templateId) ?? templates[0]!).shape,
+        eyeShape:
+          eyeShape ?? (templates.find((t) => t.id === templateId) ?? templates[0]!).eyeShape,
+        gradient,
+        logo,
+        frame,
+      });
+    }
+  }, [templateId, fg, bg, bodyShape, eyeShape, gradient, logo, frame, onDesignChange]);
 
   const template = useMemo(() => {
     const base = templates.find((t) => t.id === templateId) ?? templates[0]!;
@@ -282,33 +319,34 @@ export function QrWidget() {
           />
 
           <div className="mt-6 space-y-3">
-            {user ? (
-              <>
-                <SaveSection
-                  saving={saving}
-                  isEmpty={isEmpty}
-                  type={type}
-                  onSaveStatic={() => void save(false)}
-                  onSaveDynamic={() => void save(true)}
-                />
-              </>
-            ) : (
-              <div className="rounded-xl border border-border bg-background p-4">
-                <p className="flex items-center gap-2 text-sm font-bold">
-                  <Sparkles className="size-4 text-premium" /> Save & track your codes
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Sign in with Google to store your codes, create editable dynamic links and see
-                  scan counts. Downloads are always free and never watermarked.
-                </p>
-                <Link
-                  to="/auth"
-                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
-                >
-                  Sign in with Google
-                </Link>
-              </div>
-            )}
+            {!hideSaveSection &&
+              (user ? (
+                <>
+                  <SaveSection
+                    saving={saving}
+                    isEmpty={isEmpty}
+                    type={type}
+                    onSaveStatic={() => void save(false)}
+                    onSaveDynamic={() => void save(true)}
+                  />
+                </>
+              ) : (
+                <div className="rounded-xl border border-border bg-background p-4">
+                  <p className="flex items-center gap-2 text-sm font-bold">
+                    <Sparkles className="size-4 text-premium" /> Save & track your codes
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Sign in with Google to store your codes, create editable dynamic links and see
+                    scan counts. Downloads are always free and never watermarked.
+                  </p>
+                  <Link
+                    to="/auth"
+                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+                  >
+                    Sign in with Google
+                  </Link>
+                </div>
+              ))}
           </div>
         </div>
 
