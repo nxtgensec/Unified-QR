@@ -187,6 +187,7 @@ export type Database = {
       qr_codes: {
         Row: {
           active: boolean;
+          batch_id: string | null;
           bg: string | null;
           body_shape: string | null;
           content: string;
@@ -204,6 +205,7 @@ export type Database = {
           logo_url: string | null;
           name: string;
           slug: string | null;
+          source: string;
           team_id: string | null;
           template_id: number;
           type: string;
@@ -212,6 +214,7 @@ export type Database = {
         };
         Insert: {
           active?: boolean;
+          batch_id?: string | null;
           bg?: string | null;
           body_shape?: string | null;
           content?: string;
@@ -229,6 +232,7 @@ export type Database = {
           logo_url?: string | null;
           name?: string;
           slug?: string | null;
+          source?: string;
           team_id?: string | null;
           template_id?: number;
           type?: string;
@@ -237,6 +241,7 @@ export type Database = {
         };
         Update: {
           active?: boolean;
+          batch_id?: string | null;
           bg?: string | null;
           body_shape?: string | null;
           content?: string;
@@ -254,6 +259,7 @@ export type Database = {
           logo_url?: string | null;
           name?: string;
           slug?: string | null;
+          source?: string;
           team_id?: string | null;
           template_id?: number;
           type?: string;

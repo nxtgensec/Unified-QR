@@ -60,6 +60,7 @@ export const Route = createFileRoute("/_authenticated/bulk")({
 type Parsed = { name: string; destination: string };
 
 type ImportResult = {
+  id: string | null;
   name: string;
   slug: string | null;
   ok: boolean;
@@ -125,36 +126,26 @@ function BulkPage() {
       });
   });
 
-  const createdIds = results.filter((r) => r.ok).map((r) => r.name);
+  const createdIds = results
+    .filter((r) => r.ok)
+    .map((r) => r.id)
+    .filter((id): id is string => id !== null);
 
   useEffect(() => {
     if (step !== "results" || createdIds.length === 0) return;
     setAnalyticsLoading(true);
-    const slugIds = results.filter((r) => r.ok && r.slug).map((r) => r.name);
-    if (slugIds.length === 0) {
-      setAnalyticsLoading(false);
-      return;
-    }
 
-    supabase
-      .from("qr_codes")
-      .select("id")
-      .eq("user_id", user?.id ?? "")
-      .eq("is_dynamic", true)
-      .order("created_at", { ascending: false })
-      .limit(500)
-      .then(async ({ data }) => {
-        const ids = (data ?? []).map((r) => r.id);
-        try {
-          const scans = await listScans(ids);
-          setBulkScans(scans);
-        } catch {
-          // ignore
-        } finally {
-          setAnalyticsLoading(false);
-        }
+    listScans(createdIds)
+      .then((scans) => {
+        setBulkScans(scans);
+      })
+      .catch(() => {
+        // ignore
+      })
+      .finally(() => {
+        setAnalyticsLoading(false);
       });
-  }, [step, user]);
+  }, [step, createdIds]);
 
   function handleFile(file: File) {
     const reader = new FileReader();
@@ -324,6 +315,7 @@ function BulkPage() {
     const d = getDesign();
     const batchSize = 25;
     const importResults: ImportResult[] = [];
+    const batchId = crypto.randomUUID();
 
     for (let i = 0; i < validDestinations.length; i += batchSize) {
       const batch = validDestinations.slice(i, i + batchSize);
@@ -335,6 +327,8 @@ function BulkPage() {
         is_dynamic: true,
         slug: makeSlug(),
         destination: r.destination,
+        source: "bulk",
+        batch_id: batchId,
         template_id: d.templateId,
         fg: d.fg ?? null,
         bg: d.bg ?? null,
@@ -348,16 +342,26 @@ function BulkPage() {
         logo_url: d.logo ?? null,
       }));
 
-      const { data, error } = await supabase.from("qr_codes").insert(payload).select("name, slug");
+      const { data, error } = await supabase
+        .from("qr_codes")
+        .insert(payload)
+        .select("id, name, slug");
 
       if (error) {
         for (const r of batch) {
-          importResults.push({ name: r.name, slug: null, ok: false, error: error.message });
+          importResults.push({
+            id: null,
+            name: r.name,
+            slug: null,
+            ok: false,
+            error: error.message,
+          });
         }
       } else {
         for (let j = 0; j < batch.length; j++) {
           const row = data?.[j];
           importResults.push({
+            id: row?.id ?? null,
             name: row?.name ?? batch[j]!.name,
             slug: row?.slug ?? null,
             ok: true,

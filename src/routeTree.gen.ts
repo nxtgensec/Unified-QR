@@ -28,6 +28,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedBulkRouteImport } from './routes/_authenticated/bulk'
+import { Route as AuthenticatedBulkCodesRouteImport } from './routes/_authenticated/bulk-codes'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
@@ -129,6 +130,11 @@ const AuthenticatedBulkRoute = AuthenticatedBulkRouteImport.update({
   path: '/bulk',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBulkCodesRoute = AuthenticatedBulkCodesRouteImport.update({
+  id: '/bulk-codes',
+  path: '/bulk-codes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/bulk': typeof AuthenticatedBulkRoute
+  '/bulk-codes': typeof AuthenticatedBulkCodesRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/links': typeof AuthenticatedLinksRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/bulk': typeof AuthenticatedBulkRoute
+  '/bulk-codes': typeof AuthenticatedBulkCodesRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/links': typeof AuthenticatedLinksRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/bulk': typeof AuthenticatedBulkRoute
+  '/_authenticated/bulk-codes': typeof AuthenticatedBulkCodesRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/links': typeof AuthenticatedLinksRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/billing'
     | '/bulk'
+    | '/bulk-codes'
     | '/create'
     | '/dashboard'
     | '/links'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/billing'
     | '/bulk'
+    | '/bulk-codes'
     | '/create'
     | '/dashboard'
     | '/links'
@@ -314,6 +325,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/billing'
     | '/_authenticated/bulk'
+    | '/_authenticated/bulk-codes'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
     | '/_authenticated/links'
@@ -478,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBulkRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/bulk-codes': {
+      id: '/_authenticated/bulk-codes'
+      path: '/bulk-codes'
+      fullPath: '/bulk-codes'
+      preLoaderRoute: typeof AuthenticatedBulkCodesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/create': {
       id: '/_authenticated/create'
       path: '/create'
@@ -527,6 +546,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedBulkRoute: typeof AuthenticatedBulkRoute
+  AuthenticatedBulkCodesRoute: typeof AuthenticatedBulkCodesRoute
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLinksRoute: typeof AuthenticatedLinksRoute
@@ -537,6 +557,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedBulkRoute: AuthenticatedBulkRoute,
+  AuthenticatedBulkCodesRoute: AuthenticatedBulkCodesRoute,
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLinksRoute: AuthenticatedLinksRoute,
@@ -569,13 +590,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

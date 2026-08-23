@@ -230,6 +230,11 @@ const CodeCard = memo(function CodeCard({
               shared
             </span>
           )}
+          {code.source === "bulk" && (
+            <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase text-blue-500">
+              bulk
+            </span>
+          )}
         </div>
         <p className="mt-1 truncate text-xs text-muted-foreground">
           {code.is_dynamic ? code.destination : code.content}

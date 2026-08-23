@@ -24,6 +24,7 @@ const nav: { to: string; label: string; icon: React.ReactNode }[] = [
   { to: "/links", label: "Workspace", icon: <Link2 className="size-4" /> },
   { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" /> },
   { to: "/bulk", label: "Bulk Create", icon: <Layers className="size-4" /> },
+  { to: "/bulk-codes", label: "Bulk Codes", icon: <Layers className="size-4" /> },
   { to: "/billing", label: "Billing", icon: <CreditCard className="size-4" /> },
   { to: "/settings", label: "Settings", icon: <Settings className="size-4" /> },
 ];

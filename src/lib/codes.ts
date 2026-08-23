@@ -11,6 +11,8 @@ export type SavedCode = {
   slug: string | null;
   destination: string | null;
   active: boolean;
+  source: string;
+  batch_id: string | null;
   template_id: number;
   fg: string | null;
   bg: string | null;
@@ -51,7 +53,7 @@ export async function listCodes(userId?: string) {
   const query = supabase
     .from("qr_codes")
     .select(
-      "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,logo_url,created_at",
+      "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,source,batch_id,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,logo_url,created_at",
     )
     .eq("user_id", uid)
     .order("created_at", { ascending: false });
@@ -65,7 +67,7 @@ export async function getCodeWithLogo(id: string, userId?: string): Promise<Save
   let query = supabase
     .from("qr_codes")
     .select(
-      "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,logo_url,created_at",
+      "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,source,batch_id,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,logo_url,created_at",
     )
     .eq("id", id);
   if (userId) query = query.eq("user_id", userId);
@@ -91,6 +93,19 @@ export async function scanCounts(ids: string[]) {
   const out: Record<string, number> = {};
   for (const row of data ?? []) out[row.code_id] = (out[row.code_id] ?? 0) + 1;
   return out;
+}
+
+export async function listBulkCodes(userId: string) {
+  const { data, error } = await supabase
+    .from("qr_codes")
+    .select(
+      "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,source,batch_id,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,logo_url,created_at",
+    )
+    .eq("user_id", userId)
+    .eq("source", "bulk")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as SavedCode[];
 }
 
 export async function listScans(ids: string[]) {
