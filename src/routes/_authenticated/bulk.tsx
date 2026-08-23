@@ -621,9 +621,6 @@ function BulkPage() {
 
       {step === "design" && (
         <div className="mt-8">
-          <p className="mb-4 text-sm text-muted-foreground">
-            Design one QR code — this same design will be applied to all {rows.length} codes.
-          </p>
           <QrWidget
             onDesignChange={setBulkDesign}
             hideSaveSection
