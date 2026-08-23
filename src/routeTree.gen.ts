@@ -28,7 +28,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedBulkRouteImport } from './routes/_authenticated/bulk'
-import { Route as AuthenticatedBulkCodesRouteImport } from './routes/_authenticated/bulk-codes'
+import { Route as AuthenticatedBulkAnalyticsRouteImport } from './routes/_authenticated/bulk-analytics'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
@@ -130,11 +130,12 @@ const AuthenticatedBulkRoute = AuthenticatedBulkRouteImport.update({
   path: '/bulk',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedBulkCodesRoute = AuthenticatedBulkCodesRouteImport.update({
-  id: '/bulk-codes',
-  path: '/bulk-codes',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedBulkAnalyticsRoute =
+  AuthenticatedBulkAnalyticsRouteImport.update({
+    id: '/bulk-analytics',
+    path: '/bulk-analytics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -185,7 +186,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/bulk': typeof AuthenticatedBulkRoute
-  '/bulk-codes': typeof AuthenticatedBulkCodesRoute
+  '/bulk-analytics': typeof AuthenticatedBulkAnalyticsRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/links': typeof AuthenticatedLinksRoute
@@ -212,7 +213,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/bulk': typeof AuthenticatedBulkRoute
-  '/bulk-codes': typeof AuthenticatedBulkCodesRoute
+  '/bulk-analytics': typeof AuthenticatedBulkAnalyticsRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/links': typeof AuthenticatedLinksRoute
@@ -241,7 +242,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/bulk': typeof AuthenticatedBulkRoute
-  '/_authenticated/bulk-codes': typeof AuthenticatedBulkCodesRoute
+  '/_authenticated/bulk-analytics': typeof AuthenticatedBulkAnalyticsRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/links': typeof AuthenticatedLinksRoute
@@ -270,7 +271,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/billing'
     | '/bulk'
-    | '/bulk-codes'
+    | '/bulk-analytics'
     | '/create'
     | '/dashboard'
     | '/links'
@@ -297,7 +298,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/billing'
     | '/bulk'
-    | '/bulk-codes'
+    | '/bulk-analytics'
     | '/create'
     | '/dashboard'
     | '/links'
@@ -325,7 +326,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/billing'
     | '/_authenticated/bulk'
-    | '/_authenticated/bulk-codes'
+    | '/_authenticated/bulk-analytics'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
     | '/_authenticated/links'
@@ -490,11 +491,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBulkRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/bulk-codes': {
-      id: '/_authenticated/bulk-codes'
-      path: '/bulk-codes'
-      fullPath: '/bulk-codes'
-      preLoaderRoute: typeof AuthenticatedBulkCodesRouteImport
+    '/_authenticated/bulk-analytics': {
+      id: '/_authenticated/bulk-analytics'
+      path: '/bulk-analytics'
+      fullPath: '/bulk-analytics'
+      preLoaderRoute: typeof AuthenticatedBulkAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/create': {
@@ -546,7 +547,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedBulkRoute: typeof AuthenticatedBulkRoute
-  AuthenticatedBulkCodesRoute: typeof AuthenticatedBulkCodesRoute
+  AuthenticatedBulkAnalyticsRoute: typeof AuthenticatedBulkAnalyticsRoute
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLinksRoute: typeof AuthenticatedLinksRoute
@@ -557,7 +558,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedBulkRoute: AuthenticatedBulkRoute,
-  AuthenticatedBulkCodesRoute: AuthenticatedBulkCodesRoute,
+  AuthenticatedBulkAnalyticsRoute: AuthenticatedBulkAnalyticsRoute,
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLinksRoute: AuthenticatedLinksRoute,

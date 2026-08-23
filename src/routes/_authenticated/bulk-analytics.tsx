@@ -1,44 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { PageHeader } from "@/components/app/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { listBulkCodes, scanCounts, shortUrl, type SavedCode } from "@/lib/codes";
-import {
-  renderQrSvg,
-  svgToDataUrl,
-  downloadPng,
-  downloadSvg,
-  templates,
-  type BodyShape,
-  type EyeShape,
-} from "@/lib/qr";
-import { effectivePlan, type PlanId } from "@/lib/plans";
+import { renderQrSvg, svgToDataUrl, templates, type BodyShape, type EyeShape } from "@/lib/qr";
 import { toast } from "sonner";
-import {
-  BarChart3,
-  ChevronDown,
-  Copy,
-  Download,
-  Layers,
-  Loader2,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
+import { BarChart3, Copy, Layers, Loader2, Pencil, RefreshCw, Trash2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/bulk-codes")({
+export const Route = createFileRoute("/_authenticated/bulk-analytics")({
   head: () => ({
     meta: [
-      { title: "Bulk QR Codes — UnifiedQR Workspace" },
+      { title: "Bulk Analytics — UnifiedQR Workspace" },
       {
         name: "description",
-        content: "View and manage your bulk-created QR Codes and their analytics.",
+        content: "View analytics and manage your bulk-created QR Codes.",
       },
     ],
   }),
-  component: BulkCodesPage,
+  component: BulkAnalyticsPage,
 });
 
 function codeData(c: SavedCode) {
@@ -243,7 +222,7 @@ function SmallAction({
   );
 }
 
-function BulkCodesPage() {
+function BulkAnalyticsPage() {
   const { user } = useAuth();
   const [codes, setCodes] = useState<SavedCode[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -375,33 +354,27 @@ function BulkCodesPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <PageHeader
-        title="Bulk QR Codes"
-        description="All QR codes created via CSV bulk import, grouped by batch."
-        actions={
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setLoading(true);
-                setCountsLoading(true);
-                void refresh();
-              }}
-              disabled={loading}
-              className="flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-background disabled:opacity-50"
-            >
-              <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
-              Refresh
-            </button>
-            <Link
-              to="/bulk"
-              className="flex items-center gap-2 rounded-full bg-brand px-5 py-2 text-sm font-bold text-brand-foreground"
-            >
-              <Plus className="size-4" /> New Bulk Import
-            </Link>
-          </div>
-        }
-      />
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Bulk Analytics</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Analytics and management for your bulk-created QR codes.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            setCountsLoading(true);
+            void refresh();
+          }}
+          disabled={loading}
+          className="flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-background disabled:opacity-50"
+        >
+          <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
+      </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <Stat label="Bulk codes" value={codes.length} icon={<Layers className="size-4" />} />

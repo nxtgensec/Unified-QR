@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
+  ChevronDown,
   CreditCard,
   LayoutGrid,
   Layers,
@@ -18,13 +19,37 @@ import {
 } from "lucide-react";
 import unifiedQrLogo from "@/assets/UnifiedQR_Logo.png";
 
-const nav: { to: string; label: string; icon: React.ReactNode }[] = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+};
+
+type NavSection = {
+  label: string;
+  icon: React.ReactNode;
+  children: NavItem[];
+};
+
+type NavEntry = NavItem | NavSection;
+
+function isSection(item: NavEntry): item is NavSection {
+  return "children" in item;
+}
+
+const nav: NavEntry[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutGrid className="size-4" /> },
   { to: "/create", label: "Create QR Code", icon: <Plus className="size-4" /> },
   { to: "/links", label: "Workspace", icon: <Link2 className="size-4" /> },
   { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" /> },
-  { to: "/bulk", label: "Bulk Create", icon: <Layers className="size-4" /> },
-  { to: "/bulk-codes", label: "Bulk Codes", icon: <Layers className="size-4" /> },
+  {
+    label: "Bulk",
+    icon: <Layers className="size-4" />,
+    children: [
+      { to: "/bulk", label: "Bulk Create", icon: <Layers className="size-3" /> },
+      { to: "/bulk-analytics", label: "Bulk Analytics", icon: <BarChart3 className="size-3" /> },
+    ],
+  },
   { to: "/billing", label: "Billing", icon: <CreditCard className="size-4" /> },
   { to: "/settings", label: "Settings", icon: <Settings className="size-4" /> },
 ];
@@ -68,6 +93,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
 
+  const [expandedSection, setExpandedSection] = useState<string | null>(() => {
+    if (pathname.startsWith("/bulk")) return "Bulk";
+    return null;
+  });
+
   return (
     <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
@@ -93,6 +123,54 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 space-y-1 px-3 py-2">
           {nav.map((item) => {
+            if (isSection(item)) {
+              const isExpanded = expandedSection === item.label;
+              const hasActive = item.children.some(
+                (c) => pathname === c.to || pathname.startsWith(`${c.to}/`),
+              );
+              return (
+                <div key={item.label}>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSection(isExpanded ? null : item.label)}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                      hasActive
+                        ? "bg-brand-soft text-brand"
+                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                    }`}
+                  >
+                    {item.icon}
+                    <span className="flex-1 text-left">{item.label}</span>
+                    <ChevronDown
+                      className={`size-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {isExpanded && (
+                    <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-3">
+                      {item.children.map((child) => {
+                        const active = pathname === child.to;
+                        return (
+                          <Link
+                            key={child.to}
+                            to={child.to}
+                            preload="intent"
+                            onClick={() => setOpen(false)}
+                            className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
+                              active
+                                ? "bg-brand-soft text-brand"
+                                : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                            }`}
+                          >
+                            {child.icon}
+                            <span className="flex-1">{child.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
             const active = pathname === item.to;
             return (
               <Link
