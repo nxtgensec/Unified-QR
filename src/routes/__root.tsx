@@ -185,6 +185,7 @@ const APP_PREFIXES = [
   "/create",
   "/analytics",
   "/bulk",
+  "/bulk-analytics",
   "/billing",
   "/settings",
   "/links",
