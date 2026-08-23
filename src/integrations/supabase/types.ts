@@ -124,6 +124,7 @@ export type Database = {
           created_at: string;
           id: string;
           page_id: string;
+          parent_id: string | null;
           sort_order: number;
           title: string;
           visible: boolean;
@@ -132,6 +133,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           page_id: string;
+          parent_id?: string | null;
           sort_order?: number;
           title?: string;
           visible?: boolean;
@@ -140,6 +142,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           page_id?: string;
+          parent_id?: string | null;
           sort_order?: number;
           title?: string;
           visible?: boolean;

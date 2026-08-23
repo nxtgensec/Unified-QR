@@ -1,20 +1,30 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/AppShell";
+import { renderQrSvg, svgToDataUrl, downloadPng, downloadSvg } from "@/lib/qr";
+import { workspaceTemplates, type WorkspaceTemplate } from "@/lib/workspace-templates";
 import {
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Download,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  FileImage,
+  FileType,
   GripVertical,
+  Link2,
   Loader2,
   Plus,
   Save,
+  Sparkles,
   Trash2,
-  Eye,
-  EyeOff,
-  ExternalLink,
-  Link2,
   Upload,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/links")({
@@ -34,7 +44,13 @@ export const Route = createFileRoute("/_authenticated/links")({
 });
 
 type PageRow = { id: string; slug: string; title: string; updated_at: string };
-type SectionRow = { id: string; title: string; sort_order: number; visible: boolean };
+type SectionRow = {
+  id: string;
+  title: string;
+  sort_order: number;
+  visible: boolean;
+  parent_id: string | null;
+};
 type ItemRow = {
   id: string;
   section_id: string;
@@ -54,6 +70,8 @@ function LinksEditor() {
   const [items, setItems] = useState<ItemRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [pageFields, setPageFields] = useState({
     title: "My Links",
     subtitle: "",
@@ -105,7 +123,7 @@ function LinksEditor() {
     }
     const { data: secData } = await supabase
       .from("link_sections")
-      .select("id, title, sort_order, visible")
+      .select("id, title, sort_order, visible, parent_id")
       .eq("page_id", pageId)
       .order("sort_order");
     const secs = (secData ?? []) as SectionRow[];
@@ -124,15 +142,75 @@ function LinksEditor() {
     }
   }, []);
 
-  async function createPage() {
+  async function createPageFromTemplate(template: WorkspaceTemplate) {
     if (!user) return;
+    setShowTemplatePicker(false);
+    const slug = pageFields.slug.trim() || makeSlug();
+
+    const { data: pageData, error: pageErr } = await supabase
+      .from("link_pages")
+      .insert({
+        user_id: user.id,
+        slug,
+        title: template.title,
+        subtitle: template.subtitle || null,
+        avatar_url: null,
+        theme_color: template.theme_color,
+        theme_bg: template.theme_bg,
+        theme_font: template.theme_font,
+      })
+      .select("id, slug, title, updated_at")
+      .single();
+    if (pageErr) {
+      toast.error("Could not create page", { description: pageErr.message });
+      return;
+    }
+
+    for (let si = 0; si < template.sections.length; si++) {
+      const sec = template.sections[si]!;
+      const { data: secRow } = await supabase
+        .from("link_sections")
+        .insert({ page_id: pageData.id, title: sec.title, sort_order: si })
+        .select("id")
+        .single();
+      if (!secRow) continue;
+
+      for (let ii = 0; ii < sec.items.length; ii++) {
+        const item = sec.items[ii]!;
+        await supabase.from("link_items").insert({
+          section_id: secRow.id,
+          title: item.title,
+          url: item.url,
+          icon_emoji: item.icon_emoji,
+          sort_order: ii,
+        });
+      }
+    }
+
+    setPages((prev) => [pageData as PageRow, ...prev]);
+    await loadPage(pageData.id);
+    setPageFields({
+      title: template.title,
+      subtitle: template.subtitle,
+      slug,
+      avatar_url: "",
+      theme_color: template.theme_color,
+      theme_bg: template.theme_bg,
+      theme_font: template.theme_font,
+    });
+    toast.success("Page created from template");
+  }
+
+  async function createBlankPage() {
+    if (!user) return;
+    setShowTemplatePicker(false);
     const slug = pageFields.slug.trim() || makeSlug();
     const { data, error } = await supabase
       .from("link_pages")
       .insert({
         user_id: user.id,
         slug,
-        title: pageFields.title || "My Links",
+        title: pageFields.title || "My Page",
         subtitle: pageFields.subtitle || null,
         theme_color: pageFields.theme_color,
         theme_bg: pageFields.theme_bg,
@@ -146,7 +224,7 @@ function LinksEditor() {
     }
     setPages((prev) => [data as PageRow, ...prev]);
     await loadPage(data.id);
-    toast.success("Link page created");
+    toast.success("Page created");
   }
 
   async function saveAll() {
@@ -177,7 +255,12 @@ function LinksEditor() {
       ...sections.map((sec) =>
         supabase
           .from("link_sections")
-          .update({ title: sec.title, sort_order: sec.sort_order, visible: sec.visible })
+          .update({
+            title: sec.title,
+            sort_order: sec.sort_order,
+            visible: sec.visible,
+            parent_id: sec.parent_id,
+          })
           .eq("id", sec.id),
       ),
       ...items.map((item) =>
@@ -203,13 +286,19 @@ function LinksEditor() {
     );
   }
 
-  async function addSection() {
+  async function addSection(parentId: string | null = null) {
     if (!selectedPageId) return;
-    const order = sections.length;
+    const siblings = sections.filter((s) => s.parent_id === parentId);
+    const order = siblings.length;
     const { data, error } = await supabase
       .from("link_sections")
-      .insert({ page_id: selectedPageId, title: "", sort_order: order })
-      .select("id, title, sort_order, visible")
+      .insert({
+        page_id: selectedPageId,
+        title: "",
+        sort_order: order,
+        parent_id: parentId,
+      })
+      .select("id, title, sort_order, visible, parent_id")
       .single();
     if (error) {
       toast.error("Failed");
@@ -220,8 +309,11 @@ function LinksEditor() {
 
   async function deleteSection(secId: string) {
     await supabase.from("link_sections").delete().eq("id", secId);
-    setSections((prev) => prev.filter((s) => s.id !== secId));
-    setItems((prev) => prev.filter((i) => i.section_id !== secId));
+    const childIds = sections.filter((s) => s.parent_id === secId).map((s) => s.id);
+    setSections((prev) => prev.filter((s) => s.id !== secId && s.parent_id !== secId));
+    setItems((prev) =>
+      prev.filter((i) => i.section_id !== secId && !childIds.includes(i.section_id)),
+    );
   }
 
   async function addItem(secId: string) {
@@ -252,6 +344,15 @@ function LinksEditor() {
     setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, ...patch } : i)));
   }
 
+  function toggleCollapse(secId: string) {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(secId)) next.delete(secId);
+      else next.add(secId);
+      return next;
+    });
+  }
+
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedPageId) return;
@@ -271,6 +372,23 @@ function LinksEditor() {
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/p/${pageFields.slug || selectedPage.slug}`
     : "";
 
+  const previewSvg = useMemo(() => {
+    if (!publicUrl) return null;
+    return renderQrSvg(publicUrl, {
+      templateId: 1,
+      fg: pageFields.theme_color,
+      bg: "#ffffff",
+      eye: pageFields.theme_color,
+      bodyShape: "square",
+      eyeShape: "square",
+    });
+  }, [publicUrl, pageFields.theme_color]);
+
+  const rootSections = useMemo(
+    () => sections.filter((s) => !s.parent_id).sort((a, b) => a.sort_order - b.sort_order),
+    [sections],
+  );
+
   if (loading) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
@@ -282,7 +400,7 @@ function LinksEditor() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
       <PageHeader
         title="Workspace"
         description="One QR code, many destinations — your multi-link workspace."
@@ -301,7 +419,7 @@ function LinksEditor() {
             )}
             <button
               type="button"
-              onClick={() => void createPage()}
+              onClick={() => setShowTemplatePicker(true)}
               className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold transition-colors hover:bg-background"
             >
               <Plus className="size-4" /> New Page
@@ -310,23 +428,32 @@ function LinksEditor() {
         }
       />
 
-      {pages.length === 0 ? (
+      {showTemplatePicker && (
+        <TemplatePicker
+          onSelect={(t) => void createPageFromTemplate(t)}
+          onBlank={() => void createBlankPage()}
+          onClose={() => setShowTemplatePicker(false)}
+        />
+      )}
+
+      {pages.length === 0 && !showTemplatePicker ? (
         <div className="mt-12 rounded-2xl border border-dashed border-border p-10 text-center">
-          <Link2 className="mx-auto size-8 text-muted-foreground/40" />
+          <Sparkles className="mx-auto size-8 text-muted-foreground/40" />
           <p className="mt-3 font-semibold">No workspace pages yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Create your first multi-link page — one QR code for everything.
           </p>
           <button
             type="button"
-            onClick={() => void createPage()}
+            onClick={() => setShowTemplatePicker(true)}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-bold text-brand-foreground"
           >
             <Plus className="size-4" /> Create page
           </button>
         </div>
       ) : (
-        <div className="mt-8 grid gap-6 lg:grid-cols-[260px_1fr]">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[220px_1fr_320px]">
+          {/* Page list sidebar */}
           <nav className="space-y-1">
             {pages.map((p) => (
               <button
@@ -345,8 +472,10 @@ function LinksEditor() {
             ))}
           </nav>
 
+          {/* Editor */}
           {selectedPageId && (
             <div className="space-y-6">
+              {/* Page settings */}
               <div className="rounded-2xl border border-border bg-background p-5 shadow-card">
                 <h2 className="mb-4 text-sm font-bold">Page settings</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -381,6 +510,18 @@ function LinksEditor() {
                         className="w-full bg-transparent px-1 py-2 text-sm outline-none"
                       />
                     </div>
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-semibold text-muted-foreground">Font</span>
+                    <select
+                      value={pageFields.theme_font}
+                      onChange={(e) => setPageFields((f) => ({ ...f, theme_font: e.target.value }))}
+                      className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+                    >
+                      <option value="system">System</option>
+                      <option value="serif">Serif</option>
+                      <option value="mono">Monospace</option>
+                    </select>
                   </label>
                   <label className="block">
                     <span className="text-xs font-semibold text-muted-foreground">Theme color</span>
@@ -418,18 +559,6 @@ function LinksEditor() {
                       />
                     </div>
                   </label>
-                  <label className="block">
-                    <span className="text-xs font-semibold text-muted-foreground">Font</span>
-                    <select
-                      value={pageFields.theme_font}
-                      onChange={(e) => setPageFields((f) => ({ ...f, theme_font: e.target.value }))}
-                      className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand"
-                    >
-                      <option value="system">System</option>
-                      <option value="serif">Serif</option>
-                      <option value="mono">Monospace</option>
-                    </select>
-                  </label>
                 </div>
 
                 <div className="mt-3">
@@ -465,7 +594,7 @@ function LinksEditor() {
                 </div>
 
                 {publicUrl && (
-                  <div className="mt-4 flex items-center gap-2">
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
                     <a
                       href={publicUrl}
                       target="_blank"
@@ -474,108 +603,37 @@ function LinksEditor() {
                     >
                       <ExternalLink className="size-3" /> Open public page
                     </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(publicUrl);
+                        toast.success("Link copied");
+                      }}
+                      className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                    >
+                      <Copy className="size-3" /> Copy link
+                    </button>
                   </div>
                 )}
               </div>
 
+              {/* Sections */}
               <div className="space-y-4">
-                {sections.map((sec) => (
-                  <div
+                {rootSections.map((sec) => (
+                  <SectionBlock
                     key={sec.id}
-                    className="rounded-2xl border border-border bg-background p-4 shadow-card"
-                  >
-                    <div className="flex items-center gap-2">
-                      <GripVertical className="size-4 text-muted-foreground/40" />
-                      <input
-                        value={sec.title}
-                        onChange={(e) => updateSection(sec.id, { title: e.target.value })}
-                        placeholder="Section title (optional)"
-                        className="flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-muted-foreground/40"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => updateSection(sec.id, { visible: !sec.visible })}
-                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-background"
-                        title={sec.visible ? "Hide section" : "Show section"}
-                      >
-                        {sec.visible ? (
-                          <Eye className="size-4" />
-                        ) : (
-                          <EyeOff className="size-4 text-muted-foreground/40" />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void deleteSection(sec.id)}
-                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
-                    </div>
-
-                    <div className="mt-3 space-y-2">
-                      {items
-                        .filter((i) => i.section_id === sec.id)
-                        .sort((a, b) => a.sort_order - b.sort_order)
-                        .map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2"
-                          >
-                            <span className="text-muted-foreground/40">⋮⋮</span>
-                            <input
-                              value={item.title}
-                              onChange={(e) => updateItem(item.id, { title: e.target.value })}
-                              placeholder="Link title"
-                              className="w-32 bg-transparent text-xs font-semibold outline-none placeholder:text-muted-foreground/40"
-                            />
-                            <input
-                              value={item.url}
-                              onChange={(e) => updateItem(item.id, { url: e.target.value })}
-                              placeholder="https://…"
-                              className="flex-1 bg-transparent text-xs text-muted-foreground outline-none placeholder:text-muted-foreground/40"
-                            />
-                            <input
-                              value={item.icon_emoji ?? ""}
-                              onChange={(e) =>
-                                updateItem(item.id, {
-                                  icon_emoji: e.target.value || null,
-                                })
-                              }
-                              placeholder="😀"
-                              className="w-10 bg-transparent text-center text-sm outline-none"
-                              title="Emoji icon"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => updateItem(item.id, { visible: !item.visible })}
-                              className="rounded p-1 text-muted-foreground/50 hover:text-foreground"
-                            >
-                              {item.visible ? (
-                                <Eye className="size-3.5" />
-                              ) : (
-                                <EyeOff className="size-3.5" />
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void deleteItem(item.id)}
-                              className="rounded p-1 text-muted-foreground/50 hover:text-destructive"
-                            >
-                              <Trash2 className="size-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => void addItem(sec.id)}
-                      className="mt-2 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                    >
-                      <Plus className="size-3" /> Add link
-                    </button>
-                  </div>
+                    section={sec}
+                    allSections={sections}
+                    items={items}
+                    collapsedSections={collapsedSections}
+                    onToggleCollapse={toggleCollapse}
+                    onUpdateSection={updateSection}
+                    onDeleteSection={deleteSection}
+                    onAddItem={addItem}
+                    onUpdateItem={updateItem}
+                    onDeleteItem={deleteItem}
+                    onAddSubSection={(parentId) => void addSection(parentId)}
+                  />
                 ))}
 
                 <button
@@ -588,8 +646,390 @@ function LinksEditor() {
               </div>
             </div>
           )}
+
+          {/* Live preview + QR */}
+          {selectedPageId && (
+            <div className="space-y-4 lg:sticky lg:top-8 lg:self-start">
+              <div className="rounded-2xl border border-border bg-background p-4 shadow-card">
+                <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Live Preview
+                </h3>
+                <div
+                  className="overflow-hidden rounded-xl border border-border"
+                  style={{ backgroundColor: pageFields.theme_bg }}
+                >
+                  <div className="max-h-[500px] overflow-y-auto px-4 py-6">
+                    <div className="flex flex-col items-center text-center">
+                      {pageFields.avatar_url && (
+                        <img
+                          src={pageFields.avatar_url}
+                          alt=""
+                          className="mb-3 size-14 rounded-full border-2 object-cover"
+                          style={{ borderColor: pageFields.theme_color }}
+                        />
+                      )}
+                      <h2
+                        className="text-base font-extrabold"
+                        style={{ color: pageFields.theme_color }}
+                      >
+                        {pageFields.title || "Page Title"}
+                      </h2>
+                      {pageFields.subtitle && (
+                        <p
+                          className="mt-0.5 text-xs opacity-70"
+                          style={{ color: pageFields.theme_color }}
+                        >
+                          {pageFields.subtitle}
+                        </p>
+                      )}
+                    </div>
+                    <div className="mt-5 space-y-4">
+                      {rootSections
+                        .filter((s) => s.visible)
+                        .map((sec) => {
+                          const secItems = items
+                            .filter((i) => i.section_id === sec.id && i.visible)
+                            .sort((a, b) => a.sort_order - b.sort_order);
+                          const subSecs = sections
+                            .filter((s) => s.parent_id === sec.id && s.visible)
+                            .sort((a, b) => a.sort_order - b.sort_order);
+                          return (
+                            <div key={sec.id}>
+                              {sec.title && (
+                                <p
+                                  className="mb-1.5 text-[10px] font-bold uppercase tracking-widest opacity-50"
+                                  style={{ color: pageFields.theme_color }}
+                                >
+                                  {sec.title}
+                                </p>
+                              )}
+                              <div className="space-y-1.5">
+                                {secItems.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="flex items-center gap-2 rounded-lg border px-3 py-2"
+                                    style={{
+                                      borderColor: `${pageFields.theme_color}25`,
+                                      backgroundColor: `${pageFields.theme_color}08`,
+                                    }}
+                                  >
+                                    <span className="text-xs">{item.icon_emoji || "🔗"}</span>
+                                    <span
+                                      className="flex-1 truncate text-xs font-semibold"
+                                      style={{ color: pageFields.theme_color }}
+                                    >
+                                      {item.title || "Link"}
+                                    </span>
+                                  </div>
+                                ))}
+                                {subSecs.map((sub) => {
+                                  const subItems = items
+                                    .filter((i) => i.section_id === sub.id && i.visible)
+                                    .sort((a, b) => a.sort_order - b.sort_order);
+                                  return (
+                                    <div key={sub.id} className="ml-2 mt-2">
+                                      {sub.title && (
+                                        <p
+                                          className="mb-1 text-[9px] font-bold uppercase tracking-wider opacity-40"
+                                          style={{ color: pageFields.theme_color }}
+                                        >
+                                          {sub.title}
+                                        </p>
+                                      )}
+                                      {subItems.map((item) => (
+                                        <div
+                                          key={item.id}
+                                          className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5"
+                                          style={{
+                                            borderColor: `${pageFields.theme_color}15`,
+                                            backgroundColor: `${pageFields.theme_color}05`,
+                                          }}
+                                        >
+                                          <span className="text-[10px]">
+                                            {item.icon_emoji || "🔗"}
+                                          </span>
+                                          <span
+                                            className="flex-1 truncate text-[10px] font-semibold"
+                                            style={{ color: pageFields.theme_color }}
+                                          >
+                                            {item.title || "Link"}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* QR Code */}
+              {previewSvg && (
+                <div className="rounded-2xl border border-border bg-background p-4 shadow-card">
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    Workspace QR Code
+                  </h3>
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={svgToDataUrl(previewSvg)}
+                      alt="QR Code"
+                      className="size-40 rounded-lg"
+                    />
+                    <p className="mt-2 text-[10px] text-muted-foreground break-all text-center">
+                      {publicUrl}
+                    </p>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void downloadPng(previewSvg, `workspace-${pageFields.slug}.png`)
+                        }
+                        className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold hover:bg-background"
+                      >
+                        <FileImage className="size-3" /> PNG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => downloadSvg(previewSvg, `workspace-${pageFields.slug}.svg`)}
+                        className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold hover:bg-background"
+                      >
+                        <FileType className="size-3" /> SVG
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function SectionBlock({
+  section,
+  allSections,
+  items,
+  collapsedSections,
+  onToggleCollapse,
+  onUpdateSection,
+  onDeleteSection,
+  onAddItem,
+  onUpdateItem,
+  onDeleteItem,
+  onAddSubSection,
+}: {
+  section: SectionRow;
+  allSections: SectionRow[];
+  items: ItemRow[];
+  collapsedSections: Set<string>;
+  onToggleCollapse: (id: string) => void;
+  onUpdateSection: (id: string, patch: Partial<SectionRow>) => void;
+  onDeleteSection: (id: string) => void;
+  onAddItem: (secId: string) => void;
+  onUpdateItem: (id: string, patch: Partial<ItemRow>) => void;
+  onDeleteItem: (id: string) => void;
+  onAddSubSection: (parentId: string) => void;
+}) {
+  const isCollapsed = collapsedSections.has(section.id);
+  const sectionItems = items
+    .filter((i) => i.section_id === section.id)
+    .sort((a, b) => a.sort_order - b.sort_order);
+  const subSections = allSections
+    .filter((s) => s.parent_id === section.id)
+    .sort((a, b) => a.sort_order - b.sort_order);
+
+  return (
+    <div className="rounded-2xl border border-border bg-background p-4 shadow-card">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onToggleCollapse(section.id)}
+          className="rounded p-1 text-muted-foreground/50 hover:text-foreground"
+        >
+          {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronDown className="size-4" />}
+        </button>
+        <GripVertical className="size-4 text-muted-foreground/40" />
+        <input
+          value={section.title}
+          onChange={(e) => onUpdateSection(section.id, { title: e.target.value })}
+          placeholder="Section title (optional)"
+          className="flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-muted-foreground/40"
+        />
+        <button
+          type="button"
+          onClick={() => onUpdateSection(section.id, { visible: !section.visible })}
+          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-background"
+          title={section.visible ? "Hide section" : "Show section"}
+        >
+          {section.visible ? (
+            <Eye className="size-4" />
+          ) : (
+            <EyeOff className="size-4 text-muted-foreground/40" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => onDeleteSection(section.id)}
+          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+        </button>
+      </div>
+
+      {!isCollapsed && (
+        <>
+          <div className="mt-3 space-y-2">
+            {sectionItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2"
+              >
+                <input
+                  value={item.icon_emoji ?? ""}
+                  onChange={(e) => onUpdateItem(item.id, { icon_emoji: e.target.value || null })}
+                  placeholder="😀"
+                  className="w-10 bg-transparent text-center text-sm outline-none"
+                  title="Emoji icon"
+                />
+                <input
+                  value={item.title}
+                  onChange={(e) => onUpdateItem(item.id, { title: e.target.value })}
+                  placeholder="Link title"
+                  className="w-32 bg-transparent text-xs font-semibold outline-none placeholder:text-muted-foreground/40"
+                />
+                <input
+                  value={item.url}
+                  onChange={(e) => onUpdateItem(item.id, { url: e.target.value })}
+                  placeholder="https://…"
+                  className="flex-1 bg-transparent text-xs text-muted-foreground outline-none placeholder:text-muted-foreground/40"
+                />
+                <button
+                  type="button"
+                  onClick={() => onUpdateItem(item.id, { visible: !item.visible })}
+                  className="rounded p-1 text-muted-foreground/50 hover:text-foreground"
+                >
+                  {item.visible ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDeleteItem(item.id)}
+                  className="rounded p-1 text-muted-foreground/50 hover:text-destructive"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-2 flex flex-wrap gap-1">
+            <button
+              type="button"
+              onClick={() => onAddItem(section.id)}
+              className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            >
+              <Plus className="size-3" /> Add link
+            </button>
+            <button
+              type="button"
+              onClick={() => onAddSubSection(section.id)}
+              className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-brand transition-colors hover:bg-brand-soft"
+            >
+              <Plus className="size-3" /> Add sub-section
+            </button>
+          </div>
+
+          {subSections.length > 0 && (
+            <div className="mt-3 ml-4 space-y-3 border-l-2 border-border pl-3">
+              {subSections.map((sub) => (
+                <SectionBlock
+                  key={sub.id}
+                  section={sub}
+                  allSections={allSections}
+                  items={items}
+                  collapsedSections={collapsedSections}
+                  onToggleCollapse={onToggleCollapse}
+                  onUpdateSection={onUpdateSection}
+                  onDeleteSection={onDeleteSection}
+                  onAddItem={onAddItem}
+                  onUpdateItem={onUpdateItem}
+                  onDeleteItem={onDeleteItem}
+                  onAddSubSection={onAddSubSection}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function TemplatePicker({
+  onSelect,
+  onBlank,
+  onClose,
+}: {
+  onSelect: (t: WorkspaceTemplate) => void;
+  onBlank: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onMouseDown={onClose}
+    >
+      <div
+        className="w-full max-w-3xl rounded-2xl border border-border bg-background p-6 shadow-float"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-extrabold">Choose a template</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Pick a starting point, then customize everything.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-background"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {workspaceTemplates.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => (t.id === "blank" ? onBlank() : onSelect(t))}
+              className="group flex flex-col items-center rounded-xl border border-border p-4 text-center transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-card"
+            >
+              <span className="text-3xl">{t.preview}</span>
+              <h3 className="mt-2 text-sm font-bold">{t.name}</h3>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">{t.description}</p>
+              <div className="mt-3 flex gap-1" style={{ color: t.theme_color }}>
+                <span
+                  className="size-3 rounded-full border"
+                  style={{ backgroundColor: t.theme_color }}
+                />
+                <span
+                  className="size-3 rounded-full border"
+                  style={{ backgroundColor: t.theme_bg }}
+                />
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

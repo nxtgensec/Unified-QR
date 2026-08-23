@@ -16,7 +16,9 @@ type LinkSection = {
   id: string;
   title: string;
   sort_order: number;
+  parent_id: string | null;
   items: LinkItem[];
+  children: LinkSection[];
 };
 
 type LinkPageData = {
@@ -44,6 +46,72 @@ export const Route = createFileRoute("/p/$slug")({
   component: LinkPage,
 });
 
+function SectionBlock({ section, themeColor }: { section: LinkSection; themeColor: string }) {
+  return (
+    <div>
+      {section.title && (
+        <h2
+          className="mb-3 text-xs font-bold uppercase tracking-widest opacity-50"
+          style={{ color: themeColor }}
+        >
+          {section.title}
+        </h2>
+      )}
+      <div className="space-y-2">
+        {section.items.map((item) => (
+          <a
+            key={item.id}
+            href={/^https?:\/\//i.test(item.url) ? item.url : "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-card"
+            style={{
+              borderColor: `${themeColor}25`,
+              backgroundColor: `${themeColor}08`,
+            }}
+          >
+            {item.icon_url ? (
+              <img src={item.icon_url} alt="" className="size-6 shrink-0 rounded" />
+            ) : item.icon_emoji ? (
+              <span className="text-lg">{item.icon_emoji}</span>
+            ) : (
+              <span
+                className="flex size-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
+                style={{ backgroundColor: themeColor }}
+              >
+                {item.title.charAt(0).toUpperCase()}
+              </span>
+            )}
+            <span className="flex-1 truncate text-sm font-semibold" style={{ color: themeColor }}>
+              {item.title}
+            </span>
+            <svg
+              className="size-4 shrink-0 opacity-30"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        ))}
+      </div>
+
+      {section.children.length > 0 && (
+        <div
+          className="mt-3 ml-4 space-y-4 border-l-2 pl-4"
+          style={{ borderColor: `${themeColor}20` }}
+        >
+          {section.children.map((child) => (
+            <SectionBlock key={child.id} section={child} themeColor={themeColor} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LinkPage() {
   const { slug } = Route.useParams();
   const [page, setPage] = useState<LinkPageData | null>(null);
@@ -68,7 +136,7 @@ function LinkPage() {
 
       const { data: sectionsData } = await supabase
         .from("link_sections")
-        .select("id, title, sort_order")
+        .select("id, title, sort_order, visible, parent_id")
         .eq("page_id", pageData.id)
         .eq("visible", true)
         .order("sort_order");
@@ -86,15 +154,46 @@ function LinkPage() {
         allItems = (itemsData ?? []) as LinkItem[];
       }
 
-      const sections: LinkSection[] = (sectionsData ?? []).map((sec) => ({
-        id: sec.id,
-        title: sec.title,
-        sort_order: sec.sort_order,
-        items: allItems.filter((i) => i.section_id === sec.id),
-      }));
+      const flatSections: Array<{
+        id: string;
+        title: string;
+        sort_order: number;
+        parent_id: string | null;
+      }> = (sectionsData ?? []) as Array<{
+        id: string;
+        title: string;
+        sort_order: number;
+        parent_id: string | null;
+      }>;
+
+      const sectionMap = new Map<string, LinkSection>();
+      for (const sec of flatSections) {
+        sectionMap.set(sec.id, {
+          id: sec.id,
+          title: sec.title,
+          sort_order: sec.sort_order,
+          parent_id: sec.parent_id,
+          items: allItems.filter((i) => i.section_id === sec.id),
+          children: [],
+        });
+      }
+
+      const topLevel: LinkSection[] = [];
+      for (const sec of sectionMap.values()) {
+        if (sec.parent_id && sectionMap.has(sec.parent_id)) {
+          sectionMap.get(sec.parent_id)!.children.push(sec);
+        } else {
+          topLevel.push(sec);
+        }
+      }
+
+      topLevel.sort((a, b) => a.sort_order - b.sort_order);
+      for (const sec of sectionMap.values()) {
+        sec.children.sort((a, b) => a.sort_order - b.sort_order);
+      }
 
       if (!cancelled) {
-        setPage({ ...pageData, sections } as LinkPageData);
+        setPage({ ...pageData, sections: topLevel } as LinkPageData);
         setLoading(false);
       }
     })();
@@ -150,59 +249,7 @@ function LinkPage() {
 
         <div className="mt-8 space-y-6">
           {page.sections.map((section) => (
-            <div key={section.id}>
-              {section.title && (
-                <h2
-                  className="mb-3 text-xs font-bold uppercase tracking-widest opacity-50"
-                  style={{ color: page.theme_color }}
-                >
-                  {section.title}
-                </h2>
-              )}
-              <div className="space-y-2">
-                {section.items.map((item) => (
-                  <a
-                    key={item.id}
-                    href={/^https?:\/\//i.test(item.url) ? item.url : "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-card"
-                    style={{
-                      borderColor: `${page.theme_color}25`,
-                      backgroundColor: `${page.theme_color}08`,
-                    }}
-                  >
-                    {item.icon_url ? (
-                      <img src={item.icon_url} alt="" className="size-6 shrink-0 rounded" />
-                    ) : item.icon_emoji ? (
-                      <span className="text-lg">{item.icon_emoji}</span>
-                    ) : (
-                      <span
-                        className="flex size-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
-                        style={{ backgroundColor: page.theme_color }}
-                      >
-                        {item.title.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                    <span
-                      className="flex-1 truncate text-sm font-semibold"
-                      style={{ color: page.theme_color }}
-                    >
-                      {item.title}
-                    </span>
-                    <svg
-                      className="size-4 shrink-0 opacity-30"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </a>
-                ))}
-              </div>
-            </div>
+            <SectionBlock key={section.id} section={section} themeColor={page.theme_color} />
           ))}
         </div>
 
