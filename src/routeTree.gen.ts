@@ -33,6 +33,7 @@ import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedWorkspaceAnalyticsRouteImport } from './routes/_authenticated/workspace-analytics'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as RSlugRouteImport } from './routes/r.$slug'
 
@@ -136,6 +137,12 @@ const AuthenticatedBulkAnalyticsRoute =
     path: '/bulk-analytics',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedWorkspaceAnalyticsRoute =
+  AuthenticatedWorkspaceAnalyticsRouteImport.update({
+    id: '/workspace-analytics',
+    path: '/workspace-analytics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -191,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/links': typeof AuthenticatedLinksRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/workspace-analytics': typeof AuthenticatedWorkspaceAnalyticsRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$slug': typeof RSlugRoute
 }
@@ -218,6 +226,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/links': typeof AuthenticatedLinksRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/workspace-analytics': typeof AuthenticatedWorkspaceAnalyticsRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$slug': typeof RSlugRoute
 }
@@ -247,6 +256,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/links': typeof AuthenticatedLinksRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/workspace-analytics': typeof AuthenticatedWorkspaceAnalyticsRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$slug': typeof RSlugRoute
 }
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/links'
     | '/settings'
+    | '/workspace-analytics'
     | '/p/$slug'
     | '/r/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/links'
     | '/settings'
+    | '/workspace-analytics'
     | '/p/$slug'
     | '/r/$slug'
   id:
@@ -331,6 +343,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/links'
     | '/_authenticated/settings'
+    | '/_authenticated/workspace-analytics'
     | '/p/$slug'
     | '/r/$slug'
   fileRoutesById: FileRoutesById
@@ -526,6 +539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/workspace-analytics': {
+      id: '/_authenticated/workspace-analytics'
+      path: '/workspace-analytics'
+      fullPath: '/workspace-analytics'
+      preLoaderRoute: typeof AuthenticatedWorkspaceAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/p/$slug': {
       id: '/p/$slug'
       path: '/p/$slug'
@@ -552,6 +572,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLinksRoute: typeof AuthenticatedLinksRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedWorkspaceAnalyticsRoute: typeof AuthenticatedWorkspaceAnalyticsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -563,6 +584,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLinksRoute: AuthenticatedLinksRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedWorkspaceAnalyticsRoute: AuthenticatedWorkspaceAnalyticsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

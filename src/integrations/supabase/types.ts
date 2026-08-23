@@ -77,6 +77,88 @@ export type Database = {
           },
         ];
       };
+      link_item_clicks: {
+        Row: {
+          city: string | null;
+          clicked_at: string;
+          country: string | null;
+          country_code: string | null;
+          device: string | null;
+          id: string;
+          item_id: string;
+          referrer: string | null;
+        };
+        Insert: {
+          city?: string | null;
+          clicked_at?: string;
+          country?: string | null;
+          country_code?: string | null;
+          device?: string | null;
+          id?: string;
+          item_id: string;
+          referrer?: string | null;
+        };
+        Update: {
+          city?: string | null;
+          clicked_at?: string;
+          country?: string | null;
+          country_code?: string | null;
+          device?: string | null;
+          id?: string;
+          item_id?: string;
+          referrer?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "link_item_clicks_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "link_items";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      link_page_views: {
+        Row: {
+          city: string | null;
+          country: string | null;
+          country_code: string | null;
+          device: string | null;
+          id: string;
+          page_id: string;
+          referrer: string | null;
+          viewed_at: string;
+        };
+        Insert: {
+          city?: string | null;
+          country?: string | null;
+          country_code?: string | null;
+          device?: string | null;
+          id?: string;
+          page_id: string;
+          referrer?: string | null;
+          viewed_at?: string;
+        };
+        Update: {
+          city?: string | null;
+          country?: string | null;
+          country_code?: string | null;
+          device?: string | null;
+          id?: string;
+          page_id?: string;
+          referrer?: string | null;
+          viewed_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "link_page_views_page_id_fkey";
+            columns: ["page_id"];
+            isOneToOne: false;
+            referencedRelation: "link_pages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       link_pages: {
         Row: {
           avatar_url: string | null;

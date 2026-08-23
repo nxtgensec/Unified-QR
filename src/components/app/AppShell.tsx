@@ -40,7 +40,14 @@ function isSection(item: NavEntry): item is NavSection {
 const nav: NavEntry[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutGrid className="size-4" /> },
   { to: "/create", label: "Create QR Code", icon: <Plus className="size-4" /> },
-  { to: "/links", label: "Workspace", icon: <Link2 className="size-4" /> },
+  {
+    label: "Workspace",
+    icon: <Link2 className="size-4" />,
+    children: [
+      { to: "/links", label: "Editor", icon: <Link2 className="size-3" /> },
+      { to: "/workspace-analytics", label: "Analytics", icon: <BarChart3 className="size-3" /> },
+    ],
+  },
   { to: "/analytics", label: "Analytics", icon: <BarChart3 className="size-4" /> },
   {
     label: "Bulk",
@@ -95,6 +102,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const [expandedSection, setExpandedSection] = useState<string | null>(() => {
     if (pathname.startsWith("/bulk")) return "Bulk";
+    if (pathname.startsWith("/links") || pathname.startsWith("/workspace-analytics"))
+      return "Workspace";
     return null;
   });
 

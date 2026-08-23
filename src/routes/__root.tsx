@@ -189,6 +189,7 @@ const APP_PREFIXES = [
   "/billing",
   "/settings",
   "/links",
+  "/workspace-analytics",
 ];
 
 const STANDALONE_PREFIXES = ["/p"];

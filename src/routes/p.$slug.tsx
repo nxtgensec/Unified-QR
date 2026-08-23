@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { recordPageView, recordItemClick } from "@/lib/workspaceAnalytics.functions";
 
 type LinkItem = {
   id: string;
@@ -46,7 +47,15 @@ export const Route = createFileRoute("/p/$slug")({
   component: LinkPage,
 });
 
-function SectionBlock({ section, themeColor }: { section: LinkSection; themeColor: string }) {
+function SectionBlock({
+  section,
+  themeColor,
+  onItemClick,
+}: {
+  section: LinkSection;
+  themeColor: string;
+  onItemClick: (itemId: string) => void;
+}) {
   return (
     <div>
       {section.title && (
@@ -64,6 +73,7 @@ function SectionBlock({ section, themeColor }: { section: LinkSection; themeColo
             href={/^https?:\/\//i.test(item.url) ? item.url : "#"}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => onItemClick(item.id)}
             className="group flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-card"
             style={{
               borderColor: `${themeColor}25`,
@@ -104,7 +114,12 @@ function SectionBlock({ section, themeColor }: { section: LinkSection; themeColo
           style={{ borderColor: `${themeColor}20` }}
         >
           {section.children.map((child) => (
-            <SectionBlock key={child.id} section={child} themeColor={themeColor} />
+            <SectionBlock
+              key={child.id}
+              section={child}
+              themeColor={themeColor}
+              onItemClick={onItemClick}
+            />
           ))}
         </div>
       )}
@@ -195,12 +210,30 @@ function LinkPage() {
       if (!cancelled) {
         setPage({ ...pageData, sections: topLevel } as LinkPageData);
         setLoading(false);
+
+        void recordPageView({
+          data: {
+            pageId: pageData.id,
+            device: navigator.userAgent.slice(0, 200),
+            referrer: document.referrer || null,
+          },
+        });
       }
     })();
     return () => {
       cancelled = true;
     };
   }, [slug]);
+
+  const handleItemClick = useCallback((itemId: string) => {
+    void recordItemClick({
+      data: {
+        itemId,
+        device: navigator.userAgent.slice(0, 200),
+        referrer: document.referrer || null,
+      },
+    });
+  }, []);
 
   if (loading) {
     return (
@@ -249,7 +282,12 @@ function LinkPage() {
 
         <div className="mt-8 space-y-6">
           {page.sections.map((section) => (
-            <SectionBlock key={section.id} section={section} themeColor={page.theme_color} />
+            <SectionBlock
+              key={section.id}
+              section={section}
+              themeColor={page.theme_color}
+              onItemClick={handleItemClick}
+            />
           ))}
         </div>
 
