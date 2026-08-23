@@ -11,10 +11,16 @@ import {
   templates,
   bodyShapeOptions,
   eyeShapeOptions,
+  frameStyleOptions,
   downloadPng,
+  downloadSvg,
+  downloadJpg,
+  downloadWebp,
   type QrDesign,
   type BodyShape,
   type EyeShape,
+  type GradientConfig,
+  type FrameConfig,
 } from "@/lib/qr";
 import { toast } from "sonner";
 import JSZip from "jszip";
@@ -22,6 +28,7 @@ import {
   AlertTriangle,
   Check,
   ChevronRight,
+  ChevronDown,
   FileSpreadsheet,
   Loader2,
   Upload,
@@ -30,6 +37,9 @@ import {
   Sparkles,
   Package,
   X,
+  Palette,
+  Image,
+  Frame,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/bulk")({
@@ -185,8 +195,21 @@ function BulkPage() {
     );
   }
 
-  function renderSvg(destination: string): string {
-    return renderQrSvg(destination, { templateId, ...design }, { size: 256, margin: 2 });
+  const tplBase = templates.find((t) => t.id === templateId) ?? templates[0]!;
+  const fullDesign = {
+    templateId,
+    fg: design.fg ?? tplBase.fg,
+    bg: design.bg ?? tplBase.bg,
+    eye: design.eye ?? tplBase.eye,
+    bodyShape: design.bodyShape ?? tplBase.shape,
+    eyeShape: design.eyeShape ?? tplBase.eyeShape,
+    gradient: design.gradient ?? null,
+    logo: design.logo ?? null,
+    frame: design.frame ?? null,
+  };
+
+  function renderSvgFor(destination: string, size: number, margin: number): string {
+    return renderQrSvg(destination, fullDesign, { size, margin });
   }
 
   function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -209,10 +232,34 @@ function BulkPage() {
     setDesign((prev) => ({ ...prev, logo: null }));
   }
 
-  async function downloadSinglePng(name: string, slug: string) {
-    const svg = renderQrSvg(shortUrl(slug), { templateId, ...design }, { size: 1024, margin: 4 });
+  function resetAllCustom() {
+    setDesign({});
+    const tpl = templates.find((t) => t.id === templateId) ?? templates[0]!;
+    setTemplateId(tpl.id);
+  }
+
+  async function downloadSingleFormat(
+    name: string,
+    slug: string,
+    format: "png" | "svg" | "jpg" | "webp",
+  ) {
+    const svg = renderSvgFor(shortUrl(slug), 1024, 4);
     const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 60);
-    await downloadPng(svg, safeName + ".png", 1024);
+    switch (format) {
+      case "svg":
+        downloadSvg(svg, `${safeName}.svg`);
+        break;
+      case "png":
+        await downloadPng(svg, `${safeName}.png`, 1024);
+        break;
+      case "jpg":
+        await downloadJpg(svg, `${safeName}.jpg`, 1024);
+        break;
+      case "webp":
+        await downloadWebp(svg, `${safeName}.webp`, 1024);
+        break;
+    }
+    toast.success(`${safeName}.${format} downloaded`);
   }
 
   async function runImport() {
@@ -310,7 +357,7 @@ function BulkPage() {
     setStep("results");
   }
 
-  async function downloadZip() {
+  async function downloadBulkZip(format: "png" | "svg" | "jpg" | "webp") {
     const okResults = results.filter((r) => r.ok && r.slug);
     if (okResults.length === 0) return;
 
@@ -318,24 +365,31 @@ function BulkPage() {
     const pngSize = 512;
 
     for (const r of okResults) {
-      const svg = renderQrSvg(shortUrl(r.slug!), { templateId, ...design }, { size: pngSize, margin: 4 });
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Failed to render " + r.name));
-        img.src = svgToDataUrl(svg);
-      });
-      const canvas = document.createElement("canvas");
-      canvas.width = pngSize;
-      canvas.height = pngSize;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) continue;
-      ctx.drawImage(img, 0, 0, pngSize, pngSize);
-      const dataUrl = canvas.toDataURL("image/png");
-      const base64 = dataUrl.split(",")[1] ?? "";
+      const svg = renderSvgFor(shortUrl(r.slug!), pngSize, 4);
       const safeName = r.name.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 60);
-      zip.file(safeName + ".png", base64, { base64: true });
+
+      if (format === "svg") {
+        zip.file(`${safeName}.svg`, svg);
+      } else {
+        const img = window.Image ? new window.Image() : document.createElement("img");
+        img.crossOrigin = "anonymous";
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("Failed to render " + r.name));
+          img.src = svgToDataUrl(svg);
+        });
+        const canvas = document.createElement("canvas");
+        canvas.width = pngSize;
+        canvas.height = pngSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) continue;
+        ctx.drawImage(img, 0, 0, pngSize, pngSize);
+        const mimeType =
+          format === "jpg" ? "image/jpeg" : format === "webp" ? "image/webp" : "image/png";
+        const dataUrl = canvas.toDataURL(mimeType);
+        const base64 = dataUrl.split(",")[1] ?? "";
+        zip.file(`${safeName}.${format}`, base64, { base64: true });
+      }
     }
 
     zip.file(
@@ -350,10 +404,10 @@ function BulkPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "unifiedqr-bulk-codes.zip";
+    a.download = `unifiedqr-bulk-codes.${format === "svg" ? "zip" : "zip"}`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("ZIP downloaded");
+    toast.success(`ZIP (${format.toUpperCase()}) downloaded`);
   }
 
   function downloadLinksCsv() {
@@ -368,6 +422,8 @@ function BulkPage() {
     );
     toast.success("CSV downloaded");
   }
+
+  const activeTpl = templates.find((t) => t.id === templateId) ?? templates[0]!;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
@@ -545,6 +601,9 @@ function BulkPage() {
 
       {step === "design" && (
         <div className="mt-8">
+          <p className="mb-4 text-sm text-muted-foreground">
+            Design one QR code — this same design will be applied to all {rows.length} codes.
+          </p>
           <div className="grid gap-6 lg:grid-cols-2">
             <div>
               <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
@@ -555,7 +614,10 @@ function BulkPage() {
                   <button
                     key={tpl.id}
                     type="button"
-                    onClick={() => setTemplateId(tpl.id)}
+                    onClick={() => {
+                      setTemplateId(tpl.id);
+                      setDesign({});
+                    }}
                     className={
                       "relative flex flex-col items-center rounded-xl border p-2 transition-all " +
                       (templateId === tpl.id
@@ -572,7 +634,11 @@ function BulkPage() {
                     <div className="size-16">
                       <img
                         src={svgToDataUrl(
-                          renderQrSvg("https://example.com", { templateId: tpl.id }, { size: 64, margin: 1 }),
+                          renderQrSvg(
+                            "https://example.com",
+                            { templateId: tpl.id },
+                            { size: 64, margin: 1 },
+                          ),
                         )}
                         alt={"Template " + tpl.id}
                         className="size-full rounded-md"
@@ -584,94 +650,295 @@ function BulkPage() {
                   </button>
                 ))}
               </div>
+
+              <div className="mt-5 flex items-center justify-center gap-6">
+                <label className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Code</span>
+                  <input
+                    type="color"
+                    value={design.fg ?? activeTpl.fg}
+                    onChange={(e) => setDesign((prev) => ({ ...prev, fg: e.target.value }))}
+                    className="size-8 cursor-pointer rounded-lg border border-border bg-background p-0.5"
+                  />
+                </label>
+                <label className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Background</span>
+                  <input
+                    type="color"
+                    value={design.bg ?? activeTpl.bg}
+                    onChange={(e) => setDesign((prev) => ({ ...prev, bg: e.target.value }))}
+                    className="size-8 cursor-pointer rounded-lg border border-border bg-background p-0.5"
+                  />
+                </label>
+                <label className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Eye</span>
+                  <input
+                    type="color"
+                    value={design.eye ?? activeTpl.eye}
+                    onChange={(e) => setDesign((prev) => ({ ...prev, eye: e.target.value }))}
+                    className="size-8 cursor-pointer rounded-lg border border-border bg-background p-0.5"
+                  />
+                </label>
+              </div>
             </div>
 
             <div className="rounded-2xl border border-border bg-background p-5 shadow-card">
               <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
                 Customise
               </h2>
-              <div className="mt-3 space-y-3">
-                <div className="flex flex-wrap items-center gap-4">
-                  <label className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Foreground</span>
-                    <input type="color" value={design.fg ?? templates.find((t) => t.id === templateId)?.fg ?? "#111827"} onChange={(e) => setDesign((prev) => ({ ...prev, fg: e.target.value }))} className="size-7 cursor-pointer rounded border border-border" />
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Background</span>
-                    <input type="color" value={design.bg ?? templates.find((t) => t.id === templateId)?.bg ?? "#ffffff"} onChange={(e) => setDesign((prev) => ({ ...prev, bg: e.target.value }))} className="size-7 cursor-pointer rounded border border-border" />
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Eye</span>
-                    <input type="color" value={design.eye ?? templates.find((t) => t.id === templateId)?.eye ?? "#111827"} onChange={(e) => setDesign((prev) => ({ ...prev, eye: e.target.value }))} className="size-7 cursor-pointer rounded border border-border" />
-                  </label>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4">
-                  <label className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Body shape</span>
-                    <select value={design.bodyShape ?? ""} onChange={(e) => setDesign((prev) => ({ ...prev, bodyShape: (e.target.value || undefined) as BodyShape | undefined }))} className="rounded-lg border border-border bg-background px-2 py-1 text-xs outline-none">
-                      <option value="">Default</option>
-                      {bodyShapeOptions.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Eye shape</span>
-                    <select value={design.eyeShape ?? ""} onChange={(e) => setDesign((prev) => ({ ...prev, eyeShape: (e.target.value || undefined) as EyeShape | undefined }))} className="rounded-lg border border-border bg-background px-2 py-1 text-xs outline-none">
-                      <option value="">Default</option>
-                      {eyeShapeOptions.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                <div className="border-t border-border pt-3">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={!!design.gradient} onChange={(e) => setDesign((prev) => ({ ...prev, gradient: e.target.checked ? { type: "linear", color: "#6366f1", angle: 135 } : null }))} className="size-3.5 rounded border-border" />
-                    <span className="text-xs text-muted-foreground">Gradient fill</span>
-                  </label>
-                  {design.gradient && (
-                    <div className="mt-2 flex flex-wrap items-center gap-3 pl-5">
-                      <label className="flex items-center gap-2">
-                        <span className="text-[11px] text-muted-foreground">Colour</span>
-                        <input type="color" value={design.gradient.color} onChange={(e) => setDesign((prev) => ({ ...prev, gradient: prev.gradient ? { ...prev.gradient, color: e.target.value } : null }))} className="size-6 cursor-pointer rounded border border-border" />
-                      </label>
-                      <select value={design.gradient.type} onChange={(e) => setDesign((prev) => ({ ...prev, gradient: prev.gradient ? { ...prev.gradient, type: e.target.value as "linear" | "radial" } : null }))} className="rounded-lg border border-border bg-background px-2 py-1 text-[11px] outline-none">
-                        <option value="linear">Linear</option>
-                        <option value="radial">Radial</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                <div className="border-t border-border pt-3">
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => logoInputRef.current?.click()} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-bold">
-                      {design.logo ? "Change logo" : "Add logo"}
-                    </button>
-                    {design.logo && (
-                      <button type="button" onClick={removeLogo} className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] text-destructive hover:bg-destructive/10">
-                        <X className="size-3" /> Remove
+              <div className="mt-3 space-y-1">
+                <BulkDesignCollapsible
+                  icon={<Palette className="size-4" />}
+                  label="Body Shape"
+                  value={design.bodyShape ?? null}
+                >
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {bodyShapeOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() =>
+                          setDesign((prev) => ({
+                            ...prev,
+                            bodyShape:
+                              prev.bodyShape === opt.value
+                                ? (undefined as unknown as BodyShape | null)
+                                : opt.value,
+                          }))
+                        }
+                        className={
+                          "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
+                          (design.bodyShape === opt.value
+                            ? "bg-brand text-brand-foreground"
+                            : "bg-background text-muted-foreground hover:bg-background/80")
+                        }
+                      >
+                        {opt.label}
                       </button>
+                    ))}
+                  </div>
+                </BulkDesignCollapsible>
+
+                <BulkDesignCollapsible
+                  icon={<Frame className="size-4" />}
+                  label="Eye Style"
+                  value={design.eyeShape ?? null}
+                >
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {eyeShapeOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() =>
+                          setDesign((prev) => ({
+                            ...prev,
+                            eyeShape:
+                              prev.eyeShape === opt.value
+                                ? (undefined as unknown as EyeShape | null)
+                                : opt.value,
+                          }))
+                        }
+                        className={
+                          "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
+                          (design.eyeShape === opt.value
+                            ? "bg-brand text-brand-foreground"
+                            : "bg-background text-muted-foreground hover:bg-background/80")
+                        }
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </BulkDesignCollapsible>
+
+                <BulkDesignCollapsible
+                  icon={<Palette className="size-4" />}
+                  label="Gradient"
+                  value={
+                    design.gradient
+                      ? `${design.gradient.type} gradient`
+                      : null
+                  }
+                >
+                  <div className="space-y-2 pt-1">
+                    <div className="flex gap-1.5">
+                      {(["linear", "radial"] as const).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() =>
+                            setDesign((prev) => ({
+                              ...prev,
+                              gradient:
+                                prev.gradient?.type === t
+                                  ? (null as GradientConfig | null)
+                                  : { type: t, color: "#6366f1", angle: 135 },
+                            }))
+                          }
+                          className={
+                            "rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition-colors " +
+                            (design.gradient?.type === t
+                              ? "bg-brand text-brand-foreground"
+                              : "bg-background text-muted-foreground hover:bg-background/80")
+                          }
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                    {design.gradient && (
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                          <input
+                            type="color"
+                            value={design.gradient.color}
+                            onChange={(e) =>
+                              setDesign((prev) => ({
+                                ...prev,
+                                gradient: prev.gradient
+                                  ? { ...prev.gradient, color: e.target.value }
+                                  : null,
+                              }))
+                            }
+                            className="size-7 cursor-pointer rounded-lg border border-border bg-background p-0.5"
+                          />
+                          Colour
+                        </label>
+                        {design.gradient.type === "linear" && (
+                          <input
+                            type="number"
+                            min={0}
+                            max={360}
+                            value={design.gradient.angle ?? 135}
+                            onChange={(e) =>
+                              setDesign((prev) => ({
+                                ...prev,
+                                gradient: prev.gradient
+                                  ? { ...prev.gradient, angle: Number(e.target.value) }
+                                  : null,
+                              }))
+                            }
+                            className="h-8 w-20 rounded-lg border border-border bg-background px-2 text-xs"
+                            placeholder="Angle"
+                          />
+                        )}
+                      </div>
                     )}
                   </div>
-                  <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                  {design.logo && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <img src={design.logo} alt="Logo preview" className="size-10 rounded border border-border object-contain" />
-                      <span className="text-[10px] text-muted-foreground">Logo will be placed at the centre of each QR code.</span>
-                    </div>
-                  )}
-                </div>
+                </BulkDesignCollapsible>
+
+                <BulkDesignCollapsible
+                  icon={<Image className="size-4" />}
+                  label="Logo"
+                  value={design.logo ? "Logo added" : null}
+                >
+                  <div className="pt-1">
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/svg+xml"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    {design.logo ? (
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={design.logo}
+                          alt="Logo preview"
+                          className="size-12 rounded-lg border border-border object-contain bg-background p-0.5"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeLogo}
+                          className="rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        className="flex items-center gap-2 rounded-lg border border-dashed border-border bg-background px-4 py-3 text-xs font-semibold text-muted-foreground hover:bg-background/80"
+                      >
+                        <Upload className="size-4" />
+                        Upload logo (max 500KB)
+                      </button>
+                    )}
+                    {design.logo && (
+                      <p className="mt-1.5 text-[10px] text-muted-foreground">
+                        Logo will be placed at the centre of each QR code.
+                      </p>
+                    )}
+                  </div>
+                </BulkDesignCollapsible>
+
+                <BulkDesignCollapsible
+                  icon={<Frame className="size-4" />}
+                  label="Frame & CTA"
+                  value={design.frame?.text || null}
+                >
+                  <div className="space-y-2 pt-1">
+                    <input
+                      type="text"
+                      value={design.frame?.text ?? ""}
+                      onChange={(e) =>
+                        setDesign((prev) => ({
+                          ...prev,
+                          frame: e.target.value
+                            ? {
+                                text: e.target.value,
+                                style: prev.frame?.style ?? "default",
+                              }
+                            : (null as FrameConfig | null),
+                        }))
+                      }
+                      placeholder="CTA text (e.g. Scan Me)"
+                      className="h-9 w-full rounded-lg border border-border bg-background px-3 text-xs"
+                    />
+                    {design.frame && (
+                      <div className="flex gap-1.5">
+                        {frameStyleOptions.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() =>
+                              setDesign((prev) => ({
+                                ...prev,
+                                frame: prev.frame
+                                  ? { ...prev.frame, style: opt.value }
+                                  : null,
+                              }))
+                            }
+                            className={
+                              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
+                              (design.frame?.style === opt.value
+                                ? "bg-brand text-brand-foreground"
+                                : "bg-background text-muted-foreground hover:bg-background/80")
+                            }
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </BulkDesignCollapsible>
               </div>
 
               <div className="mt-4 flex items-center justify-between">
-                <button type="button" onClick={() => setStep("review")} className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold">
+                <button
+                  type="button"
+                  onClick={() => setStep("review")}
+                  className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold"
+                >
                   Back
                 </button>
-                <button type="button" onClick={() => setStep("preview")} className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground">
+                <button
+                  type="button"
+                  onClick={() => setStep("preview")}
+                  className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground"
+                >
                   Next: Preview <ChevronRight className="size-4" />
                 </button>
               </div>
@@ -688,7 +955,11 @@ function BulkPage() {
           <div className="mt-4 grid max-h-[500px] grid-cols-2 gap-3 overflow-auto rounded-2xl border border-border bg-background p-4 shadow-card sm:grid-cols-3 lg:grid-cols-4">
             {rows.slice(0, 50).map((r, i) => (
               <div key={i} className="flex flex-col items-center rounded-xl border border-border p-3">
-                <img src={svgToDataUrl(renderSvg(r.destination))} alt={r.name} className="size-24 rounded-md" />
+                <img
+                  src={svgToDataUrl(renderSvgFor(r.destination, 256, 2))}
+                  alt={r.name}
+                  className="size-24 rounded-md"
+                />
                 <span className="mt-2 block w-full truncate text-center text-xs font-semibold">
                   {r.name}
                 </span>
@@ -701,10 +972,19 @@ function BulkPage() {
             )}
           </div>
           <div className="mt-6 flex justify-between">
-            <button type="button" onClick={() => setStep("design")} className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold">
+            <button
+              type="button"
+              onClick={() => setStep("design")}
+              className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold"
+            >
               Back
             </button>
-            <button type="button" onClick={() => void runImport()} disabled={busy} className="flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-bold text-brand-foreground disabled:opacity-60">
+            <button
+              type="button"
+              onClick={() => void runImport()}
+              disabled={busy}
+              className="flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-bold text-brand-foreground disabled:opacity-60"
+            >
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
               Create {rows.length} codes
             </button>
@@ -718,11 +998,26 @@ function BulkPage() {
           <p className="mt-4 text-sm font-bold">Creating your QR codes...</p>
           <div className="mt-4 w-full max-w-md">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{progress.done} of {progress.total}</span>
-              <span>{progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0}%</span>
+              <span>
+                {progress.done} of {progress.total}
+              </span>
+              <span>
+                {progress.total > 0
+                  ? Math.round((progress.done / progress.total) * 100)
+                  : 0}
+                %
+              </span>
             </div>
             <div className="mt-2 h-2 rounded-full bg-background">
-              <div className="h-2 rounded-full bg-brand transition-all" style={{ width: progress.total > 0 ? Math.round((progress.done / progress.total) * 100) + "%" : "0%" }} />
+              <div
+                className="h-2 rounded-full bg-brand transition-all"
+                style={{
+                  width:
+                    progress.total > 0
+                      ? Math.round((progress.done / progress.total) * 100) + "%"
+                      : "0%",
+                }}
+              />
             </div>
           </div>
         </div>
@@ -742,13 +1037,51 @@ function BulkPage() {
               </p>
             </div>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <button type="button" onClick={() => void downloadZip()} disabled={results.filter((r) => r.ok && r.slug).length === 0} className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground disabled:opacity-60">
-                <Package className="size-4" /> Download ZIP
+              <button
+                type="button"
+                onClick={() => void downloadBulkZip("png")}
+                disabled={results.filter((r) => r.ok && r.slug).length === 0}
+                className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground disabled:opacity-60"
+              >
+                <Package className="size-4" /> Download ZIP (PNG)
               </button>
-              <button type="button" onClick={downloadLinksCsv} disabled={results.filter((r) => r.ok && r.slug).length === 0} className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold disabled:opacity-60">
-                <Download className="size-4" /> Download CSV
+              <button
+                type="button"
+                onClick={() => void downloadBulkZip("svg")}
+                disabled={results.filter((r) => r.ok && r.slug).length === 0}
+                className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold disabled:opacity-60"
+              >
+                <Package className="size-4" /> ZIP (SVG)
               </button>
-              <button type="button" onClick={() => navigate({ to: "/dashboard" })} className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold">
+              <button
+                type="button"
+                onClick={() => void downloadBulkZip("jpg")}
+                disabled={results.filter((r) => r.ok && r.slug).length === 0}
+                className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold disabled:opacity-60"
+              >
+                <Package className="size-4" /> ZIP (JPG)
+              </button>
+              <button
+                type="button"
+                onClick={() => void downloadBulkZip("webp")}
+                disabled={results.filter((r) => r.ok && r.slug).length === 0}
+                className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold disabled:opacity-60"
+              >
+                <Package className="size-4" /> ZIP (WebP)
+              </button>
+              <button
+                type="button"
+                onClick={downloadLinksCsv}
+                disabled={results.filter((r) => r.ok && r.slug).length === 0}
+                className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold disabled:opacity-60"
+              >
+                <Download className="size-4" /> Links CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/dashboard" })}
+                className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold"
+              >
                 Done
               </button>
             </div>
@@ -758,19 +1091,38 @@ function BulkPage() {
             <div className="rounded-2xl border border-border bg-background shadow-card">
               <div className="border-b border-border px-5 py-4">
                 <h3 className="text-sm font-bold">Individual codes</h3>
-                <p className="text-xs text-muted-foreground">Download each QR code individually.</p>
+                <p className="text-xs text-muted-foreground">
+                  Download each QR code individually in your preferred format.
+                </p>
               </div>
               <ul className="max-h-96 divide-y divide-border overflow-auto">
                 {results.filter((r) => r.ok && r.slug).map((r) => (
                   <li key={r.name} className="flex items-center gap-3 px-5 py-3">
-                    <img src={svgToDataUrl(renderQrSvg(shortUrl(r.slug!), { templateId, ...design }, { size: 48, margin: 1 }))} alt={r.name} className="size-10 shrink-0 rounded" />
+                    <img
+                      src={svgToDataUrl(
+                        renderSvgFor(shortUrl(r.slug!), 48, 1),
+                      )}
+                      alt={r.name}
+                      className="size-10 shrink-0 rounded"
+                    />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold">{r.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{shortUrl(r.slug!)}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {shortUrl(r.slug!)}
+                      </span>
                     </span>
-                    <button type="button" onClick={() => void downloadSinglePng(r.name, r.slug!)} className="shrink-0 flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-bold transition-colors hover:bg-surface">
-                      <Download className="size-3" /> PNG
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {(["png", "svg", "jpg", "webp"] as const).map((fmt) => (
+                        <button
+                          key={fmt}
+                          type="button"
+                          onClick={() => void downloadSingleFormat(r.name, r.slug!, fmt)}
+                          className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-bold transition-colors hover:bg-surface"
+                        >
+                          <Download className="size-3" /> {fmt.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -778,6 +1130,43 @@ function BulkPage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function BulkDesignCollapsible({
+  icon,
+  label,
+  value,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | null;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-border bg-background/50">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="flex w-full items-center gap-2 px-3 py-2.5 text-left"
+      >
+        <span className="text-muted-foreground">{icon}</span>
+        <span className="flex-1 text-xs font-semibold">{label}</span>
+        {value && (
+          <span className="max-w-[80px] truncate rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">
+            {value}
+          </span>
+        )}
+        {open ? (
+          <ChevronDown className="size-3.5 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="size-3.5 text-muted-foreground" />
+        )}
+      </button>
+      {open && <div className="border-t border-border px-3 py-2.5">{children}</div>}
     </div>
   );
 }
