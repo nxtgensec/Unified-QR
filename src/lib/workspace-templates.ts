@@ -2,6 +2,7 @@ export type WorkspaceTemplateItem = {
   title: string;
   url: string;
   icon_emoji: string | null;
+  icon_url?: string | null;
 };
 
 export type WorkspaceTemplateSection = {
@@ -9,8 +10,42 @@ export type WorkspaceTemplateSection = {
   items: WorkspaceTemplateItem[];
 };
 
+export type NeedId =
+  | "personal"
+  | "business"
+  | "creator"
+  | "food"
+  | "events"
+  | "education"
+  | "work"
+  | "health"
+  | "shop";
+
+export const NEEDS: { id: NeedId; label: string; description: string; emoji: string }[] = [
+  {
+    id: "personal",
+    label: "Personal",
+    description: "All your socials & contact in one link",
+    emoji: "👤",
+  },
+  {
+    id: "business",
+    label: "Business",
+    description: "Services, contact & social presence",
+    emoji: "🏢",
+  },
+  { id: "creator", label: "Creator", description: "Content, merch & support links", emoji: "🎬" },
+  { id: "food", label: "Food & Dining", description: "Menu, ordering & reservations", emoji: "🍽️" },
+  { id: "events", label: "Events", description: "Schedule, tickets & venue info", emoji: "🎉" },
+  { id: "education", label: "Education", description: "Courses, notes & admissions", emoji: "🎓" },
+  { id: "work", label: "Work", description: "Portfolio, services & hiring", emoji: "💼" },
+  { id: "health", label: "Health", description: "Appointments, timings & location", emoji: "🩺" },
+  { id: "shop", label: "Shop", description: "Catalog, offers & WhatsApp ordering", emoji: "🛍️" },
+];
+
 export type WorkspaceTemplate = {
   id: string;
+  need: NeedId;
   name: string;
   description: string;
   preview: string;
@@ -22,9 +57,35 @@ export type WorkspaceTemplate = {
   sections: WorkspaceTemplateSection[];
 };
 
+const TITLE_BRAND: [RegExp, string][] = [
+  [/^instagram$/i, "instagram"],
+  [/^(twitter \/ x|x \/ twitter|twitter)$/i, "x"],
+  [/^linkedin$/i, "linkedin"],
+  [/^(youtube|youtube channel)$/i, "youtube"],
+  [/^facebook$/i, "facebook"],
+  [/^(whatsapp|order on whatsapp)$/i, "whatsapp"],
+  [/^github$/i, "github"],
+  [/^email( me| us)?$/i, "email"],
+  [/^(call now|call us|call reception)$/i, "phone"],
+  [/^(google maps|directions|location( & maps)?)$/i, "location"],
+  [/^(my portfolio|portfolio|view portfolio|website)$/i, "website"],
+  [/^(book a call|book appointment|reserve a table)$/i, "booking"],
+  [/^(resume \/ cv|view menu|view catalog)$/i, "menu"],
+];
+
+export function brandForTitle(title: string): string | null {
+  const t = title.trim();
+  if (!t) return null;
+  for (const [re, id] of TITLE_BRAND) {
+    if (re.test(t)) return `brand:${id}`;
+  }
+  return null;
+}
+
 export const workspaceTemplates: WorkspaceTemplate[] = [
   {
     id: "personal",
+    need: "personal",
     name: "Personal",
     description: "All your links in one place — socials, contact, about me.",
     preview: "👤",
@@ -54,6 +115,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "business",
+    need: "business",
     name: "Business",
     description: "Showcase services, pricing, and contact info for your business.",
     preview: "🏢",
@@ -91,6 +153,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "creator",
+    need: "creator",
     name: "Creator",
     description: "For content creators — your content, merch, and support links.",
     preview: "🎬",
@@ -126,6 +189,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "restaurant",
+    need: "food",
     name: "Restaurant",
     description: "Menu, reservations, location, and hours for your restaurant.",
     preview: "🍽️",
@@ -162,6 +226,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "event",
+    need: "events",
     name: "Event",
     description: "Conference, meetup, or festival — schedule, speakers, venue.",
     preview: "🎉",
@@ -197,6 +262,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "student",
+    need: "education",
     name: "Student",
     description: "Portfolio, resume, projects, and contact for job seekers.",
     preview: "🎓",
@@ -232,6 +298,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "minimal",
+    need: "personal",
     name: "Minimal",
     description: "Clean, simple — just your most important links.",
     preview: "✨",
@@ -254,6 +321,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "shop",
+    need: "shop",
     name: "Shop",
     description: "Catalog, offers and WhatsApp ordering for your store.",
     preview: "🛍️",
@@ -283,6 +351,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "coaching",
+    need: "education",
     name: "Coaching",
     description: "Courses, notes and admissions for teachers & institutes.",
     preview: "📚",
@@ -319,6 +388,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "freelancer",
+    need: "work",
     name: "Freelancer",
     description: "Services, portfolio and hiring links for clients.",
     preview: "💼",
@@ -355,6 +425,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "clinic",
+    need: "health",
     name: "Clinic",
     description: "Appointments, timings and location for doctors & clinics.",
     preview: "🩺",
@@ -384,6 +455,7 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
   },
   {
     id: "blank",
+    need: "personal",
     name: "Blank",
     description: "Start from scratch with a clean page.",
     preview: "📝",

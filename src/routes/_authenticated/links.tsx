@@ -11,10 +11,22 @@ import {
   downloadSvg,
   downloadJpg,
   downloadPdf,
+  bodyShapeOptions,
+  eyeShapeOptions,
+  type BodyShape,
+  type EyeShape,
 } from "@/lib/qr";
 import { readableQrColor, readableTextColor, urlHostname } from "@/lib/utils";
-import { workspaceTemplates, type WorkspaceTemplate } from "@/lib/workspace-templates";
+import { BRAND_LIST, BrandIconRender, brandIdFromUrl, BRAND_PREFIX } from "@/lib/brand-icons";
 import {
+  workspaceTemplates,
+  NEEDS,
+  brandForTitle,
+  type NeedId,
+  type WorkspaceTemplate,
+} from "@/lib/workspace-templates";
+import {
+  ArrowLeft,
   ChevronDown,
   ChevronRight,
   Copy,
@@ -25,10 +37,12 @@ import {
   FileImage,
   FileType,
   GripVertical,
+  ImagePlus,
   Link2,
   Loader2,
   Plus,
   Save,
+  Smile,
   Sparkles,
   Trash2,
   Upload,
@@ -82,6 +96,42 @@ function LinksEditor() {
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [confirmDeleteSection, setConfirmDeleteSection] = useState<SectionRow | null>(null);
   const [confirmDeletePage, setConfirmDeletePage] = useState<PageRow | null>(null);
+  const [qrFg, setQrFg] = useState<string | null>(null);
+  const [qrBody, setQrBody] = useState<BodyShape | null>(null);
+  const [qrEye, setQrEye] = useState<EyeShape | null>(null);
+
+  useEffect(() => {
+    if (!selectedPageId) return;
+    try {
+      const raw = localStorage.getItem(`uqr-wsqr-${selectedPageId}`);
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          fg?: string | null;
+          bodyShape?: BodyShape | null;
+          eyeShape?: EyeShape | null;
+        };
+        setQrFg(saved.fg ?? null);
+        setQrBody(saved.bodyShape ?? null);
+        setQrEye(saved.eyeShape ?? null);
+      } else {
+        setQrFg(null);
+        setQrBody(null);
+        setQrEye(null);
+      }
+    } catch {
+      setQrFg(null);
+      setQrBody(null);
+      setQrEye(null);
+    }
+  }, [selectedPageId]);
+
+  useEffect(() => {
+    if (!selectedPageId) return;
+    localStorage.setItem(
+      `uqr-wsqr-${selectedPageId}`,
+      JSON.stringify({ fg: qrFg, bodyShape: qrBody, eyeShape: qrEye }),
+    );
+  }, [selectedPageId, qrFg, qrBody, qrEye]);
   const [pageFields, setPageFields] = useState({
     title: "My Links",
     subtitle: "",
@@ -209,6 +259,7 @@ function LinksEditor() {
           title: item.title,
           url: item.url,
           icon_emoji: item.icon_emoji,
+          icon_url: item.icon_url ?? brandForTitle(item.title),
           sort_order: ii,
         });
       }
@@ -441,16 +492,16 @@ function LinksEditor() {
 
   const previewSvg = useMemo(() => {
     if (!publicUrl) return null;
-    const qrColor = readableQrColor(pageFields.theme_color, "#ffffff");
+    const qrColor = readableQrColor(qrFg ?? pageFields.theme_color, "#ffffff");
     return renderQrSvg(publicUrl, {
       templateId: 1,
       fg: qrColor,
       bg: "#ffffff",
       eye: qrColor,
-      bodyShape: "square",
-      eyeShape: "square",
+      bodyShape: qrBody ?? "square",
+      eyeShape: qrEye ?? "square",
     });
-  }, [publicUrl, pageFields.theme_color]);
+  }, [publicUrl, pageFields.theme_color, qrFg, qrBody, qrEye]);
 
   const previewTextColor = useMemo(
     () => readableTextColor(pageFields.theme_color, pageFields.theme_bg),
@@ -809,26 +860,38 @@ function LinksEditor() {
                                 </p>
                               )}
                               <div className="space-y-1.5">
-                                {secItems.map((item) => (
-                                  <div
-                                    key={item.id}
-                                    className="flex items-center gap-2 rounded-lg border px-3 py-2"
-                                    style={{
-                                      borderColor: `${pageFields.theme_color}25`,
-                                      backgroundColor: `${pageFields.theme_color}08`,
-                                    }}
-                                  >
-                                    <span className="text-xs">{item.icon_emoji || "🔗"}</span>
-                                    <span
-                                      className="flex-1 truncate text-xs font-semibold"
-                                      style={{ color: previewTextColor }}
+                                {secItems.map((item) => {
+                                  const brandId = brandIdFromUrl(item.icon_url);
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      className="flex items-center gap-2 rounded-lg border px-3 py-2"
+                                      style={{
+                                        borderColor: `${pageFields.theme_color}25`,
+                                        backgroundColor: `${pageFields.theme_color}08`,
+                                      }}
                                     >
-                                      {item.title ||
-                                        urlHostname(normalizeItemUrl(item.url)) ||
-                                        "Link"}
-                                    </span>
-                                  </div>
-                                ))}
+                                      {brandId ? (
+                                        <span
+                                          className="flex size-4 items-center justify-center"
+                                          style={{ color: previewTextColor }}
+                                        >
+                                          <BrandIconRender id={brandId} className="size-4" />
+                                        </span>
+                                      ) : (
+                                        <span className="text-xs">{item.icon_emoji || "🔗"}</span>
+                                      )}
+                                      <span
+                                        className="flex-1 truncate text-xs font-semibold"
+                                        style={{ color: previewTextColor }}
+                                      >
+                                        {item.title ||
+                                          urlHostname(normalizeItemUrl(item.url)) ||
+                                          "Link"}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
                                 {subSecs.map((sub) => {
                                   const subItems = items
                                     .filter((i) => i.section_id === sub.id && i.visible)
@@ -843,28 +906,43 @@ function LinksEditor() {
                                           {sub.title}
                                         </p>
                                       )}
-                                      {subItems.map((item) => (
-                                        <div
-                                          key={item.id}
-                                          className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5"
-                                          style={{
-                                            borderColor: `${pageFields.theme_color}15`,
-                                            backgroundColor: `${pageFields.theme_color}05`,
-                                          }}
-                                        >
-                                          <span className="text-[10px]">
-                                            {item.icon_emoji || "🔗"}
-                                          </span>
-                                          <span
-                                            className="flex-1 truncate text-[10px] font-semibold"
-                                            style={{ color: previewTextColor }}
+                                      {subItems.map((item) => {
+                                        const subBrandId = brandIdFromUrl(item.icon_url);
+                                        return (
+                                          <div
+                                            key={item.id}
+                                            className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5"
+                                            style={{
+                                              borderColor: `${pageFields.theme_color}15`,
+                                              backgroundColor: `${pageFields.theme_color}05`,
+                                            }}
                                           >
-                                            {item.title ||
-                                              urlHostname(normalizeItemUrl(item.url)) ||
-                                              "Link"}
-                                          </span>
-                                        </div>
-                                      ))}
+                                            {subBrandId ? (
+                                              <span
+                                                className="flex items-center justify-center"
+                                                style={{ color: previewTextColor }}
+                                              >
+                                                <BrandIconRender
+                                                  id={subBrandId}
+                                                  className="size-3.5"
+                                                />
+                                              </span>
+                                            ) : (
+                                              <span className="text-[10px]">
+                                                {item.icon_emoji || "🔗"}
+                                              </span>
+                                            )}
+                                            <span
+                                              className="flex-1 truncate text-[10px] font-semibold"
+                                              style={{ color: previewTextColor }}
+                                            >
+                                              {item.title ||
+                                                urlHostname(normalizeItemUrl(item.url)) ||
+                                                "Link"}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
                                     </div>
                                   );
                                 })}
@@ -876,6 +954,93 @@ function LinksEditor() {
                   </div>
                 </div>
               </div>
+
+              {/* QR design */}
+              {previewSvg && (
+                <div className="rounded-2xl border border-border bg-background p-4 shadow-card">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      QR Design
+                    </h3>
+                    {(qrFg || qrBody || qrEye) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQrFg(null);
+                          setQrBody(null);
+                          setQrEye(null);
+                        }}
+                        className="text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+
+                  <label className="flex items-center gap-2 text-xs font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={!qrFg}
+                      onChange={(e) => setQrFg(e.target.checked ? null : pageFields.theme_color)}
+                      className="size-3.5 accent-brand"
+                    />
+                    Match theme color (auto scan-safe)
+                  </label>
+                  {qrFg && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={qrFg ?? pageFields.theme_color}
+                        onChange={(e) => setQrFg(e.target.value)}
+                        className="size-8 cursor-pointer rounded-lg border border-border bg-background p-0.5"
+                      />
+                      <span className="text-[11px] text-muted-foreground">
+                        Light colors are auto-darkened so the code stays scannable.
+                      </span>
+                    </div>
+                  )}
+
+                  <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Body shape
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {bodyShapeOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setQrBody(qrBody === opt.value ? null : opt.value)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                          (qrBody ?? "square") === opt.value
+                            ? "bg-brand text-brand-foreground"
+                            : "bg-background text-muted-foreground hover:bg-background/80"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Eye style
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {eyeShapeOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setQrEye(qrEye === opt.value ? null : opt.value)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                          (qrEye ?? "square") === opt.value
+                            ? "bg-brand text-brand-foreground"
+                            : "bg-background text-muted-foreground hover:bg-background/80"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* QR Code */}
               {previewSvg && (
@@ -1027,44 +1192,12 @@ function SectionBlock({
         <>
           <div className="mt-3 space-y-2">
             {sectionItems.map((item) => (
-              <div
+              <ItemRow
                 key={item.id}
-                className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2"
-              >
-                <input
-                  value={item.icon_emoji ?? ""}
-                  onChange={(e) => onUpdateItem(item.id, { icon_emoji: e.target.value || null })}
-                  placeholder="😀"
-                  className="w-10 bg-transparent text-center text-sm outline-none"
-                  title="Emoji icon"
-                />
-                <input
-                  value={item.title}
-                  onChange={(e) => onUpdateItem(item.id, { title: e.target.value })}
-                  placeholder="Link title"
-                  className="w-32 bg-transparent text-xs font-semibold outline-none placeholder:text-muted-foreground/40"
-                />
-                <input
-                  value={item.url}
-                  onChange={(e) => onUpdateItem(item.id, { url: e.target.value })}
-                  placeholder="https://…"
-                  className="flex-1 bg-transparent text-xs text-muted-foreground outline-none placeholder:text-muted-foreground/40"
-                />
-                <button
-                  type="button"
-                  onClick={() => onUpdateItem(item.id, { visible: !item.visible })}
-                  className="rounded p-1 text-muted-foreground/50 hover:text-foreground"
-                >
-                  {item.visible ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDeleteItem(item.id)}
-                  className="rounded p-1 text-muted-foreground/50 hover:text-destructive"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
-              </div>
+                item={item}
+                onUpdateItem={onUpdateItem}
+                onDeleteItem={onDeleteItem}
+              />
             ))}
           </div>
 
@@ -1114,6 +1247,123 @@ function SectionBlock({
   );
 }
 
+function ItemRow({
+  item,
+  onUpdateItem,
+  onDeleteItem,
+}: {
+  item: ItemRow;
+  onUpdateItem: (id: string, patch: Partial<ItemRow>) => void;
+  onDeleteItem: (id: string) => void;
+}) {
+  const [iconOpen, setIconOpen] = useState(false);
+  const brandId = brandIdFromUrl(item.icon_url);
+
+  return (
+    <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIconOpen((v) => !v)}
+          className="grid size-8 place-items-center rounded-lg border border-border bg-background text-sm transition-colors hover:bg-background/80"
+          title="Choose icon"
+        >
+          {brandId ? (
+            <BrandIconRender id={brandId} className="size-4" />
+          ) : item.icon_emoji ? (
+            <span>{item.icon_emoji}</span>
+          ) : (
+            <ImagePlus className="size-3.5 text-muted-foreground" />
+          )}
+        </button>
+        {iconOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIconOpen(false)} />
+            <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-border bg-background p-2 shadow-float">
+              <p className="px-1 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Brand icons
+              </p>
+              <div className="grid grid-cols-6 gap-1">
+                {BRAND_LIST.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    title={b.label}
+                    onClick={() => {
+                      onUpdateItem(item.id, { icon_url: `${BRAND_PREFIX}${b.id}` });
+                      setIconOpen(false);
+                    }}
+                    className={`grid size-9 place-items-center rounded-lg transition-colors ${
+                      brandId === b.id
+                        ? "bg-brand text-brand-foreground"
+                        : "text-muted-foreground hover:bg-brand-soft hover:text-brand"
+                    }`}
+                  >
+                    <BrandIconRender id={b.id} className="size-4" />
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 border-t border-border pt-2">
+                <div className="flex items-center gap-2">
+                  <Smile className="size-3.5 text-muted-foreground" />
+                  <input
+                    value={item.icon_emoji ?? ""}
+                    onChange={(e) => onUpdateItem(item.id, { icon_emoji: e.target.value || null })}
+                    placeholder="Custom emoji"
+                    className="w-full rounded-lg bg-transparent px-1 py-1 text-sm outline-none"
+                  />
+                  {(brandId || item.icon_emoji) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onUpdateItem(item.id, { icon_url: null, icon_emoji: null });
+                        setIconOpen(false);
+                      }}
+                      className="shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      title="Remove icon"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  )}
+                </div>
+                <p className="mt-1 px-1 text-[10px] text-muted-foreground">
+                  Brand icon overrides emoji on the public page.
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <input
+        value={item.title}
+        onChange={(e) => onUpdateItem(item.id, { title: e.target.value })}
+        placeholder="Link title"
+        className="w-32 bg-transparent text-xs font-semibold outline-none placeholder:text-muted-foreground/40"
+      />
+      <input
+        value={item.url}
+        onChange={(e) => onUpdateItem(item.id, { url: e.target.value })}
+        placeholder="https://…"
+        className="flex-1 bg-transparent text-xs text-muted-foreground outline-none placeholder:text-muted-foreground/40"
+      />
+      <button
+        type="button"
+        onClick={() => onUpdateItem(item.id, { visible: !item.visible })}
+        className="rounded p-1 text-muted-foreground/50 hover:text-foreground"
+      >
+        {item.visible ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+      </button>
+      <button
+        type="button"
+        onClick={() => onDeleteItem(item.id)}
+        className="rounded p-1 text-muted-foreground/50 hover:text-destructive"
+      >
+        <Trash2 className="size-3.5" />
+      </button>
+    </div>
+  );
+}
+
 function TemplatePicker({
   onSelect,
   onBlank,
@@ -1123,21 +1373,40 @@ function TemplatePicker({
   onBlank: () => void;
   onClose: () => void;
 }) {
+  const [need, setNeed] = useState<NeedId | null>(null);
+  const matching = need ? workspaceTemplates.filter((t) => t.need === need) : [];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       onMouseDown={onClose}
     >
       <div
-        className="w-full max-w-3xl rounded-2xl border border-border bg-background p-6 shadow-float"
+        className="max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-background p-6 shadow-float"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-extrabold">Choose a template</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Pick a starting point, then customize everything.
-            </p>
+          <div className="flex items-center gap-2">
+            {need && (
+              <button
+                type="button"
+                onClick={() => setNeed(null)}
+                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-background"
+                title="Back"
+              >
+                <ArrowLeft className="size-4" />
+              </button>
+            )}
+            <div>
+              <h2 className="text-lg font-extrabold">
+                {need ? "Pick a template" : "What is this page for?"}
+              </h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {need
+                  ? "Choose a starting point — everything is editable after."
+                  : "We'll show you the best templates for your need."}
+              </p>
+            </div>
           </div>
           <button
             type="button"
@@ -1148,30 +1417,82 @@ function TemplatePicker({
           </button>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {workspaceTemplates.map((t) => (
+        {!need ? (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {NEEDS.map((n) => {
+              const count = workspaceTemplates.filter((t) => t.need === n.id).length;
+              return (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => setNeed(n.id)}
+                  className="flex items-start gap-3 rounded-xl border border-border p-4 text-left transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-card"
+                >
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-xl">
+                    {n.emoji}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold">{n.label}</span>
+                    <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
+                      {n.description}
+                    </span>
+                    <span className="mt-1 block text-[10px] font-semibold text-brand">
+                      {count} template{count === 1 ? "" : "s"}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {matching.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => onSelect(t)}
+                className="group flex flex-col items-center rounded-xl border border-border p-4 text-center transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-card"
+              >
+                <span className="text-3xl">{t.preview}</span>
+                <h3 className="mt-2 text-sm font-bold">{t.name}</h3>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{t.description}</p>
+                <div className="mt-2 flex flex-wrap justify-center gap-1">
+                  {t.sections.slice(0, 3).map((s, i) => (
+                    <span
+                      key={i}
+                      className="rounded-full bg-brand-soft px-2 py-0.5 text-[9px] font-semibold text-brand"
+                    >
+                      {s.title || "Links"}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-3 flex gap-1">
+                  <span
+                    className="size-3 rounded-full border"
+                    style={{ backgroundColor: t.theme_color }}
+                  />
+                  <span
+                    className="size-3 rounded-full border"
+                    style={{ backgroundColor: t.theme_bg }}
+                  />
+                </div>
+              </button>
+            ))}
             <button
-              key={t.id}
               type="button"
-              onClick={() => (t.id === "blank" ? onBlank() : onSelect(t))}
-              className="group flex flex-col items-center rounded-xl border border-border p-4 text-center transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-card"
+              onClick={onBlank}
+              className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border p-4 text-center transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-card"
             >
-              <span className="text-3xl">{t.preview}</span>
-              <h3 className="mt-2 text-sm font-bold">{t.name}</h3>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">{t.description}</p>
-              <div className="mt-3 flex gap-1" style={{ color: t.theme_color }}>
-                <span
-                  className="size-3 rounded-full border"
-                  style={{ backgroundColor: t.theme_color }}
-                />
-                <span
-                  className="size-3 rounded-full border"
-                  style={{ backgroundColor: t.theme_bg }}
-                />
-              </div>
+              <span className="grid size-12 place-items-center rounded-xl bg-brand-soft">
+                <Plus className="size-5 text-brand" />
+              </span>
+              <h3 className="mt-2 text-sm font-bold">Start blank</h3>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Empty page — build it your way
+              </p>
             </button>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

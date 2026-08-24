@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { recordPageView, recordItemClick } from "@/lib/workspaceAnalytics.functions";
 import { readableTextColor, urlHostname } from "@/lib/utils";
+import { BrandIconRender, brandIdFromUrl } from "@/lib/brand-icons";
 
 type LinkItem = {
   id: string;
@@ -101,8 +102,15 @@ function SectionBlock({
                 backgroundColor: `${themeColor}08`,
               }}
             >
-              {item.icon_url ? (
+              {item.icon_url?.startsWith("http") || item.icon_url?.startsWith("data:") ? (
                 <img src={item.icon_url} alt="" className="size-6 shrink-0 rounded" />
+              ) : brandIdFromUrl(item.icon_url) ? (
+                <span
+                  className="flex size-6 shrink-0 items-center justify-center"
+                  style={{ color: textColor }}
+                >
+                  <BrandIconRender id={brandIdFromUrl(item.icon_url)!} className="size-5" />
+                </span>
               ) : item.icon_emoji ? (
                 <span className="text-lg">{item.icon_emoji}</span>
               ) : (
