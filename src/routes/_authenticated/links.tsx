@@ -81,6 +81,7 @@ function LinksEditor() {
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [confirmDeleteSection, setConfirmDeleteSection] = useState<SectionRow | null>(null);
+  const [confirmDeletePage, setConfirmDeletePage] = useState<PageRow | null>(null);
   const [pageFields, setPageFields] = useState({
     title: "My Links",
     subtitle: "",
@@ -151,29 +152,46 @@ function LinksEditor() {
     }
   }, []);
 
+  async function insertPage(values: {
+    title: string;
+    subtitle: string | null;
+    theme_color: string;
+    theme_bg: string;
+    theme_font: string;
+    avatar_url?: string | null;
+  }): Promise<PageRow | null> {
+    if (!user) return null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const slug = makeSlug();
+      const { data, error } = await supabase
+        .from("link_pages")
+        .insert({ user_id: user.id, slug, ...values })
+        .select("id, slug, title, updated_at")
+        .single();
+      if (!error) return data as PageRow;
+      const msg = error.message.toLowerCase();
+      if (!msg.includes("duplicate") && !msg.includes("unique")) {
+        toast.error("Could not create page", { description: error.message });
+        return null;
+      }
+    }
+    toast.error("Could not create page", {
+      description: "Could not generate a unique page link. Please try again.",
+    });
+    return null;
+  }
+
   async function createPageFromTemplate(template: WorkspaceTemplate) {
     if (!user) return;
     setShowTemplatePicker(false);
-    const slug = pageFields.slug.trim() || makeSlug();
-
-    const { data: pageData, error: pageErr } = await supabase
-      .from("link_pages")
-      .insert({
-        user_id: user.id,
-        slug,
-        title: template.title,
-        subtitle: template.subtitle || null,
-        avatar_url: null,
-        theme_color: template.theme_color,
-        theme_bg: template.theme_bg,
-        theme_font: template.theme_font,
-      })
-      .select("id, slug, title, updated_at")
-      .single();
-    if (pageErr) {
-      toast.error("Could not create page", { description: pageErr.message });
-      return;
-    }
+    const pageData = await insertPage({
+      title: template.title,
+      subtitle: template.subtitle || null,
+      theme_color: template.theme_color,
+      theme_bg: template.theme_bg,
+      theme_font: template.theme_font,
+    });
+    if (!pageData) return;
 
     for (let si = 0; si < template.sections.length; si++) {
       const sec = template.sections[si]!;
@@ -196,48 +214,65 @@ function LinksEditor() {
       }
     }
 
-    setPages((prev) => [pageData as PageRow, ...prev]);
+    setPages((prev) => [pageData, ...prev]);
     await loadPage(pageData.id);
-    setPageFields({
-      title: template.title,
-      subtitle: template.subtitle,
-      slug,
-      avatar_url: "",
-      theme_color: template.theme_color,
-      theme_bg: template.theme_bg,
-      theme_font: template.theme_font,
-    });
     toast.success("Page created from template");
   }
 
   async function createBlankPage() {
     if (!user) return;
     setShowTemplatePicker(false);
-    const slug = pageFields.slug.trim() || makeSlug();
-    const { data, error } = await supabase
-      .from("link_pages")
-      .insert({
-        user_id: user.id,
-        slug,
-        title: pageFields.title || "My Page",
-        subtitle: pageFields.subtitle || null,
-        theme_color: pageFields.theme_color,
-        theme_bg: pageFields.theme_bg,
-        theme_font: pageFields.theme_font,
-      })
-      .select("id, slug, title, updated_at")
-      .single();
+    const pageData = await insertPage({
+      title: "My Page",
+      subtitle: null,
+      theme_color: pageFields.theme_color,
+      theme_bg: pageFields.theme_bg,
+      theme_font: pageFields.theme_font,
+    });
+    if (!pageData) return;
+    setPages((prev) => [pageData, ...prev]);
+    await loadPage(pageData.id);
+    toast.success("Page created");
+  }
+
+  async function deletePage(page: PageRow) {
+    const { error } = await supabase.from("link_pages").delete().eq("id", page.id);
     if (error) {
-      toast.error("Could not create page", { description: error.message });
+      toast.error("Could not delete page", { description: error.message });
       return;
     }
-    setPages((prev) => [data as PageRow, ...prev]);
-    await loadPage(data.id);
-    toast.success("Page created");
+    const remaining = pages.filter((p) => p.id !== page.id);
+    setPages(remaining);
+    setConfirmDeletePage(null);
+    if (selectedPageId === page.id) {
+      setSelectedPageId(null);
+      setSections([]);
+      setItems([]);
+      if (remaining.length > 0) {
+        void loadPage(remaining[0]!.id);
+      } else {
+        setPageFields({
+          title: "My Links",
+          subtitle: "",
+          slug: "",
+          avatar_url: "",
+          theme_color: "#6366f1",
+          theme_bg: "#ffffff",
+          theme_font: "system",
+        });
+      }
+    }
+    toast.success("Page deleted");
   }
 
   async function saveAll() {
     if (!selectedPageId) return;
+    if (!pageFields.slug.trim()) {
+      toast.error("Slug cannot be empty", {
+        description: "Set a slug so your page has a public link.",
+      });
+      return;
+    }
     setSaving(true);
 
     const { error: pageErr } = await supabase
@@ -255,7 +290,14 @@ function LinksEditor() {
       .eq("id", selectedPageId);
 
     if (pageErr) {
-      toast.error("Save failed", { description: pageErr.message });
+      const msg = pageErr.message.toLowerCase();
+      if (msg.includes("duplicate") || msg.includes("unique")) {
+        toast.error("This link is taken", {
+          description: `Another page already uses /p/${pageFields.slug}. Pick a different slug.`,
+        });
+      } else {
+        toast.error("Save failed", { description: pageErr.message });
+      }
       setSaving(false);
       return;
     }
@@ -477,6 +519,16 @@ function LinksEditor() {
         />
       )}
 
+      {confirmDeletePage && (
+        <DeletePageConfirm
+          page={confirmDeletePage}
+          sectionCount={selectedPageId === confirmDeletePage.id ? sections.length : 0}
+          itemCount={selectedPageId === confirmDeletePage.id ? items.length : 0}
+          onClose={() => setConfirmDeletePage(null)}
+          onConfirm={() => void deletePage(confirmDeletePage)}
+        />
+      )}
+
       {pages.length === 0 && !showTemplatePicker ? (
         <div className="mt-12 rounded-2xl border border-dashed border-border p-10 text-center">
           <Sparkles className="mx-auto size-8 text-muted-foreground/40" />
@@ -497,19 +549,33 @@ function LinksEditor() {
           {/* Page list sidebar */}
           <nav className="space-y-1">
             {pages.map((p) => (
-              <button
+              <div
                 key={p.id}
-                type="button"
-                onClick={() => void loadPage(p.id)}
-                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
-                  selectedPageId === p.id
-                    ? "bg-brand-soft text-brand"
-                    : "text-muted-foreground hover:bg-background hover:text-foreground"
+                className={`flex items-center gap-1 rounded-xl pr-1 transition-colors ${
+                  selectedPageId === p.id ? "bg-brand-soft" : "hover:bg-background"
                 }`}
               >
-                <span className="flex-1 truncate">{p.title || p.slug}</span>
-                <span className="text-[10px] opacity-50">/{p.slug}</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => void loadPage(p.id)}
+                  className={`flex min-w-0 flex-1 items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
+                    selectedPageId === p.id
+                      ? "text-brand"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span className="flex-1 truncate">{p.title || p.slug}</span>
+                  <span className="text-[10px] opacity-50">/{p.slug}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeletePage(p)}
+                  className="rounded-lg p-1.5 text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  title="Delete page"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
             ))}
           </nav>
 
@@ -1105,6 +1171,79 @@ function TemplatePicker({
               </div>
             </button>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeletePageConfirm({
+  page,
+  sectionCount,
+  itemCount,
+  onClose,
+  onConfirm,
+}: {
+  page: PageRow;
+  sectionCount: number;
+  itemCount: number;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onMouseDown={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl border border-border bg-background p-6 shadow-float"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-destructive/10">
+            <Trash2 className="size-5 text-destructive" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-base font-extrabold">Delete page?</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              "<span className="font-semibold text-foreground">{page.title || page.slug}</span>"
+              will be permanently removed, including:
+            </p>
+            <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+              <li>• All sections and links on this page</li>
+              {sectionCount > 0 && (
+                <li>
+                  • {sectionCount} section{sectionCount === 1 ? "" : "s"} and {itemCount} link
+                  {itemCount === 1 ? "" : "s"}
+                </li>
+              )}
+              <li>
+                • Its public link{" "}
+                <span className="font-semibold text-foreground">/p/{page.slug}</span> — it will stop
+                working immediately
+              </li>
+              <li>• All page views and click analytics</li>
+            </ul>
+            <p className="mt-2 text-xs font-semibold text-destructive">
+              This cannot be undone. QR codes printed with this link will stop working.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-border px-5 py-2 text-sm font-bold transition-colors hover:bg-background"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="rounded-full bg-destructive px-5 py-2 text-sm font-bold text-destructive-foreground transition-transform hover:-translate-y-0.5"
+          >
+            Delete page
+          </button>
         </div>
       </div>
     </div>
