@@ -101,7 +101,7 @@ const messages = {
     "pricing.freeFeatures": [
       "Unlimited static QR Codes",
       "2 dynamic QR Codes",
-      "PNG & SVG downloads",
+      "All format downloads — PNG, SVG, JPG & PDF",
       "13 design templates",
       "Commercial use",
     ],

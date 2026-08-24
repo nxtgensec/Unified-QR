@@ -8,7 +8,7 @@ export const Route = createFileRoute("/how-to-create")({
       {
         name: "description",
         content:
-          "Learn how to create a free QR Code in 3 simple steps: pick a type, customise the design and download in PNG, SVG or PDF. No sign-up required.",
+          "Learn how to create a free QR Code in 3 simple steps: pick a type, customise the design and download in PNG, SVG, JPG or PDF. No sign-up required.",
       },
       { property: "og:title", content: "How to Create a QR Code — Step by Step Guide" },
       {
@@ -49,7 +49,7 @@ export const Route = createFileRoute("/how-to-create")({
               "@type": "HowToStep",
               position: 3,
               name: "Download your QR Code",
-              text: "Export as PNG, SVG, JPG, WebP or PDF. No watermarks.",
+              text: "Export as PNG, SVG, JPG or PDF. No watermarks.",
             },
           ],
         }),
@@ -78,7 +78,7 @@ const steps = [
     icon: Download,
     number: 3,
     title: "Download or save",
-    body: "Hit the download button and choose your format — PNG, SVG, JPG, WebP or PDF. If you want to track scans or change the destination later, sign up for free and save it as a dynamic QR Code.",
+    body: "Hit the download button and choose your format — PNG, SVG, JPG or PDF. If you want to track scans or change the destination later, sign up for free and save it as a dynamic QR Code.",
     tip: "SVG is best for print. PNG is best for digital and social media.",
   },
 ];

@@ -62,7 +62,8 @@ function Types() {
       <div className="max-w-2xl">
         <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">QR Code types</h1>
         <p className="mt-4 text-muted-foreground">
-          Every type below is free to create, has no scan limit and downloads as PNG or SVG.
+          Every type below is free to create, has no scan limit and downloads as PNG, SVG, JPG or
+          PDF.
         </p>
       </div>
 

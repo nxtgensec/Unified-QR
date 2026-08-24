@@ -20,7 +20,7 @@ export const Route = createFileRoute("/compare")({
       {
         property: "og:description",
         content:
-          "Unlimited free static QR codes, custom designs, 5 export formats — all free. Competitors charge ₹1,200–₹5,000/yr for the same.",
+          "Unlimited free static QR codes, custom designs, 4 export formats — all free. Competitors charge ₹1,200–₹5,000/yr for the same.",
       },
       { property: "og:url", content: "https://qr.nxtgensec.org/compare" },
       { property: "og:type", content: "website" },
@@ -277,7 +277,7 @@ function Compare() {
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
           Unlimited static QR codes with no watermarks. 34 templates. Custom colours, gradients,
-          logos and frames. 5 export formats. No sign-up required. Competitors lock all of this
+          logos and frames. 4 export formats. No sign-up required. Competitors lock all of this
           behind ₹1,200 – ₹5,000/year plans.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">

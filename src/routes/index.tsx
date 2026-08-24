@@ -79,7 +79,7 @@ export const Route = createFileRoute("/")({
               "Real-time scan analytics with device and referrer tracking",
               "Team collaboration with role-based access",
               "CSV bulk create for enterprise workflows",
-              "PNG, SVG, JPG, WebP and PDF downloads",
+              "PNG, SVG, JPG and PDF downloads",
               "29 language support with auto-detection",
               "Custom colours, body shapes, eye styles, gradients, logos and frames",
             ],
@@ -320,7 +320,8 @@ function Home() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center">
           <h2 className="text-2xl font-extrabold tracking-tight sm:text-4xl">QR Code types</h2>
           <p className="mt-3 text-muted-foreground">
-            Every type below is free to create, has no scan limit and downloads as PNG or SVG.
+            Every type below is free to create, has no scan limit and downloads as PNG, SVG, JPG or
+            PDF.
           </p>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {qrTypes.slice(0, 6).map((qt) => (

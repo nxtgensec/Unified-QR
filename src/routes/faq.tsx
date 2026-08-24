@@ -107,7 +107,7 @@ const faqData = [
   },
   {
     q: "What formats can I download in?",
-    a: "You can download QR Codes as PNG, SVG, JPG, WebP or PDF. SVG is recommended for print, while PNG is best for screens and social media.",
+    a: "You can download QR Codes as PNG, SVG, JPG or PDF — all free. SVG is recommended for print, while PNG is best for screens and social media.",
   },
   {
     q: "Can I change the destination of a QR Code after printing?",
