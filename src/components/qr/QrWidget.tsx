@@ -4,7 +4,6 @@ import {
   downloadPng,
   downloadSvg,
   downloadJpg,
-  downloadWebp,
   downloadPdf,
   initialForm,
   renderQrSvg,
@@ -231,7 +230,7 @@ export function QrWidget({
   const gradientThumbs = useMemo(() => thumbs.filter((t) => t.variant === "gradient"), [thumbs]);
 
   const handleDownload = useCallback(
-    async (format: "png" | "svg" | "jpg" | "webp" | "pdf") => {
+    async (format: "png" | "svg" | "jpg" | "pdf") => {
       const out = renderQrSvg(data, template, { size: 1024 });
       const baseName = `unifiedqr-${type}`;
       switch (format) {
@@ -243,9 +242,6 @@ export function QrWidget({
           break;
         case "jpg":
           await downloadJpg(out, `${baseName}.jpg`);
-          break;
-        case "webp":
-          await downloadWebp(out, `${baseName}.webp`);
           break;
         case "pdf":
           await downloadPdf(out, `${baseName}.pdf`);
@@ -578,7 +574,7 @@ function FormatDialog({
   onDownload,
   previewSrc,
 }: {
-  onDownload: (format: "png" | "svg" | "jpg" | "webp" | "pdf") => void;
+  onDownload: (format: "png" | "svg" | "jpg" | "pdf") => void;
   previewSrc: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -587,7 +583,6 @@ function FormatDialog({
     { value: "png" as const, label: "PNG", icon: FileImage },
     { value: "svg" as const, label: "SVG", icon: FileType },
     { value: "jpg" as const, label: "JPG", icon: FileImage },
-    { value: "webp" as const, label: "WebP", icon: FileImage },
     { value: "pdf" as const, label: "PDF", icon: FileText },
   ];
 
