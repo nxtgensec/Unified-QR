@@ -584,11 +584,11 @@ function FormatDialog({
   const [open, setOpen] = useState(false);
 
   const formats = [
-    { value: "png" as const, label: "PNG", desc: "Best for screens & social media" },
-    { value: "svg" as const, label: "SVG", desc: "Scalable, ideal for print" },
-    { value: "jpg" as const, label: "JPG", desc: "Universal, smaller file size" },
-    { value: "webp" as const, label: "WebP", desc: "Modern, optimised for web" },
-    { value: "pdf" as const, label: "PDF", desc: "Ready for documents & print" },
+    { value: "png" as const, label: "PNG", desc: "Best for screens" },
+    { value: "svg" as const, label: "SVG", desc: "Scalable, print" },
+    { value: "jpg" as const, label: "JPG", desc: "Universal" },
+    { value: "webp" as const, label: "WebP", desc: "Modern, web" },
+    { value: "pdf" as const, label: "PDF", desc: "Documents" },
   ];
 
   return (
@@ -600,19 +600,19 @@ function FormatDialog({
       >
         <Download className="size-4" /> Download QR Code
       </button>
-      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
-        <div className="flex flex-col items-center gap-6 p-8">
-          <DialogHeader className="items-center text-center">
-            <DialogTitle className="text-xl">Download QR Code</DialogTitle>
-          </DialogHeader>
-          <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-0">
+          <DialogTitle className="text-lg">Download QR Code</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col sm:flex-row items-center gap-5 p-6">
+          <div className="shrink-0 rounded-2xl border border-border bg-white p-3 shadow-sm">
             <img
               src={previewSrc}
               alt="QR code preview"
-              className="w-64 h-64 sm:w-80 sm:h-80 object-contain"
+              className="w-32 h-32 sm:w-40 sm:h-40 object-contain"
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 w-full">
+          <div className="flex sm:flex-col gap-2 w-full sm:w-auto">
             {formats.map((f) => (
               <button
                 key={f.value}
@@ -621,21 +621,23 @@ function FormatDialog({
                   onDownload(f.value);
                   setOpen(false);
                 }}
-                className="flex flex-col items-center gap-2 rounded-xl border border-border bg-background p-4 transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-md cursor-pointer"
+                className="flex items-center gap-2.5 rounded-xl border border-border bg-background px-3 py-2.5 transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-md cursor-pointer sm:w-full"
               >
-                <span className="grid size-10 place-items-center rounded-xl bg-brand-soft text-brand">
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
                   {f.value === "pdf" ? (
-                    <FileText className="size-5" />
+                    <FileText className="size-4" />
                   ) : f.value === "svg" ? (
-                    <FileType className="size-5" />
+                    <FileType className="size-4" />
                   ) : (
-                    <FileImage className="size-5" />
+                    <FileImage className="size-4" />
                   )}
                 </span>
-                <span className="text-sm font-bold">{f.label}</span>
-                <span className="text-[11px] text-muted-foreground text-center leading-tight">
-                  {f.desc}
-                </span>
+                <div className="min-w-0 text-left">
+                  <span className="block text-sm font-bold">{f.label}</span>
+                  <span className="block text-[10px] text-muted-foreground leading-tight">
+                    {f.desc}
+                  </span>
+                </div>
               </button>
             ))}
           </div>
