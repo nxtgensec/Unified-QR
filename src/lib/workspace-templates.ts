@@ -253,6 +253,136 @@ export const workspaceTemplates: WorkspaceTemplate[] = [
     ],
   },
   {
+    id: "shop",
+    name: "Shop",
+    description: "Catalog, offers and WhatsApp ordering for your store.",
+    preview: "🛍️",
+    theme_color: "#16a34a",
+    theme_bg: "#f0fdf4",
+    theme_font: "system",
+    title: "{Shop Name}",
+    subtitle: "Order directly on WhatsApp",
+    sections: [
+      {
+        title: "Shop",
+        items: [
+          { title: "View Catalog", url: "https://", icon_emoji: "🛒" },
+          { title: "Order on WhatsApp", url: "https://wa.me/91", icon_emoji: "💬" },
+          { title: "Today's Offers", url: "https://", icon_emoji: "🏷️" },
+        ],
+      },
+      {
+        title: "Find Us",
+        items: [
+          { title: "Google Maps", url: "https://maps.google.com/", icon_emoji: "📍" },
+          { title: "Call Us", url: "tel:", icon_emoji: "📞" },
+          { title: "Instagram", url: "https://instagram.com/", icon_emoji: "📸" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "coaching",
+    name: "Coaching",
+    description: "Courses, notes and admissions for teachers & institutes.",
+    preview: "📚",
+    theme_color: "#2563eb",
+    theme_bg: "#eff6ff",
+    theme_font: "system",
+    title: "{Institute Name}",
+    subtitle: "Learn · Practice · Succeed",
+    sections: [
+      {
+        title: "Courses",
+        items: [
+          { title: "Course Details", url: "https://", icon_emoji: "📖" },
+          { title: "Free Demo Class", url: "https://", icon_emoji: "🎥" },
+          { title: "Enroll Now", url: "https://", icon_emoji: "📝" },
+        ],
+      },
+      {
+        title: "Students",
+        items: [
+          { title: "Download Notes", url: "https://", icon_emoji: "📥" },
+          { title: "Test Results", url: "https://", icon_emoji: "📊" },
+          { title: "Doubt Session", url: "https://", icon_emoji: "❓" },
+        ],
+      },
+      {
+        title: "Contact",
+        items: [
+          { title: "WhatsApp", url: "https://wa.me/91", icon_emoji: "💬" },
+          { title: "Directions", url: "https://maps.google.com/", icon_emoji: "📍" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "freelancer",
+    name: "Freelancer",
+    description: "Services, portfolio and hiring links for clients.",
+    preview: "💼",
+    theme_color: "#0f172a",
+    theme_bg: "#ffffff",
+    theme_font: "system",
+    title: "{Your Name}",
+    subtitle: "Freelance · Available for work",
+    sections: [
+      {
+        title: "Hire Me",
+        items: [
+          { title: "View Portfolio", url: "https://", icon_emoji: "🖼️" },
+          { title: "Services & Pricing", url: "https://", icon_emoji: "💰" },
+          { title: "Book a Call", url: "https://calendly.com/", icon_emoji: "📅" },
+        ],
+      },
+      {
+        title: "My Work",
+        items: [
+          { title: "GitHub", url: "https://github.com/", icon_emoji: "💻" },
+          { title: "Dribbble / Behance", url: "https://dribbble.com/", icon_emoji: "🎨" },
+          { title: "Client Reviews", url: "https://", icon_emoji: "⭐" },
+        ],
+      },
+      {
+        title: "Contact",
+        items: [
+          { title: "Email", url: "mailto:", icon_emoji: "✉️" },
+          { title: "LinkedIn", url: "https://linkedin.com/in/", icon_emoji: "💼" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "clinic",
+    name: "Clinic",
+    description: "Appointments, timings and location for doctors & clinics.",
+    preview: "🩺",
+    theme_color: "#0891b2",
+    theme_bg: "#ecfeff",
+    theme_font: "system",
+    title: "{Clinic Name}",
+    subtitle: "Book your appointment",
+    sections: [
+      {
+        title: "Appointments",
+        items: [
+          { title: "Book Appointment", url: "https://", icon_emoji: "📅" },
+          { title: "Call Reception", url: "tel:", icon_emoji: "📞" },
+          { title: "WhatsApp", url: "https://wa.me/91", icon_emoji: "💬" },
+        ],
+      },
+      {
+        title: "Visit",
+        items: [
+          { title: "Location", url: "https://maps.google.com/", icon_emoji: "📍" },
+          { title: "Mon–Sat: 9am – 8pm", url: "https://", icon_emoji: "🕐" },
+          { title: "Sunday: Closed", url: "https://", icon_emoji: "🚫" },
+        ],
+      },
+    ],
+  },
+  {
     id: "blank",
     name: "Blank",
     description: "Start from scratch with a clean page.",

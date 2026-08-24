@@ -4,7 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/AppShell";
-import { renderQrSvg, svgToDataUrl, downloadPng, downloadSvg } from "@/lib/qr";
+import {
+  renderQrSvg,
+  svgToDataUrl,
+  downloadPng,
+  downloadSvg,
+  downloadJpg,
+  downloadPdf,
+} from "@/lib/qr";
 import { readableQrColor, readableTextColor, urlHostname } from "@/lib/utils";
 import { workspaceTemplates, type WorkspaceTemplate } from "@/lib/workspace-templates";
 import {
@@ -73,6 +80,7 @@ function LinksEditor() {
   const [saving, setSaving] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [confirmDeleteSection, setConfirmDeleteSection] = useState<SectionRow | null>(null);
   const [pageFields, setPageFields] = useState({
     title: "My Links",
     subtitle: "",
@@ -315,13 +323,22 @@ function LinksEditor() {
     setSections((prev) => [...prev, data as SectionRow]);
   }
 
-  async function deleteSection(secId: string) {
-    await supabase.from("link_sections").delete().eq("id", secId);
-    const childIds = sections.filter((s) => s.parent_id === secId).map((s) => s.id);
-    setSections((prev) => prev.filter((s) => s.id !== secId && s.parent_id !== secId));
+  async function deleteSection(sec: SectionRow) {
+    const childIds = sections.filter((s) => s.parent_id === sec.id).map((s) => s.id);
+    for (const childId of childIds) {
+      await supabase.from("link_sections").delete().eq("id", childId);
+    }
+    const { error } = await supabase.from("link_sections").delete().eq("id", sec.id);
+    if (error) {
+      toast.error("Could not delete section", { description: error.message });
+      return;
+    }
+    setSections((prev) => prev.filter((s) => s.id !== sec.id && !childIds.includes(s.id)));
     setItems((prev) =>
-      prev.filter((i) => i.section_id !== secId && !childIds.includes(i.section_id)),
+      prev.filter((i) => i.section_id !== sec.id && !childIds.includes(i.section_id)),
     );
+    setConfirmDeleteSection(null);
+    toast.success("Section deleted");
   }
 
   async function addItem(secId: string) {
@@ -447,6 +464,16 @@ function LinksEditor() {
           onSelect={(t) => void createPageFromTemplate(t)}
           onBlank={() => void createBlankPage()}
           onClose={() => setShowTemplatePicker(false)}
+        />
+      )}
+
+      {confirmDeleteSection && (
+        <DeleteSectionConfirm
+          section={confirmDeleteSection}
+          sections={sections}
+          items={items}
+          onClose={() => setConfirmDeleteSection(null)}
+          onConfirm={() => void deleteSection(confirmDeleteSection)}
         />
       )}
 
@@ -637,12 +664,13 @@ function LinksEditor() {
                   <SectionBlock
                     key={sec.id}
                     section={sec}
+                    depth={0}
                     allSections={sections}
                     items={items}
                     collapsedSections={collapsedSections}
                     onToggleCollapse={toggleCollapse}
                     onUpdateSection={updateSection}
-                    onDeleteSection={deleteSection}
+                    onRequestDelete={setConfirmDeleteSection}
                     onAddItem={addItem}
                     onUpdateItem={updateItem}
                     onDeleteItem={deleteItem}
@@ -798,22 +826,40 @@ function LinksEditor() {
                     <p className="mt-2 text-[10px] text-muted-foreground break-all text-center">
                       {publicUrl}
                     </p>
-                    <div className="mt-3 flex gap-2">
+                    <div className="mt-3 flex flex-wrap justify-center gap-2">
                       <button
                         type="button"
                         onClick={() =>
                           void downloadPng(previewSvg, `workspace-${pageFields.slug}.png`)
                         }
-                        className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold hover:bg-background"
+                        className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold transition-colors hover:bg-background"
                       >
                         <FileImage className="size-3" /> PNG
                       </button>
                       <button
                         type="button"
                         onClick={() => downloadSvg(previewSvg, `workspace-${pageFields.slug}.svg`)}
-                        className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold hover:bg-background"
+                        className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold transition-colors hover:bg-background"
                       >
                         <FileType className="size-3" /> SVG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void downloadJpg(previewSvg, `workspace-${pageFields.slug}.jpg`)
+                        }
+                        className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold transition-colors hover:bg-background"
+                      >
+                        <FileImage className="size-3" /> JPG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void downloadPdf(previewSvg, `workspace-${pageFields.slug}.pdf`)
+                        }
+                        className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold transition-colors hover:bg-background"
+                      >
+                        <FileType className="size-3" /> PDF
                       </button>
                     </div>
                   </div>
@@ -829,24 +875,26 @@ function LinksEditor() {
 
 function SectionBlock({
   section,
+  depth,
   allSections,
   items,
   collapsedSections,
   onToggleCollapse,
   onUpdateSection,
-  onDeleteSection,
+  onRequestDelete,
   onAddItem,
   onUpdateItem,
   onDeleteItem,
   onAddSubSection,
 }: {
   section: SectionRow;
+  depth: number;
   allSections: SectionRow[];
   items: ItemRow[];
   collapsedSections: Set<string>;
   onToggleCollapse: (id: string) => void;
   onUpdateSection: (id: string, patch: Partial<SectionRow>) => void;
-  onDeleteSection: (id: string) => void;
+  onRequestDelete: (section: SectionRow) => void;
   onAddItem: (secId: string) => void;
   onUpdateItem: (id: string, patch: Partial<ItemRow>) => void;
   onDeleteItem: (id: string) => void;
@@ -861,7 +909,11 @@ function SectionBlock({
     .sort((a, b) => a.sort_order - b.sort_order);
 
   return (
-    <div className="rounded-2xl border border-border bg-background p-4 shadow-card">
+    <div
+      className={`rounded-2xl border border-border bg-background shadow-card ${
+        depth > 0 ? "p-3" : "p-4"
+      }`}
+    >
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -870,11 +922,17 @@ function SectionBlock({
         >
           {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronDown className="size-4" />}
         </button>
-        <GripVertical className="size-4 text-muted-foreground/40" />
+        {depth === 0 ? (
+          <GripVertical className="size-4 text-muted-foreground/40" />
+        ) : (
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40">
+            Sub
+          </span>
+        )}
         <input
           value={section.title}
           onChange={(e) => onUpdateSection(section.id, { title: e.target.value })}
-          placeholder="Section title (optional)"
+          placeholder={depth === 0 ? "Section title (optional)" : "Sub-section title (optional)"}
           className="flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-muted-foreground/40"
         />
         <button
@@ -891,8 +949,9 @@ function SectionBlock({
         </button>
         <button
           type="button"
-          onClick={() => onDeleteSection(section.id)}
+          onClick={() => onRequestDelete(section)}
           className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          title="Delete section"
         >
           <Trash2 className="size-4" />
         </button>
@@ -951,13 +1010,15 @@ function SectionBlock({
             >
               <Plus className="size-3" /> Add link
             </button>
-            <button
-              type="button"
-              onClick={() => onAddSubSection(section.id)}
-              className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-brand transition-colors hover:bg-brand-soft"
-            >
-              <Plus className="size-3" /> Add sub-section
-            </button>
+            {depth === 0 && (
+              <button
+                type="button"
+                onClick={() => onAddSubSection(section.id)}
+                className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-brand transition-colors hover:bg-brand-soft"
+              >
+                <Plus className="size-3" /> Add sub-section
+              </button>
+            )}
           </div>
 
           {subSections.length > 0 && (
@@ -966,12 +1027,13 @@ function SectionBlock({
                 <SectionBlock
                   key={sub.id}
                   section={sub}
+                  depth={depth + 1}
                   allSections={allSections}
                   items={items}
                   collapsedSections={collapsedSections}
                   onToggleCollapse={onToggleCollapse}
                   onUpdateSection={onUpdateSection}
-                  onDeleteSection={onDeleteSection}
+                  onRequestDelete={onRequestDelete}
                   onAddItem={onAddItem}
                   onUpdateItem={onUpdateItem}
                   onDeleteItem={onDeleteItem}
@@ -1043,6 +1105,80 @@ function TemplatePicker({
               </div>
             </button>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteSectionConfirm({
+  section,
+  sections,
+  items,
+  onClose,
+  onConfirm,
+}: {
+  section: SectionRow;
+  sections: SectionRow[];
+  items: ItemRow[];
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const directItems = items.filter((i) => i.section_id === section.id).length;
+  const subs = sections.filter((s) => s.parent_id === section.id);
+  const subItems = items.filter((i) => subs.some((s) => s.id === i.section_id)).length;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onMouseDown={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl border border-border bg-background p-6 shadow-float"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-destructive/10">
+            <Trash2 className="size-5 text-destructive" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-base font-extrabold">Delete section?</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              "
+              <span className="font-semibold text-foreground">
+                {section.title || "Untitled section"}
+              </span>
+              " and everything inside it will be permanently removed:
+            </p>
+            <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+              <li>
+                • {directItems} link{directItems === 1 ? "" : "s"}
+              </li>
+              {subs.length > 0 && (
+                <li>
+                  • {subs.length} sub-section{subs.length === 1 ? "" : "s"} with {subItems} link
+                  {subItems === 1 ? "" : "s"}
+                </li>
+              )}
+            </ul>
+            <p className="mt-2 text-xs font-semibold text-destructive">This cannot be undone.</p>
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-border px-5 py-2 text-sm font-bold transition-colors hover:bg-background"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="rounded-full bg-destructive px-5 py-2 text-sm font-bold text-destructive-foreground transition-transform hover:-translate-y-0.5"
+          >
+            Delete section
+          </button>
         </div>
       </div>
     </div>
