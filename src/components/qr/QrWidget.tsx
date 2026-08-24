@@ -584,11 +584,11 @@ function FormatDialog({
   const [open, setOpen] = useState(false);
 
   const formats = [
-    { value: "png" as const, label: "PNG", desc: "Best for screens" },
-    { value: "svg" as const, label: "SVG", desc: "Scalable, print" },
-    { value: "jpg" as const, label: "JPG", desc: "Universal" },
-    { value: "webp" as const, label: "WebP", desc: "Modern, web" },
-    { value: "pdf" as const, label: "PDF", desc: "Documents" },
+    { value: "png" as const, label: "PNG", desc: "Best for screens & social media" },
+    { value: "svg" as const, label: "SVG", desc: "Scalable, ideal for print" },
+    { value: "jpg" as const, label: "JPG", desc: "Universal, smaller file size" },
+    { value: "webp" as const, label: "WebP", desc: "Modern, optimised for web" },
+    { value: "pdf" as const, label: "PDF", desc: "Ready for documents & print" },
   ];
 
   return (
@@ -601,18 +601,24 @@ function FormatDialog({
         <Download className="size-4" /> Download QR Code
       </button>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-0">
-          <DialogTitle className="text-lg">Download QR Code</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col sm:flex-row items-center gap-5 p-6">
-          <div className="shrink-0 rounded-2xl border border-border bg-white p-3 shadow-sm">
-            <img
-              src={previewSrc}
-              alt="QR code preview"
-              className="w-32 h-32 sm:w-40 sm:h-40 object-contain"
-            />
+        <div className="flex items-center justify-between px-5 pt-5 pb-0">
+          <DialogTitle className="text-lg font-extrabold">Download QR Code</DialogTitle>
+        </div>
+
+        <div className="p-5">
+          {/* QR preview */}
+          <div className="flex justify-center">
+            <div className="rounded-2xl border border-border bg-white p-3 shadow-sm">
+              <img
+                src={previewSrc}
+                alt="QR code preview"
+                className="w-28 h-28 sm:w-36 sm:h-36 object-contain"
+              />
+            </div>
           </div>
-          <div className="flex sm:flex-col gap-2 w-full sm:w-auto">
+
+          {/* Format buttons — full-width stacked list, always */}
+          <div className="mt-4 space-y-2">
             {formats.map((f) => (
               <button
                 key={f.value}
@@ -621,9 +627,9 @@ function FormatDialog({
                   onDownload(f.value);
                   setOpen(false);
                 }}
-                className="flex items-center gap-2.5 rounded-xl border border-border bg-background px-3 py-2.5 transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-md cursor-pointer sm:w-full"
+                className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-md active:scale-[0.98] cursor-pointer"
               >
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
                   {f.value === "pdf" ? (
                     <FileText className="size-4" />
                   ) : f.value === "svg" ? (
@@ -633,8 +639,8 @@ function FormatDialog({
                   )}
                 </span>
                 <div className="min-w-0 text-left">
-                  <span className="block text-sm font-bold">{f.label}</span>
-                  <span className="block text-[10px] text-muted-foreground leading-tight">
+                  <span className="block text-sm font-bold leading-tight">{f.label}</span>
+                  <span className="block text-xs text-muted-foreground leading-tight">
                     {f.desc}
                   </span>
                 </div>
