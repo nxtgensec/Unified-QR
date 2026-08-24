@@ -584,11 +584,11 @@ function FormatDialog({
   const [open, setOpen] = useState(false);
 
   const formats = [
-    { value: "png" as const, label: "PNG", desc: "Best for screens & social media" },
-    { value: "svg" as const, label: "SVG", desc: "Scalable, ideal for print" },
-    { value: "jpg" as const, label: "JPG", desc: "Universal, smaller file size" },
-    { value: "webp" as const, label: "WebP", desc: "Modern, optimised for web" },
-    { value: "pdf" as const, label: "PDF", desc: "Ready for documents & print" },
+    { value: "png" as const, label: "PNG", icon: FileImage },
+    { value: "svg" as const, label: "SVG", icon: FileType },
+    { value: "jpg" as const, label: "JPG", icon: FileImage },
+    { value: "webp" as const, label: "WebP", icon: FileImage },
+    { value: "pdf" as const, label: "PDF", icon: FileText },
   ];
 
   return (
@@ -600,53 +600,43 @@ function FormatDialog({
       >
         <Download className="size-4" /> Download QR Code
       </button>
-      <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-5 pb-0">
           <DialogTitle className="text-lg font-extrabold">Download QR Code</DialogTitle>
         </div>
 
-        <div className="p-5">
-          {/* QR preview */}
-          <div className="flex justify-center">
-            <div className="rounded-2xl border border-border bg-white p-3 shadow-sm">
-              <img
-                src={previewSrc}
-                alt="QR code preview"
-                className="w-28 h-28 sm:w-36 sm:h-36 object-contain"
-              />
-            </div>
+        {/* Large QR preview */}
+        <div className="flex justify-center px-5 pt-4">
+          <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+            <img
+              src={previewSrc}
+              alt="QR code preview"
+              className="w-56 h-56 sm:w-64 sm:h-64 object-contain"
+            />
           </div>
+        </div>
 
-          {/* Format buttons — full-width stacked list, always */}
-          <div className="mt-4 space-y-2">
-            {formats.map((f) => (
-              <button
-                key={f.value}
-                type="button"
-                onClick={() => {
-                  onDownload(f.value);
-                  setOpen(false);
-                }}
-                className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-md active:scale-[0.98] cursor-pointer"
-              >
-                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
-                  {f.value === "pdf" ? (
-                    <FileText className="size-4" />
-                  ) : f.value === "svg" ? (
-                    <FileType className="size-4" />
-                  ) : (
-                    <FileImage className="size-4" />
-                  )}
-                </span>
-                <div className="min-w-0 text-left">
-                  <span className="block text-sm font-bold leading-tight">{f.label}</span>
-                  <span className="block text-xs text-muted-foreground leading-tight">
-                    {f.desc}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
+        {/* Hint */}
+        <p className="flex items-center justify-center gap-1.5 px-5 pt-3 text-xs font-semibold text-muted-foreground">
+          <Download className="size-3" /> Select a format to download
+        </p>
+
+        {/* Horizontal format chips */}
+        <div className="flex flex-wrap justify-center gap-2 px-5 pb-5 pt-2">
+          {formats.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => {
+                onDownload(f.value);
+                setOpen(false);
+              }}
+              className="flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-bold transition-all hover:-translate-y-0.5 hover:border-brand hover:bg-brand-soft hover:text-brand active:scale-[0.97] cursor-pointer"
+            >
+              <f.icon className="size-3.5" />
+              {f.label}
+            </button>
+          ))}
         </div>
       </DialogContent>
     </Dialog>
