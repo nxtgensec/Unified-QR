@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/AppShell";
 import { renderQrSvg, svgToDataUrl, downloadPng, downloadSvg } from "@/lib/qr";
+import { readableQrColor, readableTextColor, urlHostname } from "@/lib/utils";
 import { workspaceTemplates, type WorkspaceTemplate } from "@/lib/workspace-templates";
 import {
   ChevronDown,
@@ -381,15 +382,21 @@ function LinksEditor() {
 
   const previewSvg = useMemo(() => {
     if (!publicUrl) return null;
+    const qrColor = readableQrColor(pageFields.theme_color, "#ffffff");
     return renderQrSvg(publicUrl, {
       templateId: 1,
-      fg: pageFields.theme_color,
+      fg: qrColor,
       bg: "#ffffff",
-      eye: pageFields.theme_color,
+      eye: qrColor,
       bodyShape: "square",
       eyeShape: "square",
     });
   }, [publicUrl, pageFields.theme_color]);
+
+  const previewTextColor = useMemo(
+    () => readableTextColor(pageFields.theme_color, pageFields.theme_bg),
+    [pageFields.theme_color, pageFields.theme_bg],
+  );
 
   const rootSections = useMemo(
     () => sections.filter((s) => !s.parent_id).sort((a, b) => a.sort_order - b.sort_order),
@@ -672,19 +679,16 @@ function LinksEditor() {
                           src={pageFields.avatar_url}
                           alt=""
                           className="mb-3 size-14 rounded-full border-2 object-cover"
-                          style={{ borderColor: pageFields.theme_color }}
+                          style={{ borderColor: previewTextColor }}
                         />
                       )}
-                      <h2
-                        className="text-base font-extrabold"
-                        style={{ color: pageFields.theme_color }}
-                      >
+                      <h2 className="text-base font-extrabold" style={{ color: previewTextColor }}>
                         {pageFields.title || "Page Title"}
                       </h2>
                       {pageFields.subtitle && (
                         <p
                           className="mt-0.5 text-xs opacity-70"
-                          style={{ color: pageFields.theme_color }}
+                          style={{ color: previewTextColor }}
                         >
                           {pageFields.subtitle}
                         </p>
@@ -705,7 +709,7 @@ function LinksEditor() {
                               {sec.title && (
                                 <p
                                   className="mb-1.5 text-[10px] font-bold uppercase tracking-widest opacity-50"
-                                  style={{ color: pageFields.theme_color }}
+                                  style={{ color: previewTextColor }}
                                 >
                                   {sec.title}
                                 </p>
@@ -723,9 +727,11 @@ function LinksEditor() {
                                     <span className="text-xs">{item.icon_emoji || "🔗"}</span>
                                     <span
                                       className="flex-1 truncate text-xs font-semibold"
-                                      style={{ color: pageFields.theme_color }}
+                                      style={{ color: previewTextColor }}
                                     >
-                                      {item.title || "Link"}
+                                      {item.title ||
+                                        urlHostname(normalizeItemUrl(item.url)) ||
+                                        "Link"}
                                     </span>
                                   </div>
                                 ))}
@@ -738,7 +744,7 @@ function LinksEditor() {
                                       {sub.title && (
                                         <p
                                           className="mb-1 text-[9px] font-bold uppercase tracking-wider opacity-40"
-                                          style={{ color: pageFields.theme_color }}
+                                          style={{ color: previewTextColor }}
                                         >
                                           {sub.title}
                                         </p>
@@ -757,9 +763,11 @@ function LinksEditor() {
                                           </span>
                                           <span
                                             className="flex-1 truncate text-[10px] font-semibold"
-                                            style={{ color: pageFields.theme_color }}
+                                            style={{ color: previewTextColor }}
                                           >
-                                            {item.title || "Link"}
+                                            {item.title ||
+                                              urlHostname(normalizeItemUrl(item.url)) ||
+                                              "Link"}
                                           </span>
                                         </div>
                                       ))}
@@ -785,7 +793,7 @@ function LinksEditor() {
                     <img
                       src={svgToDataUrl(previewSvg)}
                       alt="QR Code"
-                      className="size-40 rounded-lg"
+                      className="w-48 rounded-lg border border-border bg-white p-2 sm:w-52"
                     />
                     <p className="mt-2 text-[10px] text-muted-foreground break-all text-center">
                       {publicUrl}

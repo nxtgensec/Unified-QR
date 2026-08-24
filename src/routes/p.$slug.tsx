@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { recordPageView, recordItemClick } from "@/lib/workspaceAnalytics.functions";
+import { readableTextColor, urlHostname } from "@/lib/utils";
 
 type LinkItem = {
   id: string;
@@ -49,17 +50,25 @@ export const Route = createFileRoute("/p/$slug")({
 
 function normalizePublicUrl(v: string): string | null {
   const t = v.trim();
-  if (!t) return null;
+  if (!t || /^https?:\/\/$/i.test(t)) return null;
   if (/^(https?|mailto|tel|sms):/i.test(t)) return t;
   return `https://${t}`;
 }
 
+function itemLabel(title: string, url: string): string {
+  if (title.trim()) return title.trim();
+  const normalized = normalizePublicUrl(url);
+  return normalized ? urlHostname(normalized) : "Link";
+}
+
 function SectionBlock({
   section,
+  textColor,
   themeColor,
   onItemClick,
 }: {
   section: LinkSection;
+  textColor: string;
   themeColor: string;
   onItemClick: (itemId: string) => void;
 }) {
@@ -68,7 +77,7 @@ function SectionBlock({
       {section.title && (
         <h2
           className="mb-3 text-xs font-bold uppercase tracking-widest opacity-50"
-          style={{ color: themeColor }}
+          style={{ color: textColor }}
         >
           {section.title}
         </h2>
@@ -76,6 +85,7 @@ function SectionBlock({
       <div className="space-y-2">
         {section.items.map((item) => {
           const href = normalizePublicUrl(item.url);
+          const label = itemLabel(item.title, item.url);
           return (
             <a
               key={item.id}
@@ -84,7 +94,7 @@ function SectionBlock({
               rel="noopener noreferrer"
               onClick={href ? () => onItemClick(item.id) : undefined}
               className={`group flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-card ${
-                href ? "cursor-pointer" : "opacity-50"
+                href ? "cursor-pointer" : "cursor-default opacity-50"
               }`}
               style={{
                 borderColor: `${themeColor}25`,
@@ -100,11 +110,11 @@ function SectionBlock({
                   className="flex size-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
                   style={{ backgroundColor: themeColor }}
                 >
-                  {item.title.charAt(0).toUpperCase()}
+                  {label.charAt(0).toUpperCase()}
                 </span>
               )}
-              <span className="flex-1 truncate text-sm font-semibold" style={{ color: themeColor }}>
-                {item.title}
+              <span className="flex-1 truncate text-sm font-semibold" style={{ color: textColor }}>
+                {label}
               </span>
               <svg
                 className="size-4 shrink-0 opacity-30"
@@ -129,6 +139,7 @@ function SectionBlock({
             <SectionBlock
               key={child.id}
               section={child}
+              textColor={textColor}
               themeColor={themeColor}
               onItemClick={onItemClick}
             />
@@ -270,6 +281,8 @@ function LinkPage() {
         ? "'SF Mono', Consolas, monospace"
         : "system-ui, -apple-system, sans-serif";
 
+  const textColor = readableTextColor(page.theme_color, page.theme_bg);
+
   return (
     <div className="min-h-screen px-4 py-12" style={{ backgroundColor: page.theme_bg, fontFamily }}>
       <div className="mx-auto max-w-lg">
@@ -279,14 +292,14 @@ function LinkPage() {
               src={page.avatar_url}
               alt={page.title}
               className="mb-4 size-20 rounded-full border-2 object-cover shadow-card"
-              style={{ borderColor: page.theme_color }}
+              style={{ borderColor: textColor }}
             />
           )}
-          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: page.theme_color }}>
+          <h1 className="text-xl font-extrabold tracking-tight" style={{ color: textColor }}>
             {page.title}
           </h1>
           {page.subtitle && (
-            <p className="mt-1 text-sm opacity-70" style={{ color: page.theme_color }}>
+            <p className="mt-1 text-sm opacity-70" style={{ color: textColor }}>
               {page.subtitle}
             </p>
           )}
@@ -297,6 +310,7 @@ function LinkPage() {
             <SectionBlock
               key={section.id}
               section={section}
+              textColor={textColor}
               themeColor={page.theme_color}
               onItemClick={handleItemClick}
             />
