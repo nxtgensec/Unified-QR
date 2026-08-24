@@ -35,6 +35,12 @@ function cashfreeHeaders() {
   };
 }
 
+function defaultCustomerPhone(): string {
+  const phone = process.env["CASHFREE_DEFAULT_PHONE"] ?? "9999999999";
+  const digits = phone.replace(/\D/g, "");
+  return digits.length >= 10 ? digits.slice(-10) : "9999999999";
+}
+
 export const createCashfreeOrder = createServerFn({ method: "POST" })
   .validator(orderInput)
   .middleware([requireSupabaseAuth])
@@ -81,7 +87,7 @@ export const createCashfreeOrder = createServerFn({ method: "POST" })
             customer_id: `uqr_${customerEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
             customer_email: customerEmail,
             customer_name: String(customerName),
-            customer_phone: "9999999999",
+            customer_phone: defaultCustomerPhone(),
           },
           order_meta: {
             return_url: `${baseReturnUrl}?order_id={order_id}&plan=${data.plan}`,

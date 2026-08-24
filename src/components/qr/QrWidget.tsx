@@ -35,6 +35,8 @@ import {
   FileImage,
   FileType,
   FileText,
+  Lock,
+  Crown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
@@ -42,7 +44,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { makeSlug, shortUrl } from "@/lib/codes";
-import { getDynamicLimit, effectivePlan } from "@/lib/plans";
+import { getDynamicLimit, effectivePlan, type PlanId } from "@/lib/plans";
 
 const PLACEHOLDER = "https://qr.nxtgensec.org";
 
@@ -123,6 +125,23 @@ export function QrWidget({
 
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [plan, setPlan] = useState<PlanId>("free");
+  const isPro = plan !== "free";
+
+  useEffect(() => {
+    if (!user) {
+      setPlan("free");
+      return;
+    }
+    supabase
+      .from("profiles")
+      .select("plan, plan_expires_at")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setPlan(effectivePlan(data?.plan, data?.plan_expires_at));
+      });
+  }, [user]);
 
   const data = debounced.trim() || PLACEHOLDER;
   const isEmpty = !debounced.trim();
@@ -379,7 +398,11 @@ export function QrWidget({
                 Showing a sample — start typing
               </p>
             )}
-            <FormatDialog onDownload={handleDownload} previewSrc={svgToDataUrl(svg)} />
+            <FormatDialog
+              onDownload={handleDownload}
+              previewSrc={svgToDataUrl(svg)}
+              isPro={isPro}
+            />
           </div>
 
           {/* Plain carousel — right of QR, scrolls top-to-bottom */}
@@ -573,17 +596,19 @@ function VerticalCarousel({
 function FormatDialog({
   onDownload,
   previewSrc,
+  isPro,
 }: {
   onDownload: (format: "png" | "svg" | "jpg" | "pdf") => void;
   previewSrc: string;
+  isPro: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
   const formats = [
-    { value: "png" as const, label: "PNG", icon: FileImage },
-    { value: "svg" as const, label: "SVG", icon: FileType },
-    { value: "jpg" as const, label: "JPG", icon: FileImage },
-    { value: "pdf" as const, label: "PDF", icon: FileText },
+    { value: "png" as const, label: "PNG", icon: FileImage, pro: false },
+    { value: "svg" as const, label: "SVG", icon: FileType, pro: false },
+    { value: "jpg" as const, label: "JPG", icon: FileImage, pro: true },
+    { value: "pdf" as const, label: "PDF", icon: FileText, pro: true },
   ];
 
   return (
@@ -618,21 +643,49 @@ function FormatDialog({
 
         {/* Horizontal format chips */}
         <div className="flex flex-wrap justify-center gap-2 px-5 pb-5 pt-2">
-          {formats.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              onClick={() => {
-                onDownload(f.value);
-                setOpen(false);
-              }}
-              className="flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-bold transition-all hover:-translate-y-0.5 hover:border-brand hover:bg-brand-soft hover:text-brand active:scale-[0.97] cursor-pointer"
-            >
-              <f.icon className="size-3.5" />
-              {f.label}
-            </button>
-          ))}
+          {formats.map((f) => {
+            const locked = f.pro && !isPro;
+            return (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => {
+                  if (locked) {
+                    toast.error("Pro feature", {
+                      description: "Upgrade your plan to unlock JPG & PDF exports.",
+                    });
+                    return;
+                  }
+                  onDownload(f.value);
+                  setOpen(false);
+                }}
+                className={`relative flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-bold transition-all hover:-translate-y-0.5 active:scale-[0.97] cursor-pointer ${
+                  locked
+                    ? "border-border bg-background text-muted-foreground/60"
+                    : "border-border bg-background hover:border-brand hover:bg-brand-soft hover:text-brand"
+                }`}
+              >
+                {locked ? <Lock className="size-3.5" /> : <f.icon className="size-3.5" />}
+                {f.label}
+                {locked && (
+                  <span className="absolute -right-1.5 -top-1.5 inline-flex items-center gap-0.5 rounded-full bg-premium px-1.5 py-0.5 text-[9px] font-bold text-white">
+                    <Crown className="size-2.5" /> Pro
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
+        {!isPro && (
+          <div className="border-t border-border px-5 py-3 text-center">
+            <Link
+              to="/billing"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline"
+            >
+              <Crown className="size-3.5" /> Upgrade to Pro for JPG & PDF exports
+            </Link>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

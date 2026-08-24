@@ -88,10 +88,22 @@ export type ScanRow = {
 
 export async function scanCounts(ids: string[]) {
   if (ids.length === 0) return {} as Record<string, number>;
-  const { data, error } = await supabase.from("scans").select("code_id").in("code_id", ids);
-  if (error) throw error;
   const out: Record<string, number> = {};
-  for (const row of data ?? []) out[row.code_id] = (out[row.code_id] ?? 0) + 1;
+  const CHUNK = 20;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const results = await Promise.all(
+      chunk.map(async (id) => {
+        const { count, error } = await supabase
+          .from("scans")
+          .select("id", { count: "exact", head: true })
+          .eq("code_id", id);
+        if (error) throw error;
+        return [id, count ?? 0] as const;
+      }),
+    );
+    for (const [id, count] of results) out[id] = count;
+  }
   return out;
 }
 

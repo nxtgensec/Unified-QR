@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { effectivePlan } from "@/lib/plans";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
@@ -81,21 +82,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
 
-  const { data: plan } = useQuery({
+  const { data: planRow } = useQuery({
     queryKey: ["user-plan", user?.id],
     queryFn: async () => {
-      if (!user) return "free";
+      if (!user) return { plan: "free", planExpiresAt: null };
       const { data } = await supabase
         .from("profiles")
-        .select("plan")
+        .select("plan, plan_expires_at")
         .eq("id", user.id)
         .maybeSingle();
-      return (data?.plan ?? "free") as string;
+      return {
+        plan: (data?.plan ?? "free") as string,
+        planExpiresAt: (data?.plan_expires_at ?? null) as string | null,
+      };
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
-    placeholderData: "free",
+    placeholderData: { plan: "free", planExpiresAt: null },
   });
+  const plan = effectivePlan(planRow?.plan, planRow?.planExpiresAt);
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -113,6 +118,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/create") || pathname.startsWith("/analytics")) return "QR Codes";
     return null;
   });
+
+  useEffect(() => {
+    setExpandedSection((current) => {
+      if (pathname.startsWith("/bulk")) return "Bulk";
+      if (pathname.startsWith("/links") || pathname.startsWith("/workspace-analytics"))
+        return "Workspace";
+      if (pathname.startsWith("/create") || pathname.startsWith("/analytics")) return "QR Codes";
+      if (current === "Bulk" || current === "Workspace" || current === "QR Codes") {
+        const stillActive =
+          (current === "Bulk" && pathname.startsWith("/bulk")) ||
+          (current === "Workspace" &&
+            (pathname.startsWith("/links") || pathname.startsWith("/workspace-analytics"))) ||
+          (current === "QR Codes" &&
+            (pathname.startsWith("/create") || pathname.startsWith("/analytics")));
+        return stillActive ? current : null;
+      }
+      return current;
+    });
+  }, [pathname]);
 
   return (
     <div className="flex min-h-screen bg-background">

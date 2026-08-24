@@ -13,14 +13,7 @@ import {
   type ScanRow,
 } from "@/lib/codes";
 import { getDynamicLimit, getBulkLimit, effectivePlan } from "@/lib/plans";
-import {
-  renderQrSvg,
-  svgToDataUrl,
-  downloadPng,
-  downloadSvg,
-  downloadJpg,
-  downloadWebp,
-} from "@/lib/qr";
+import { renderQrSvg, svgToDataUrl, downloadPng, downloadSvg, downloadJpg } from "@/lib/qr";
 import { QrWidget, type QrWidgetDesign } from "@/components/qr/QrWidget";
 import { toast } from "sonner";
 import JSZip from "jszip";
@@ -234,11 +227,7 @@ function BulkPage() {
     return renderQrSvg(destination, getDesign(), { size, margin });
   }
 
-  async function downloadSingleFormat(
-    name: string,
-    slug: string,
-    format: "png" | "svg" | "jpg" | "webp",
-  ) {
+  async function downloadSingleFormat(name: string, slug: string, format: "png" | "svg" | "jpg") {
     const svg = renderSvgFor(shortUrl(slug), 1024, 4);
     const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 60);
     switch (format) {
@@ -250,9 +239,6 @@ function BulkPage() {
         break;
       case "jpg":
         await downloadJpg(svg, `${safeName}.jpg`, 1024);
-        break;
-      case "webp":
-        await downloadWebp(svg, `${safeName}.webp`, 1024);
         break;
     }
     toast.success(`${safeName}.${format} downloaded`);
@@ -383,7 +369,7 @@ function BulkPage() {
     setStep("results");
   }
 
-  async function downloadBulkZip(format: "png" | "svg" | "jpg" | "webp") {
+  async function downloadBulkZip(format: "png" | "svg" | "jpg") {
     const okResults = results.filter((r) => r.ok && r.slug);
     if (okResults.length === 0) return;
 
@@ -410,8 +396,7 @@ function BulkPage() {
         const ctx = canvas.getContext("2d");
         if (!ctx) continue;
         ctx.drawImage(img, 0, 0, pngSize, pngSize);
-        const mimeType =
-          format === "jpg" ? "image/jpeg" : format === "webp" ? "image/webp" : "image/png";
+        const mimeType = format === "jpg" ? "image/jpeg" : "image/png";
         const dataUrl = canvas.toDataURL(mimeType);
         const base64 = dataUrl.split(",")[1] ?? "";
         zip.file(`${safeName}.${format}`, base64, { base64: true });
@@ -766,14 +751,6 @@ function BulkPage() {
               </button>
               <button
                 type="button"
-                onClick={() => void downloadBulkZip("webp")}
-                disabled={results.filter((r) => r.ok && r.slug).length === 0}
-                className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold disabled:opacity-60"
-              >
-                <Package className="size-4" /> ZIP (WebP)
-              </button>
-              <button
-                type="button"
                 onClick={downloadLinksCsv}
                 disabled={results.filter((r) => r.ok && r.slug).length === 0}
                 className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-bold disabled:opacity-60"
@@ -817,7 +794,7 @@ function BulkPage() {
                         </span>
                       </span>
                       <div className="flex shrink-0 items-center gap-1.5">
-                        {(["png", "svg", "jpg", "webp"] as const).map((fmt) => (
+                        {(["png", "svg", "jpg"] as const).map((fmt) => (
                           <button
                             key={fmt}
                             type="button"

@@ -10,8 +10,26 @@ type GeoResult = {
 
 const IP_CACHE = new Map<string, { geo: GeoResult; ts: number }>();
 const CACHE_TTL = 10 * 60 * 1000;
+const IP_CACHE_MAX = 5000;
 const RATE_LIMIT = new Map<string, number>();
 const RATE_TTL = 60 * 1000;
+const RATE_LIMIT_MAX = 10000;
+
+function evictIpCache() {
+  if (IP_CACHE.size <= IP_CACHE_MAX) return;
+  const now = Date.now();
+  for (const [key, value] of IP_CACHE) {
+    if (now - value.ts > CACHE_TTL) IP_CACHE.delete(key);
+  }
+}
+
+function evictRateLimit() {
+  if (RATE_LIMIT.size <= RATE_LIMIT_MAX) return;
+  const now = Date.now();
+  for (const [key, ts] of RATE_LIMIT) {
+    if (now - ts > RATE_TTL) RATE_LIMIT.delete(key);
+  }
+}
 
 function getClientIp(): string | null {
   const request = getRequest();
@@ -55,17 +73,13 @@ export const recordScan = createServerFn({ method: "POST" })
         return { ok: true, throttled: true };
       }
       RATE_LIMIT.set(`${ip}:${data.codeId}`, Date.now());
-      if (RATE_LIMIT.size > 10000) {
-        const now = Date.now();
-        for (const [key, ts] of RATE_LIMIT) {
-          if (now - ts > RATE_TTL) RATE_LIMIT.delete(key);
-        }
-      }
+      evictRateLimit();
     }
 
     let geo: GeoResult | null = null;
     if (ip) {
       geo = await geolocate(ip);
+      evictIpCache();
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { Check, Globe, Menu, X } from "lucide-react";
+import { Check, Globe, LayoutGrid, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocale, SUPPORTED_LOCALES } from "@/lib/locale";
+import { useAuth } from "@/hooks/useAuth";
 import unifiedQrLogo from "@/assets/UnifiedQR_Logo.png";
 
 const nav: { label: string; href: string }[] = [
@@ -95,6 +96,49 @@ function LanguageSwitcher({ className = "" }: { className?: string }) {
 export function Header() {
   const [open, setOpen] = useState(false);
   const { t } = useLocale();
+  const { user, loading } = useAuth();
+
+  const authLinks = loading ? null : user ? (
+    <Link
+      to="/dashboard"
+      className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+    >
+      <LayoutGrid className="size-4" /> Dashboard
+    </Link>
+  ) : (
+    <>
+      <Link
+        to="/auth"
+        className="text-sm font-semibold text-foreground/80 transition-colors hover:text-brand"
+      >
+        {t("header.signIn")}
+      </Link>
+      <Link
+        to="/auth"
+        className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
+      >
+        Sign up free
+      </Link>
+    </>
+  );
+
+  const mobileAuthLink = loading ? null : user ? (
+    <Link
+      to="/dashboard"
+      onClick={() => setOpen(false)}
+      className="mt-2 flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-center text-sm font-bold text-brand-foreground"
+    >
+      <LayoutGrid className="size-4" /> Dashboard
+    </Link>
+  ) : (
+    <Link
+      to="/auth"
+      onClick={() => setOpen(false)}
+      className="mt-2 rounded-full bg-brand px-5 py-2.5 text-center text-sm font-bold text-brand-foreground"
+    >
+      Sign up free
+    </Link>
+  );
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
@@ -116,28 +160,19 @@ export function Header() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <LanguageSwitcher />
-          <Link
-            to="/auth"
-            className="text-sm font-semibold text-foreground/80 transition-colors hover:text-brand"
-          >
-            {t("header.signIn")}
-          </Link>
-          <Link
-            to="/auth"
-            className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5"
-          >
-            Sign up free
-          </Link>
+          {authLinks}
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
           <LanguageSwitcher />
-          <Link
-            to="/auth"
-            className="rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground"
-          >
-            Sign up free
-          </Link>
+          {!loading && !user && (
+            <Link
+              to="/auth"
+              className="rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground"
+            >
+              Sign up free
+            </Link>
+          )}
           <button onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
             {open ? <X className="size-6" /> : <Menu className="size-6" />}
           </button>
@@ -158,13 +193,7 @@ export function Header() {
               </a>
             ))}
             <LanguageSwitcher className="py-1.5" />
-            <Link
-              to="/auth"
-              onClick={() => setOpen(false)}
-              className="mt-2 rounded-full bg-brand px-5 py-2.5 text-center text-sm font-bold text-brand-foreground"
-            >
-              Sign up free
-            </Link>
+            {mobileAuthLink}
           </nav>
         </div>
       )}

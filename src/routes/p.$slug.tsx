@@ -47,6 +47,13 @@ export const Route = createFileRoute("/p/$slug")({
   component: LinkPage,
 });
 
+function normalizePublicUrl(v: string): string | null {
+  const t = v.trim();
+  if (!t) return null;
+  if (/^(https?|mailto|tel|sms):/i.test(t)) return t;
+  return `https://${t}`;
+}
+
 function SectionBlock({
   section,
   themeColor,
@@ -67,45 +74,50 @@ function SectionBlock({
         </h2>
       )}
       <div className="space-y-2">
-        {section.items.map((item) => (
-          <a
-            key={item.id}
-            href={/^https?:\/\//i.test(item.url) ? item.url : "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => onItemClick(item.id)}
-            className="group flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-card"
-            style={{
-              borderColor: `${themeColor}25`,
-              backgroundColor: `${themeColor}08`,
-            }}
-          >
-            {item.icon_url ? (
-              <img src={item.icon_url} alt="" className="size-6 shrink-0 rounded" />
-            ) : item.icon_emoji ? (
-              <span className="text-lg">{item.icon_emoji}</span>
-            ) : (
-              <span
-                className="flex size-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
-                style={{ backgroundColor: themeColor }}
-              >
-                {item.title.charAt(0).toUpperCase()}
-              </span>
-            )}
-            <span className="flex-1 truncate text-sm font-semibold" style={{ color: themeColor }}>
-              {item.title}
-            </span>
-            <svg
-              className="size-4 shrink-0 opacity-30"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+        {section.items.map((item) => {
+          const href = normalizePublicUrl(item.url);
+          return (
+            <a
+              key={item.id}
+              href={href ?? undefined}
+              target={href?.startsWith("http") ? "_blank" : undefined}
+              rel="noopener noreferrer"
+              onClick={href ? () => onItemClick(item.id) : undefined}
+              className={`group flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:-translate-y-0.5 hover:shadow-card ${
+                href ? "cursor-pointer" : "opacity-50"
+              }`}
+              style={{
+                borderColor: `${themeColor}25`,
+                backgroundColor: `${themeColor}08`,
+              }}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </a>
-        ))}
+              {item.icon_url ? (
+                <img src={item.icon_url} alt="" className="size-6 shrink-0 rounded" />
+              ) : item.icon_emoji ? (
+                <span className="text-lg">{item.icon_emoji}</span>
+              ) : (
+                <span
+                  className="flex size-6 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
+                  style={{ backgroundColor: themeColor }}
+                >
+                  {item.title.charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="flex-1 truncate text-sm font-semibold" style={{ color: themeColor }}>
+                {item.title}
+              </span>
+              <svg
+                className="size-4 shrink-0 opacity-30"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          );
+        })}
       </div>
 
       {section.children.length > 0 && (

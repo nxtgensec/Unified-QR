@@ -8,7 +8,6 @@ import {
   downloadPng,
   downloadSvg,
   downloadJpg,
-  downloadWebp,
   downloadPdf,
   type BodyShape,
   type EyeShape,
@@ -172,16 +171,6 @@ const CodeCard = memo(function CodeCard({
         },
       },
       {
-        label: "WebP",
-        ext: "webp",
-        icon: FileImage,
-        pro: true,
-        handler: async () => {
-          const c = await fetchFull();
-          await downloadWebp(buildCodeSvg(c, 1024), `${code.name}.webp`);
-        },
-      },
-      {
         label: "PDF",
         ext: "pdf",
         icon: FileText,
@@ -315,7 +304,7 @@ const CodeCard = memo(function CodeCard({
                         onClick={() => {
                           if (locked) {
                             toast.error("Pro feature", {
-                              description: "Upgrade your plan to unlock JPG, WebP & PDF exports.",
+                              description: "Upgrade your plan to unlock JPG & PDF exports.",
                             });
                             return;
                           }
@@ -417,31 +406,37 @@ function Dashboard() {
 
       if (pages.length > 0) {
         const pageIds = pages.map((p) => p.id);
-        const [viewsData, clicksData] = await Promise.all([
-          supabase
-            .from("link_page_views")
-            .select("id", { count: "exact", head: true })
-            .in("page_id", pageIds),
-          supabase
-            .from("link_item_clicks")
-            .select("id", { count: "exact", head: true })
-            .in(
-              "item_id",
-              (
-                await supabase
-                  .from("link_items")
-                  .select("id")
-                  .in(
-                    "section_id",
-                    (
-                      await supabase.from("link_sections").select("id").in("page_id", pageIds)
-                    ).data?.map((s) => s.id) ?? [],
-                  )
-              ).data?.map((i) => i.id) ?? [],
-            ),
-        ]);
+        const viewsData = await supabase
+          .from("link_page_views")
+          .select("id", { count: "exact", head: true })
+          .in("page_id", pageIds);
         setTotalViews(viewsData.count ?? 0);
-        setTotalClicks(clicksData.count ?? 0);
+
+        const { data: sectionsData } = await supabase
+          .from("link_sections")
+          .select("id")
+          .in("page_id", pageIds);
+        const sectionIds = (sectionsData ?? []).map((s) => s.id);
+
+        if (sectionIds.length > 0) {
+          const { data: itemsData } = await supabase
+            .from("link_items")
+            .select("id")
+            .in("section_id", sectionIds);
+          const itemIds = (itemsData ?? []).map((i) => i.id);
+
+          if (itemIds.length > 0) {
+            const clicksData = await supabase
+              .from("link_item_clicks")
+              .select("id", { count: "exact", head: true })
+              .in("item_id", itemIds);
+            setTotalClicks(clicksData.count ?? 0);
+          } else {
+            setTotalClicks(0);
+          }
+        } else {
+          setTotalClicks(0);
+        }
       }
     } catch (e) {
       console.error("[Dashboard] refresh error:", e);

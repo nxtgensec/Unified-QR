@@ -23,7 +23,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
       "3 dynamic QR codes",
       "20 bulk-created codes per batch",
       "Basic scan totals",
-      "PNG & JPG export",
+      "PNG & SVG export",
       "Country-level analytics",
     ],
   },
@@ -38,7 +38,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
       "5 dynamic QR codes",
       "50 bulk-created codes per batch",
       "Full scan analytics",
-      "All 5 export formats",
+      "JPG & PDF export",
       "Custom colours & frames",
       "Logo embedding",
       "City-level analytics",
@@ -56,7 +56,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
       "15 dynamic QR codes",
       "100 bulk-created codes per batch",
       "Full scan analytics",
-      "All 5 export formats",
+      "JPG & PDF export",
       "Custom colours, gradients & frames",
       "Logo embedding",
       "Bulk CSV import",
@@ -75,7 +75,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
       "50 dynamic QR codes",
       "200 bulk-created codes per batch",
       "Full scan analytics",
-      "All 5 export formats",
+      "JPG & PDF export",
       "Custom colours, gradients & frames",
       "Logo embedding",
       "Bulk CSV import",
@@ -95,7 +95,7 @@ export const PLANS: Record<PlanId, PlanDef> = {
       "Unlimited dynamic QR codes",
       "500 bulk-created codes per batch",
       "Full scan analytics",
-      "All 5 export formats",
+      "JPG & PDF export",
       "Custom colours, gradients & frames",
       "Logo embedding",
       "Bulk CSV import",
@@ -112,19 +112,13 @@ export const PLAN_IDS: PlanId[] = ["free", "day", "week", "month", "year"];
 export const PAID_PLAN_IDS: PlanId[] = ["day", "week", "month", "year"];
 
 export function getDynamicLimit(plan: string | null | undefined): number {
-  if (plan === "day") return 5;
-  if (plan === "week") return 15;
-  if (plan === "month") return 50;
-  if (plan === "year") return Infinity;
-  return 3;
+  const id = effectivePlan(plan, null);
+  return PLANS[id].dynamicLimit ?? Infinity;
 }
 
 export function getBulkLimit(plan: string | null | undefined): number {
-  if (plan === "day") return 50;
-  if (plan === "week") return 100;
-  if (plan === "month") return 200;
-  if (plan === "year") return 500;
-  return 20;
+  const id = effectivePlan(plan, null);
+  return PLANS[id].bulkLimit;
 }
 
 export function isPlanActive(

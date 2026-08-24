@@ -251,6 +251,13 @@ function LinksEditor() {
       return;
     }
 
+    const normalizedItems = items.map((item) => ({
+      ...item,
+      url: normalizeItemUrl(item.url),
+    }));
+    const urlChanged = normalizedItems.some((item, idx) => item.url !== items[idx]!.url);
+    if (urlChanged) setItems(normalizedItems);
+
     await Promise.all([
       ...sections.map((sec) =>
         supabase
@@ -263,7 +270,7 @@ function LinksEditor() {
           })
           .eq("id", sec.id),
       ),
-      ...items.map((item) =>
+      ...normalizedItems.map((item) =>
         supabase
           .from("link_items")
           .update({
@@ -1039,4 +1046,11 @@ function makeSlug() {
   const arr = new Uint8Array(7);
   crypto.getRandomValues(arr);
   return Array.from(arr, (b) => chars[b % chars.length]).join("");
+}
+
+export function normalizeItemUrl(v: string): string {
+  const t = v.trim();
+  if (!t || t === "https://" || t === "http://") return "";
+  if (/^(https?|mailto|tel|sms):/i.test(t)) return t;
+  return `https://${t}`;
 }

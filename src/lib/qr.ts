@@ -744,24 +744,6 @@ export async function downloadJpg(svg: string, filename = "qr-code.jpg", size = 
   triggerDownload(canvas.toDataURL("image/jpeg", 0.95), filename);
 }
 
-export async function downloadWebp(svg: string, filename = "qr-code.webp", size = 1024) {
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  const url = svgToDataUrl(svg);
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error("render failed"));
-    img.src = url;
-  });
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-  ctx.drawImage(img, 0, 0, size, size);
-  triggerDownload(canvas.toDataURL("image/webp", 0.95), filename);
-}
-
 export async function downloadPdf(svg: string, filename = "qr-code.pdf", size = 1024) {
   const img = new Image();
   img.crossOrigin = "anonymous";
