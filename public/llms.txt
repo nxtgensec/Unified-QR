@@ -4,25 +4,40 @@
 
 ## What is UnifiedQR?
 
-UnifiedQR is a web application that lets users create, customize, track and manage QR codes — both static and dynamic — entirely for free. It supports URL, PDF, multi-URL, vCard contact, plain text, app store link, SMS, email, phone call and social media QR code types.
+UnifiedQR is a web application that lets users create, customize, track and manage QR codes — both static and dynamic. Static codes are free forever with no watermarks. It supports URL, PDF, multi-URL, vCard contact, plain text, app store link, SMS, email, phone call and social media QR code types.
+
+## Who is it for?
+
+- Creators & individuals: link-in-bio pages, Wi-Fi sharing, contact card QRs
+- Small businesses: restaurant menus, shop catalogs, WhatsApp ordering, packaging
+- Marketers: dynamic codes with editable destinations and scan analytics
+- Teams & operations: bulk CSV creation for inventory, events and asset tags
 
 ## Key Features
 
-- Free QR code generation with no watermarks, no sign-up required
-- 13 customizable QR code templates with color and style options
-- Static codes (permanent data) and dynamic codes (editable destination + analytics)
-- Download as PNG or SVG in any resolution
-- Dynamic codes support real-time scan tracking with device, referrer and geo data
-- Team collaboration — invite members, share QR code libraries
-- CSV bulk import for batch QR code creation
-- QR code short links (qr.nxtgensec.org/r/slug) for print and marketing
-- Multi-language support — 40 languages with automatic detection
+- Free QR code generation, no watermarks, no sign-up required for static codes
+- 34 QR design templates, custom colors, gradients, body shapes, eye styles, logos and CTA frames
+- Download as PNG, SVG, JPG or PDF — all formats free
+- Static codes (permanent data) and dynamic codes (editable destination + scan analytics)
+- Real-time scan tracking: devices, countries, referrers, peak hours; CSV export
+- Workspace: multi-link pages (like a bio page) with sections, sub-sections and brand icons — one QR code for all destinations, with page view and link click analytics
+- Bulk creation from CSV with ZIP download (PNG/SVG/JPG) and links mapping
+- 12 workspace templates grouped by use case
+- Multi-language support — 29 languages with automatic detection
 
-## Pricing
+## Free vs Paid
 
-- Free: Unlimited static QR codes, 2 dynamic codes, basic analytics
-- Flex: ₹749/mo — 25 dynamic codes, team collaboration, priority support
-- Pro: ₹2,999/mo — Unlimited dynamic codes, unlimited team members, full analytics
+- Free: unlimited static QR codes, all download formats, full design customization, 3 dynamic QR codes, 20 bulk codes per batch, country-level analytics, unlimited workspace pages
+- Day Pass: ₹9 — 5 dynamic codes, 50/batch bulk, city-level analytics
+- Week Pass: ₹49 — 15 dynamic codes, 100/batch bulk
+- Monthly: ₹99 — 50 dynamic codes, 200/batch bulk
+- Yearly: ₹999 — unlimited dynamic codes, 500/batch bulk
+
+Every feature is free to try up to a limit; paid plans raise the limits and add city-level analytics and priority support.
+
+## Sharing
+
+All generated QR codes work publicly: static codes contain the data itself, dynamic codes redirect through public short links (qr.nxtgensec.org/r/slug), and workspace pages are public at qr.nxtgensec.org/p/slug. No login is ever required to scan.
 
 ## Technology
 
@@ -34,8 +49,10 @@ UnifiedQR is a web application that lets users create, customize, track and mana
 
 - Website: https://qr.nxtgensec.org
 - QR Code Generator: https://qr.nxtgensec.org
+- Documentation: https://qr.nxtgensec.org/docs
 - QR Code Types: https://qr.nxtgensec.org/qr-code-types
 - Pricing: https://qr.nxtgensec.org/pricing
+- Compare: https://qr.nxtgensec.org/compare
 - Contact: https://qr.nxtgensec.org/contact
 - About: https://qr.nxtgensec.org/about
 - Privacy Policy: https://qr.nxtgensec.org/privacy

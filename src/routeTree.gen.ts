@@ -18,6 +18,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as DocsRouteImport } from './routes/docs'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as HowToCreateRouteImport } from './routes/how-to-create'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -79,6 +80,11 @@ const ContactRoute = ContactRouteImport.update({
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/docs': typeof DocsRoute
   '/faq': typeof FaqRoute
   '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
@@ -211,6 +218,7 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/docs': typeof DocsRoute
   '/faq': typeof FaqRoute
   '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/docs': typeof DocsRoute
   '/faq': typeof FaqRoute
   '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
+    | '/docs'
     | '/faq'
     | '/how-to-create'
     | '/pricing'
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
+    | '/docs'
     | '/faq'
     | '/how-to-create'
     | '/pricing'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
+    | '/docs'
     | '/faq'
     | '/how-to-create'
     | '/pricing'
@@ -358,6 +370,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
+  DocsRoute: typeof DocsRoute
   FaqRoute: typeof FaqRoute
   HowToCreateRoute: typeof HowToCreateRoute
   PricingRoute: typeof PricingRoute
@@ -432,6 +445,13 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/cookies'
       preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -600,6 +620,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
+  DocsRoute: DocsRoute,
   FaqRoute: FaqRoute,
   HowToCreateRoute: HowToCreateRoute,
   PricingRoute: PricingRoute,

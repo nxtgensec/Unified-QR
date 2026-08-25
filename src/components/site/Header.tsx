@@ -10,6 +10,7 @@ const nav: { label: string; href: string }[] = [
   { label: "About", href: "/#about" },
   { label: "How to create", href: "/#how-to-create" },
   { label: "QR Types", href: "/#qr-types" },
+  { label: "Docs", href: "/docs" },
   { label: "FAQs", href: "/#faq" },
   { label: "Contact", href: "/#contact" },
 ];
@@ -146,15 +147,25 @@ export function Header() {
         <div className="flex items-center gap-8">
           <Logo />
           <nav className="hidden items-center gap-6 lg:flex">
-            {nav.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="text-sm font-semibold text-foreground/80 transition-colors hover:text-brand"
-              >
-                {item.label}
-              </a>
-            ))}
+            {nav.map((item) =>
+              item.href.includes("#") ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm font-semibold text-foreground/80 transition-colors hover:text-brand"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className="text-sm font-semibold text-foreground/80 transition-colors hover:text-brand"
+                >
+                  {item.label}
+                </Link>
+              ),
+            )}
           </nav>
         </div>
 
@@ -182,16 +193,27 @@ export function Header() {
       {open && (
         <div className="absolute inset-x-0 top-[72px] z-50 border-t border-border bg-background px-4 py-4 shadow-lg lg:hidden">
           <nav className="flex flex-col gap-3">
-            {nav.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="text-sm font-semibold text-foreground/80"
-              >
-                {item.label}
-              </a>
-            ))}
+            {nav.map((item) =>
+              item.href.includes("#") ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="text-sm font-semibold text-foreground/80"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setOpen(false)}
+                  className="text-sm font-semibold text-foreground/80"
+                >
+                  {item.label}
+                </Link>
+              ),
+            )}
             <LanguageSwitcher className="py-1.5" />
             {mobileAuthLink}
           </nav>

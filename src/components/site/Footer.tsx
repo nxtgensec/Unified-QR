@@ -10,6 +10,7 @@ const columns: { title: MessageKey; links: { label: string; to: string }[] }[] =
       { label: "Compare plans", to: "/compare" },
       { label: "Free QR generator", to: "/" },
       { label: "How to create", to: "/how-to-create" },
+      { label: "Documentation", to: "/docs" },
     ],
   },
   {
