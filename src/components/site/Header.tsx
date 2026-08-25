@@ -10,9 +10,9 @@ const nav: { label: string; href: string }[] = [
   { label: "About", href: "/#about" },
   { label: "How to create", href: "/#how-to-create" },
   { label: "QR Types", href: "/#qr-types" },
-  { label: "Docs", href: "/docs" },
   { label: "FAQs", href: "/#faq" },
   { label: "Contact", href: "/#contact" },
+  { label: "Docs", href: "/docs" },
 ];
 
 export function Logo() {

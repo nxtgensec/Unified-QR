@@ -214,9 +214,9 @@ function Home() {
               want you to have a tool that just works.
             </p>
             <p className="mt-3 text-muted-foreground">
-              We believe the core QR Code experience should always be free. Dynamic codes, analytics
-              and team features are available for users who need more, at honest prices with no
-              hidden fees.
+              We believe the core QR Code experience should always be free. Every feature works free
+              from the start — dynamic codes, analytics and team tools included, with generous free
+              limits and simple passes if you ever need more.
             </p>
           </section>
 

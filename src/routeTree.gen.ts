@@ -19,6 +19,8 @@ import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as DocsRouteImport } from './routes/docs'
+import { Route as DocsIndexRouteImport } from './routes/docs.index'
+import { Route as DocsTopicRouteImport } from './routes/docs.$topic'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as HowToCreateRouteImport } from './routes/how-to-create'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -86,6 +88,16 @@ const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DocsIndexRoute = DocsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DocsRoute,
+} as any)
+const DocsTopicRoute = DocsTopicRouteImport.update({
+  id: '/$topic',
+  path: '/$topic',
+  getParentRoute: () => DocsRoute,
 } as any)
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
@@ -189,7 +201,8 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
-  '/docs': typeof DocsRoute
+  '/docs': typeof DocsIndexRoute
+  '/docs/$topic': typeof DocsTopicRoute
   '/faq': typeof FaqRoute
   '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
@@ -218,7 +231,8 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
-  '/docs': typeof DocsRoute
+  '/docs': typeof DocsIndexRoute
+  '/docs/$topic': typeof DocsTopicRoute
   '/faq': typeof FaqRoute
   '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
@@ -250,6 +264,8 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
+  '/docs/': typeof DocsIndexRoute
+  '/docs/$topic': typeof DocsTopicRoute
   '/faq': typeof FaqRoute
   '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
@@ -281,6 +297,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/docs'
+    | '/docs/$topic'
     | '/faq'
     | '/how-to-create'
     | '/pricing'
@@ -310,6 +327,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/docs'
+    | '/docs/$topic'
     | '/faq'
     | '/how-to-create'
     | '/pricing'
@@ -340,6 +358,8 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/docs'
+    | '/docs/'
+    | '/docs/$topic'
     | '/faq'
     | '/how-to-create'
     | '/pricing'
@@ -453,6 +473,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/docs'
       preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/docs/': {
+      id: '/docs/'
+      path: '/'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsIndexRouteImport
+      parentRoute: typeof DocsRoute
+    }
+    '/docs/$topic': {
+      id: '/docs/$topic'
+      path: '/$topic'
+      fullPath: '/docs/$topic'
+      preLoaderRoute: typeof DocsTopicRouteImport
+      parentRoute: typeof DocsRoute
     }
     '/faq': {
       id: '/faq'
@@ -583,6 +617,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DocsRouteRouteChildren {
+  DocsIndexRoute: typeof DocsIndexRoute
+  DocsTopicRoute: typeof DocsTopicRoute
+}
+
+const DocsRouteRouteChildren: DocsRouteRouteChildren = {
+  DocsIndexRoute: DocsIndexRoute,
+  DocsTopicRoute: DocsTopicRoute,
+}
+
+const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
@@ -620,7 +666,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
-  DocsRoute: DocsRoute,
+  DocsRoute: DocsRouteWithChildren,
   FaqRoute: FaqRoute,
   HowToCreateRoute: HowToCreateRoute,
   PricingRoute: PricingRoute,
