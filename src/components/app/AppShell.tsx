@@ -75,6 +75,16 @@ const bottomNav = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
+function isBottomActive(pathname: string, to: string): boolean {
+  if (to === "/analytics") {
+    return pathname.startsWith("/analytics") || pathname.startsWith("/bulk-analytics");
+  }
+  if (to === "/links") {
+    return pathname.startsWith("/links") || pathname.startsWith("/workspace-analytics");
+  }
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -279,7 +289,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 backdrop-blur-lg lg:hidden">
         <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
           {bottomNav.slice(0, 2).map((item) => {
-            const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
+            const active = isBottomActive(pathname, item.to);
             const Icon = item.icon;
             return (
               <Link
@@ -304,14 +314,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
 
           <Link to="/create" className="-mt-5 flex flex-col items-center">
-            <span className="grid size-14 place-items-center rounded-full bg-brand text-white shadow-lg shadow-brand/30 transition-transform hover:scale-105">
+            <span
+              className={`grid size-14 place-items-center rounded-full shadow-lg transition-transform ${
+                pathname.startsWith("/create") || pathname.startsWith("/bulk")
+                  ? "text-white ring-4 ring-brand/25 scale-105"
+                  : "bg-brand text-white shadow-brand/30 hover:scale-105"
+              } bg-brand`}
+            >
               <QrCode className="size-6" />
             </span>
             <span className="mt-0.5 text-[10px] font-bold text-brand">Create</span>
           </Link>
 
           {bottomNav.slice(2).map((item) => {
-            const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
+            const active = isBottomActive(pathname, item.to);
             const Icon = item.icon;
             return (
               <Link
