@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { recordVisit } from "@/lib/recordVisit.functions";
 
 function todayKey() {
   const d = new Date();
@@ -25,7 +26,7 @@ export function VisitorBadge() {
         const day = todayKey();
         try {
           if (!window.localStorage.getItem(`unifiedqr:visited:${day}`)) {
-            await supabase.rpc("increment_visitor_count", { p_day: day });
+            await recordVisit({ data: { day } });
             window.localStorage.setItem(`unifiedqr:visited:${day}`, "1");
             const { data: fresh } = await supabase.rpc("get_total_visitor_count");
             if (active && typeof fresh === "number") setTotal(fresh);

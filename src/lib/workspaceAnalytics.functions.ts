@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { getClientIp } from "@/lib/client-ip";
 
 type GeoResult = {
   status: string;
@@ -10,19 +10,17 @@ type GeoResult = {
 
 const IP_CACHE = new Map<string, { geo: GeoResult; ts: number }>();
 const CACHE_TTL = 10 * 60 * 1000;
+const IP_CACHE_MAX = 5000;
 const RATE_LIMIT = new Map<string, number>();
 const RATE_TTL = 60 * 1000;
+const RATE_LIMIT_MAX = 10000;
 
-function getClientIp(): string | null {
-  const request = getRequest();
-  if (!request) return null;
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]!.trim();
-  const cf = request.headers.get("cf-connecting-ip");
-  if (cf) return cf;
-  const realIp = request.headers.get("x-real-ip");
-  if (realIp) return realIp;
-  return null;
+function evictIpCache() {
+  if (IP_CACHE.size <= IP_CACHE_MAX) return;
+  const now = Date.now();
+  for (const [key, value] of IP_CACHE) {
+    if (now - value.ts > CACHE_TTL) IP_CACHE.delete(key);
+  }
 }
 
 async function geolocate(ip: string): Promise<GeoResult | null> {
@@ -48,7 +46,7 @@ function checkRateLimit(key: string): boolean {
   const last = RATE_LIMIT.get(key);
   if (last && Date.now() - last < RATE_TTL) return true;
   RATE_LIMIT.set(key, Date.now());
-  if (RATE_LIMIT.size > 10000) {
+  if (RATE_LIMIT.size > RATE_LIMIT_MAX) {
     const now = Date.now();
     for (const [k, ts] of RATE_LIMIT) {
       if (now - ts > RATE_TTL) RATE_LIMIT.delete(k);
@@ -69,6 +67,7 @@ export const recordPageView = createServerFn({ method: "POST" })
     let geo: GeoResult | null = null;
     if (ip) {
       geo = await geolocate(ip);
+      evictIpCache();
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -102,6 +101,7 @@ export const recordItemClick = createServerFn({ method: "POST" })
     let geo: GeoResult | null = null;
     if (ip) {
       geo = await geolocate(ip);
+      evictIpCache();
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

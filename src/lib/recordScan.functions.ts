@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { getClientIp } from "@/lib/client-ip";
 
 type GeoResult = {
   status: string;
@@ -29,18 +29,6 @@ function evictRateLimit() {
   for (const [key, ts] of RATE_LIMIT) {
     if (now - ts > RATE_TTL) RATE_LIMIT.delete(key);
   }
-}
-
-function getClientIp(): string | null {
-  const request = getRequest();
-  if (!request) return null;
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]!.trim();
-  const cf = request.headers.get("cf-connecting-ip");
-  if (cf) return cf;
-  const realIp = request.headers.get("x-real-ip");
-  if (realIp) return realIp;
-  return null;
 }
 
 async function geolocate(ip: string): Promise<GeoResult | null> {

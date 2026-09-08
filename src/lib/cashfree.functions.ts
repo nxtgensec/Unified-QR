@@ -73,7 +73,9 @@ export const createCashfreeOrder = createServerFn({ method: "POST" })
       const randPart = Array.from(rand, (b) => b.toString(36).padStart(2, "0"))
         .join("")
         .slice(0, 8);
-      const orderId = `UQR-${Date.now()}-${randPart}`;
+      const currency = process.env["CASHFREE_CURRENCY"] ?? "INR";
+      const userPart = customerEmail.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 12);
+      const orderId = `UQR-${Date.now()}-${userPart}-${data.plan}-${randPart}`;
       const baseReturnUrl = process.env["CASHFREE_RETURN_URL"] ?? "http://localhost:8080/billing";
 
       const response = await fetch(`${cashfreeBaseUrl()}/pg/orders`, {
@@ -81,7 +83,7 @@ export const createCashfreeOrder = createServerFn({ method: "POST" })
         headers: cashfreeHeaders(),
         body: JSON.stringify({
           order_amount: String(serverAmount),
-          order_currency: process.env["CASHFREE_CURRENCY"] ?? "INR",
+          order_currency: currency,
           order_id: orderId,
           customer_details: {
             customer_id: `uqr_${customerEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
@@ -155,6 +157,8 @@ export const verifyCashfreePayment = createServerFn({ method: "POST" })
     const order = (await response.json()) as {
       order_status?: string;
       order_id?: string;
+      order_currency?: string;
+      order_amount?: string;
       customer_details?: { customer_id?: string };
     };
 
@@ -174,13 +178,25 @@ export const verifyCashfreePayment = createServerFn({ method: "POST" })
     }
 
     const expectedAmount = PLAN_PRICES[data.plan];
-    const orderAmount = Number((order as Record<string, unknown>)["order_amount"]);
+    const orderAmount = Number(order.order_amount);
     if (expectedAmount !== undefined && orderAmount !== expectedAmount) {
       console.error("[Billing] payment amount mismatch", {
         expected: expectedAmount,
         got: orderAmount,
       });
       return { ok: false, message: "Payment amount does not match the selected plan." };
+    }
+
+    const expectedCurrency = process.env["CASHFREE_CURRENCY"] ?? "INR";
+    if (
+      order.order_currency &&
+      order.order_currency.toUpperCase() !== expectedCurrency.toUpperCase()
+    ) {
+      console.error("[Billing] payment currency mismatch", {
+        expected: expectedCurrency,
+        got: order.order_currency,
+      });
+      return { ok: false, message: "Payment currency does not match the selected plan." };
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

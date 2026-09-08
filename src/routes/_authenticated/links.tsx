@@ -65,7 +65,13 @@ export const Route = createFileRoute("/_authenticated/links")({
   component: LinksEditor,
 });
 
-type PageRow = { id: string; slug: string; title: string; updated_at: string };
+type PageRow = {
+  id: string;
+  slug: string;
+  title: string;
+  updated_at: string;
+  published?: boolean;
+};
 type SectionRow = {
   id: string;
   title: string;
@@ -140,6 +146,7 @@ function LinksEditor() {
     theme_color: "#6366f1",
     theme_bg: "#ffffff",
     theme_font: "system",
+    published: true,
   });
 
   const selectedPage = pages.find((p) => p.id === selectedPageId);
@@ -150,7 +157,7 @@ function LinksEditor() {
     (async () => {
       const { data } = await supabase
         .from("link_pages")
-        .select("id, slug, title, updated_at")
+        .select("id, slug, title, updated_at, published")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
       if (!cancelled) {
@@ -179,6 +186,7 @@ function LinksEditor() {
         theme_color: pageData.theme_color,
         theme_bg: pageData.theme_bg,
         theme_font: pageData.theme_font,
+        published: pageData.published,
       });
     }
     const { data: secData } = await supabase
@@ -215,8 +223,8 @@ function LinksEditor() {
       const slug = makeSlug();
       const { data, error } = await supabase
         .from("link_pages")
-        .insert({ user_id: user.id, slug, ...values })
-        .select("id, slug, title, updated_at")
+        .insert({ user_id: user.id, slug, published: true, ...values })
+        .select("id, slug, title, updated_at, published")
         .single();
       if (!error) return data as PageRow;
       const msg = error.message.toLowerCase();
@@ -310,10 +318,28 @@ function LinksEditor() {
           theme_color: "#6366f1",
           theme_bg: "#ffffff",
           theme_font: "system",
+          published: true,
         });
       }
     }
     toast.success("Page deleted");
+  }
+
+  async function togglePublish(page: PageRow) {
+    const next = !(page.published !== false);
+    const { error } = await supabase
+      .from("link_pages")
+      .update({ published: next, updated_at: new Date().toISOString() })
+      .eq("id", page.id);
+    if (error) {
+      toast.error("Could not update visibility", { description: error.message });
+      return;
+    }
+    setPages((prev) => prev.map((p) => (p.id === page.id ? { ...p, published: next } : p)));
+    if (selectedPageId === page.id) {
+      setPageFields((f) => ({ ...f, published: next }));
+    }
+    toast.success(next ? "Page published" : "Page set to draft");
   }
 
   async function saveAll() {
@@ -336,6 +362,7 @@ function LinksEditor() {
         theme_color: pageFields.theme_color,
         theme_bg: pageFields.theme_bg,
         theme_font: pageFields.theme_font,
+        published: pageFields.published,
         updated_at: new Date().toISOString(),
       })
       .eq("id", selectedPageId);
@@ -390,7 +417,14 @@ function LinksEditor() {
     toast.success("Saved!");
     setPages((prev) =>
       prev.map((p) =>
-        p.id === selectedPageId ? { ...p, title: pageFields.title, slug: pageFields.slug } : p,
+        p.id === selectedPageId
+          ? {
+              ...p,
+              title: pageFields.title,
+              slug: pageFields.slug,
+              published: pageFields.published,
+            }
+          : p,
       ),
     );
   }
@@ -616,7 +650,24 @@ function LinksEditor() {
                   }`}
                 >
                   <span className="flex-1 truncate">{p.title || p.slug}</span>
+                  {p.published === false && (
+                    <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-destructive">
+                      Draft
+                    </span>
+                  )}
                   <span className="text-[10px] opacity-50">/{p.slug}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => togglePublish(p)}
+                  className="rounded-lg p-1.5 text-muted-foreground/50 transition-colors hover:bg-background hover:text-foreground"
+                  title={p.published === false ? "Publish page" : "Unpublish page"}
+                >
+                  {p.published === false ? (
+                    <EyeOff className="size-3.5" />
+                  ) : (
+                    <Eye className="size-3.5" />
+                  )}
                 </button>
                 <button
                   type="button"
@@ -773,6 +824,40 @@ function LinksEditor() {
                     </button>
                   </div>
                 )}
+
+                <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2.5">
+                  <div>
+                    <p className="text-sm font-semibold">Visibility</p>
+                    <p className="text-xs text-muted-foreground">
+                      {pageFields.published
+                        ? "Published — anyone with the link can view it"
+                        : "Draft — not accessible via /p/{slug}"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void togglePublish({
+                        id: selectedPageId,
+                        slug: pageFields.slug,
+                        title: pageFields.title,
+                        updated_at: "",
+                        published: pageFields.published,
+                      });
+                    }}
+                    className={`relative h-6 w-11 rounded-full transition-colors ${
+                      pageFields.published ? "bg-brand" : "bg-muted"
+                    }`}
+                    aria-pressed={pageFields.published}
+                    title={pageFields.published ? "Unpublish page" : "Publish page"}
+                  >
+                    <span
+                      className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all ${
+                        pageFields.published ? "left-[22px]" : "left-0.5"
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
 
               {/* Sections */}

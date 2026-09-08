@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/devnxtgensec/unified-qr.git"
+    "url": "https://github.com/nxtgensec/Unified-QR.git"
   },
   "scripts": {
     "dev": "vite dev",
@@ -95,6 +95,7 @@
     "globals": "^15.15.0",
     "nitro": "3.0.260603-beta",
     "prettier": "^3.7.3",
+    "supabase": "^2.117.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.2.0"

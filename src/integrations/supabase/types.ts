@@ -164,6 +164,7 @@ export type Database = {
           avatar_url: string | null;
           created_at: string;
           id: string;
+          published: boolean;
           slug: string;
           subtitle: string | null;
           theme_bg: string;
@@ -177,6 +178,7 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string;
           id?: string;
+          published?: boolean;
           slug: string;
           subtitle?: string | null;
           theme_bg?: string;
@@ -190,6 +192,7 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string;
           id?: string;
+          published?: boolean;
           slug?: string;
           subtitle?: string | null;
           theme_bg?: string;

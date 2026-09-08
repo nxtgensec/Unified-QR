@@ -171,6 +171,7 @@ function LinkPage() {
         .from("link_pages")
         .select("id, slug, title, subtitle, avatar_url, theme_color, theme_bg, theme_font")
         .eq("slug", slug)
+        .eq("published", true)
         .maybeSingle();
 
       if (cancelled) return;
