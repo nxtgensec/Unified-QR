@@ -39,13 +39,17 @@ function RedirectPage() {
         setError("This link is inactive or does not exist.");
         return;
       }
-      void recordScan({
-        data: {
-          codeId: data.id,
-          device: navigator.userAgent.slice(0, 200),
-          referrer: document.referrer || null,
-        },
-      });
+      try {
+        await recordScan({
+          data: {
+            codeId: data.id,
+            device: navigator.userAgent.slice(0, 200),
+            referrer: document.referrer || null,
+          },
+        });
+      } catch {
+        // Scan recording must never block the redirect.
+      }
       let dest = /^https?:\/\//i.test(data.destination)
         ? data.destination
         : `https://${data.destination}`;

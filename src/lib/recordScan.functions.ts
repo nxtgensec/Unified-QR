@@ -53,6 +53,15 @@ async function geolocate(ip: string): Promise<GeoResult | null> {
 export const recordScan = createServerFn({ method: "POST" })
   .validator((input: { codeId: string; device: string; referrer: string | null }) => input)
   .handler(async ({ data }) => {
+    if (
+      typeof data.codeId !== "string" ||
+      data.codeId.length === 0 ||
+      typeof data.device !== "string" ||
+      (data.referrer !== null && typeof data.referrer !== "string")
+    ) {
+      return { ok: false };
+    }
+
     const ip = getClientIp();
 
     if (ip) {

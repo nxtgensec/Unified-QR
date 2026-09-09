@@ -19,8 +19,6 @@ import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as DocsRouteImport } from './routes/docs'
-import { Route as DocsIndexRouteImport } from './routes/docs.index'
-import { Route as DocsTopicRouteImport } from './routes/docs.$topic'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as HowToCreateRouteImport } from './routes/how-to-create'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -37,6 +35,8 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLinksRouteImport } from './routes/_authenticated/links'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedWorkspaceAnalyticsRouteImport } from './routes/_authenticated/workspace-analytics'
+import { Route as DocsIndexRouteImport } from './routes/docs.index'
+import { Route as DocsTopicRouteImport } from './routes/docs.$topic'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as RSlugRouteImport } from './routes/r.$slug'
 
@@ -88,16 +88,6 @@ const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
   getParentRoute: () => rootRouteImport,
-} as any)
-const DocsIndexRoute = DocsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DocsRoute,
-} as any)
-const DocsTopicRoute = DocsTopicRouteImport.update({
-  id: '/$topic',
-  path: '/$topic',
-  getParentRoute: () => DocsRoute,
 } as any)
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
@@ -155,12 +145,6 @@ const AuthenticatedBulkAnalyticsRoute =
     path: '/bulk-analytics',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedWorkspaceAnalyticsRoute =
-  AuthenticatedWorkspaceAnalyticsRouteImport.update({
-    id: '/workspace-analytics',
-    path: '/workspace-analytics',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -180,6 +164,22 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWorkspaceAnalyticsRoute =
+  AuthenticatedWorkspaceAnalyticsRouteImport.update({
+    id: '/workspace-analytics',
+    path: '/workspace-analytics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const DocsIndexRoute = DocsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DocsRoute,
+} as any)
+const DocsTopicRoute = DocsTopicRouteImport.update({
+  id: '/$topic',
+  path: '/$topic',
+  getParentRoute: () => DocsRoute,
 } as any)
 const PSlugRoute = PSlugRouteImport.update({
   id: '/p/$slug',
@@ -201,8 +201,7 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
-  '/docs': typeof DocsIndexRoute
-  '/docs/$topic': typeof DocsTopicRoute
+  '/docs': typeof DocsRouteWithChildren
   '/faq': typeof FaqRoute
   '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
@@ -219,8 +218,10 @@ export interface FileRoutesByFullPath {
   '/links': typeof AuthenticatedLinksRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/workspace-analytics': typeof AuthenticatedWorkspaceAnalyticsRoute
+  '/docs/$topic': typeof DocsTopicRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$slug': typeof RSlugRoute
+  '/docs/': typeof DocsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -231,8 +232,6 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
-  '/docs': typeof DocsIndexRoute
-  '/docs/$topic': typeof DocsTopicRoute
   '/faq': typeof FaqRoute
   '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
@@ -249,8 +248,10 @@ export interface FileRoutesByTo {
   '/links': typeof AuthenticatedLinksRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/workspace-analytics': typeof AuthenticatedWorkspaceAnalyticsRoute
+  '/docs/$topic': typeof DocsTopicRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$slug': typeof RSlugRoute
+  '/docs': typeof DocsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -263,9 +264,7 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
-  '/docs': typeof DocsRoute
-  '/docs/': typeof DocsIndexRoute
-  '/docs/$topic': typeof DocsTopicRoute
+  '/docs': typeof DocsRouteWithChildren
   '/faq': typeof FaqRoute
   '/how-to-create': typeof HowToCreateRoute
   '/pricing': typeof PricingRoute
@@ -282,8 +281,10 @@ export interface FileRoutesById {
   '/_authenticated/links': typeof AuthenticatedLinksRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/workspace-analytics': typeof AuthenticatedWorkspaceAnalyticsRoute
+  '/docs/$topic': typeof DocsTopicRoute
   '/p/$slug': typeof PSlugRoute
   '/r/$slug': typeof RSlugRoute
+  '/docs/': typeof DocsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -297,7 +298,6 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/docs'
-    | '/docs/$topic'
     | '/faq'
     | '/how-to-create'
     | '/pricing'
@@ -314,8 +314,10 @@ export interface FileRouteTypes {
     | '/links'
     | '/settings'
     | '/workspace-analytics'
+    | '/docs/$topic'
     | '/p/$slug'
     | '/r/$slug'
+    | '/docs/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -326,8 +328,6 @@ export interface FileRouteTypes {
     | '/compare'
     | '/contact'
     | '/cookies'
-    | '/docs'
-    | '/docs/$topic'
     | '/faq'
     | '/how-to-create'
     | '/pricing'
@@ -344,8 +344,10 @@ export interface FileRouteTypes {
     | '/links'
     | '/settings'
     | '/workspace-analytics'
+    | '/docs/$topic'
     | '/p/$slug'
     | '/r/$slug'
+    | '/docs'
   id:
     | '__root__'
     | '/'
@@ -358,8 +360,6 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/docs'
-    | '/docs/'
-    | '/docs/$topic'
     | '/faq'
     | '/how-to-create'
     | '/pricing'
@@ -376,8 +376,10 @@ export interface FileRouteTypes {
     | '/_authenticated/links'
     | '/_authenticated/settings'
     | '/_authenticated/workspace-analytics'
+    | '/docs/$topic'
     | '/p/$slug'
     | '/r/$slug'
+    | '/docs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -390,7 +392,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
-  DocsRoute: typeof DocsRoute
+  DocsRoute: typeof DocsRouteWithChildren
   FaqRoute: typeof FaqRoute
   HowToCreateRoute: typeof HowToCreateRoute
   PricingRoute: typeof PricingRoute
@@ -473,20 +475,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/docs'
       preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/docs/': {
-      id: '/docs/'
-      path: '/'
-      fullPath: '/docs'
-      preLoaderRoute: typeof DocsIndexRouteImport
-      parentRoute: typeof DocsRoute
-    }
-    '/docs/$topic': {
-      id: '/docs/$topic'
-      path: '/$topic'
-      fullPath: '/docs/$topic'
-      preLoaderRoute: typeof DocsTopicRouteImport
-      parentRoute: typeof DocsRoute
     }
     '/faq': {
       id: '/faq'
@@ -600,6 +588,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkspaceAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/docs/': {
+      id: '/docs/'
+      path: '/'
+      fullPath: '/docs/'
+      preLoaderRoute: typeof DocsIndexRouteImport
+      parentRoute: typeof DocsRoute
+    }
+    '/docs/$topic': {
+      id: '/docs/$topic'
+      path: '/$topic'
+      fullPath: '/docs/$topic'
+      preLoaderRoute: typeof DocsTopicRouteImport
+      parentRoute: typeof DocsRoute
+    }
     '/p/$slug': {
       id: '/p/$slug'
       path: '/p/$slug'
@@ -616,18 +618,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface DocsRouteRouteChildren {
-  DocsIndexRoute: typeof DocsIndexRoute
-  DocsTopicRoute: typeof DocsTopicRoute
-}
-
-const DocsRouteRouteChildren: DocsRouteRouteChildren = {
-  DocsIndexRoute: DocsIndexRoute,
-  DocsTopicRoute: DocsTopicRoute,
-}
-
-const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
@@ -656,6 +646,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface DocsRouteChildren {
+  DocsTopicRoute: typeof DocsTopicRoute
+  DocsIndexRoute: typeof DocsIndexRoute
+}
+
+const DocsRouteChildren: DocsRouteChildren = {
+  DocsTopicRoute: DocsTopicRoute,
+  DocsIndexRoute: DocsIndexRoute,
+}
+
+const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -680,3 +682,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -58,6 +58,15 @@ function checkRateLimit(key: string): boolean {
 export const recordPageView = createServerFn({ method: "POST" })
   .validator((input: { pageId: string; device: string; referrer: string | null }) => input)
   .handler(async ({ data }) => {
+    if (
+      typeof data.pageId !== "string" ||
+      data.pageId.length === 0 ||
+      typeof data.device !== "string" ||
+      (data.referrer !== null && typeof data.referrer !== "string")
+    ) {
+      return { ok: false };
+    }
+
     const ip = getClientIp();
 
     if (ip && checkRateLimit(`view:${ip}:${data.pageId}`)) {
@@ -92,6 +101,15 @@ export const recordPageView = createServerFn({ method: "POST" })
 export const recordItemClick = createServerFn({ method: "POST" })
   .validator((input: { itemId: string; device: string; referrer: string | null }) => input)
   .handler(async ({ data }) => {
+    if (
+      typeof data.itemId !== "string" ||
+      data.itemId.length === 0 ||
+      typeof data.device !== "string" ||
+      (data.referrer !== null && typeof data.referrer !== "string")
+    ) {
+      return { ok: false };
+    }
+
     const ip = getClientIp();
 
     if (ip && checkRateLimit(`click:${ip}:${data.itemId}`)) {

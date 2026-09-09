@@ -24,6 +24,10 @@ function checkRateLimit(key: string): boolean {
 export const recordVisit = createServerFn({ method: "POST" })
   .validator((input: { day: string }) => input)
   .handler(async ({ data }) => {
+    if (typeof data.day !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(data.day)) {
+      return { ok: false };
+    }
+
     const ip = getClientIp();
     if (ip && checkRateLimit(`visit:${ip}:${data.day}`)) {
       return { ok: true, throttled: true };
