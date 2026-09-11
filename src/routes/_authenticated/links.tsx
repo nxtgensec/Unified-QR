@@ -512,6 +512,10 @@ function LinksEditor() {
       toast.error("Avatar must be under 4MB");
       return;
     }
+    if (!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type) || /\.svg($|\?)/i.test(file.name)) {
+      toast.error("Avatar must be a PNG, JPG, WebP or GIF image");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       setPageFields((f) => ({ ...f, avatar_url: reader.result as string }));
@@ -793,7 +797,7 @@ function LinksEditor() {
                         <Upload className="size-4" /> Upload avatar
                         <input
                           type="file"
-                          accept="image/png,image/jpeg,image/svg+xml"
+                          accept="image/png,image/jpeg,image/webp,image/gif"
                           onChange={handleAvatarUpload}
                           className="hidden"
                         />

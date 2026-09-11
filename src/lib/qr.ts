@@ -523,9 +523,9 @@ function eyeGroup(
   const r = eyeShape === "circle" ? unit * 3.5 : eyeShape === "rounded" ? unit * 2 : 0;
   const ri = eyeShape === "circle" ? unit * 1.5 : eyeShape === "rounded" ? unit * 0.9 : 0;
   return [
-    `<rect x="${x}" y="${y}" width="${unit * 7}" height="${unit * 7}" rx="${r}" fill="${color}"/>`,
-    `<rect x="${x + unit}" y="${y + unit}" width="${unit * 5}" height="${unit * 5}" rx="${Math.max(r - unit, 0)}" fill="${bg}"/>`,
-    `<rect x="${x + unit * 2}" y="${y + unit * 2}" width="${unit * 3}" height="${unit * 3}" rx="${ri}" fill="${color}"/>`,
+    `<rect x="${x}" y="${y}" width="${unit * 7}" height="${unit * 7}" rx="${r}" fill="${escXml(color)}"/>`,
+    `<rect x="${x + unit}" y="${y + unit}" width="${unit * 5}" height="${unit * 5}" rx="${Math.max(r - unit, 0)}" fill="${escXml(bg)}"/>`,
+    `<rect x="${x + unit * 2}" y="${y + unit * 2}" width="${unit * 3}" height="${unit * 3}" rx="${ri}" fill="${escXml(color)}"/>`,
   ].join("");
 }
 
@@ -537,18 +537,19 @@ function bodyShapePath(
   fill: string,
 ): string {
   const r = unit * 0.44;
+  const safeFill = escXml(fill);
   switch (shape) {
     case "dot":
-      return `<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${r.toFixed(2)}" fill="${fill}"/>`;
+      return `<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${r.toFixed(2)}" fill="${safeFill}"/>`;
     case "rounded": {
       const rx = unit * 0.3;
       const x = cx - unit / 2;
       const y = cy - unit / 2;
-      return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${unit.toFixed(2)}" height="${unit.toFixed(2)}" rx="${rx.toFixed(2)}" fill="${fill}"/>`;
+      return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${unit.toFixed(2)}" height="${unit.toFixed(2)}" rx="${rx.toFixed(2)}" fill="${safeFill}"/>`;
     }
     case "diamond": {
       const s = r * 1.2;
-      return `<polygon points="${cx.toFixed(2)},${(cy - s).toFixed(2)} ${(cx + s).toFixed(2)},${cy.toFixed(2)} ${cx.toFixed(2)},${(cy + s).toFixed(2)} ${(cx - s).toFixed(2)},${cy.toFixed(2)}" fill="${fill}"/>`;
+      return `<polygon points="${cx.toFixed(2)},${(cy - s).toFixed(2)} ${(cx + s).toFixed(2)},${cy.toFixed(2)} ${cx.toFixed(2)},${(cy + s).toFixed(2)} ${(cx - s).toFixed(2)},${cy.toFixed(2)}" fill="${safeFill}"/>`;
     }
     case "star": {
       const or = r * 1.2;
@@ -564,7 +565,7 @@ function bodyShapePath(
           `${(cx + ir * Math.cos(aInner)).toFixed(2)},${(cy - ir * Math.sin(aInner)).toFixed(2)}`,
         );
       }
-      return `<polygon points="${pts.join(" ")}" fill="${fill}"/>`;
+      return `<polygon points="${pts.join(" ")}" fill="${safeFill}"/>`;
     }
     case "heart": {
       const s = r * 1.3;
@@ -572,17 +573,17 @@ function bodyShapePath(
       const y = cy - s * 0.8;
       const w = s * 2;
       const h = s * 2;
-      return `<path d="M${cx.toFixed(2)},${(y + h * 0.7).toFixed(2)} C${(x + w * 0.1).toFixed(2)},${(y + h * 0.4).toFixed(2)} ${(x + w * 0.0).toFixed(2)},${y.toFixed(2)} ${cx.toFixed(2)},${(y + h * 0.25).toFixed(2)} C${(x + w * 1.0).toFixed(2)},${y.toFixed(2)} ${(x + w * 0.9).toFixed(2)},${(y + h * 0.4).toFixed(2)} ${cx.toFixed(2)},${(y + h * 0.7).toFixed(2)} Z" fill="${fill}"/>`;
+      return `<path d="M${cx.toFixed(2)},${(y + h * 0.7).toFixed(2)} C${(x + w * 0.1).toFixed(2)},${(y + h * 0.4).toFixed(2)} ${(x + w * 0.0).toFixed(2)},${y.toFixed(2)} ${cx.toFixed(2)},${(y + h * 0.25).toFixed(2)} C${(x + w * 1.0).toFixed(2)},${y.toFixed(2)} ${(x + w * 0.9).toFixed(2)},${(y + h * 0.4).toFixed(2)} ${cx.toFixed(2)},${(y + h * 0.7).toFixed(2)} Z" fill="${safeFill}"/>`;
     }
     case "triangle": {
       const s = r * 1.3;
-      return `<polygon points="${cx.toFixed(2)},${(cy - s).toFixed(2)} ${(cx + s).toFixed(2)},${(cy + s * 0.7).toFixed(2)} ${(cx - s).toFixed(2)},${(cy + s * 0.7).toFixed(2)}" fill="${fill}"/>`;
+      return `<polygon points="${cx.toFixed(2)},${(cy - s).toFixed(2)} ${(cx + s).toFixed(2)},${(cy + s * 0.7).toFixed(2)} ${(cx - s).toFixed(2)},${(cy + s * 0.7).toFixed(2)}" fill="${safeFill}"/>`;
     }
     default: {
       const u2 = unit + 0.4;
       const x = cx - u2 / 2;
       const y = cy - u2 / 2;
-      return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${u2.toFixed(2)}" height="${u2.toFixed(2)}" fill="${fill}"/>`;
+      return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${u2.toFixed(2)}" height="${u2.toFixed(2)}" fill="${safeFill}"/>`;
     }
   }
 }
@@ -657,7 +658,7 @@ export function renderQrSvg(
     const pad = unit;
     const rx = unit * 1.5;
     parts.push(
-      `<rect x="${(logoX - pad).toFixed(2)}" y="${(logoY - pad).toFixed(2)}" width="${(logoSize + pad * 2).toFixed(2)}" height="${(logoSize + pad * 2).toFixed(2)}" rx="${rx.toFixed(2)}" fill="${d.bg}"/>`,
+      `<rect x="${(logoX - pad).toFixed(2)}" y="${(logoY - pad).toFixed(2)}" width="${(logoSize + pad * 2).toFixed(2)}" height="${(logoSize + pad * 2).toFixed(2)}" rx="${rx.toFixed(2)}" fill="${escXml(d.bg)}"/>`,
       `<image x="${logoX.toFixed(2)}" y="${logoY.toFixed(2)}" width="${logoSize.toFixed(2)}" height="${logoSize.toFixed(2)}" href="${escXml(d.logo ?? "")}" preserveAspectRatio="xMidYMid meet"/>`,
     );
   }
@@ -671,15 +672,17 @@ export function renderQrSvg(
     const strokeW = ft.style === "badge" ? 0 : 2;
     const bgColor = d.bg === "#ffffff" ? "#f8fafc" : d.bg;
     qrBlock = [
-      `<rect width="${totalWidth}" height="${totalHeight}" rx="${r}" fill="${bgColor}"${strokeW ? ` stroke="${d.fg}" stroke-width="${strokeW}"` : ""}/>`,
+      `<rect width="${totalWidth}" height="${totalHeight}" rx="${r}" fill="${escXml(bgColor)}"${strokeW ? ` stroke="${escXml(d.fg)}" stroke-width="${strokeW}"` : ""}/>`,
       `<g transform="translate(0,0)">`,
-      `<rect width="${size}" height="${size}" fill="${d.bg}"/>`,
+      `<rect width="${size}" height="${size}" fill="${escXml(d.bg)}"/>`,
       ...parts,
       `</g>`,
-      `<text x="${totalWidth / 2}" y="${size + framePadding * 0.7}" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, sans-serif" font-size="${framePadding * 0.35}" font-weight="700" fill="${d.fg}">${escXml(ft.text)}</text>`,
+      `<text x="${totalWidth / 2}" y="${size + framePadding * 0.7}" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, sans-serif" font-size="${framePadding * 0.35}" font-weight="700" fill="${escXml(d.fg)}">${escXml(ft.text)}</text>`,
     ].join("");
   } else {
-    qrBlock = [`<rect width="${size}" height="${size}" fill="${d.bg}"/>`, ...parts].join("");
+    qrBlock = [`<rect width="${size}" height="${size}" fill="${escXml(d.bg)}"/>`, ...parts].join(
+      "",
+    );
   }
 
   const viewH = totalHeight;

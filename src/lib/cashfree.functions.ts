@@ -202,8 +202,99 @@ export const verifyCashfreePayment = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = context.userId;
     const planDef = PLANS[data.plan as PlanId];
+
+    // Idempotency ledger: an order_id may only be consumed once. Subsequent
+    // calls for the same order return the already-activated plan instead of
+    // extending the expiry again.
+    const { error: ledgerError } = await supabaseAdmin.from("payments").insert({
+      order_id: data.orderId,
+      user_id: userId,
+      plan: data.plan,
+      amount: expectedAmount ?? 0,
+      currency: expectedCurrency,
+      order_status: "paid",
+    });
+
+    if (ledgerError) {
+      if (
+        ledgerError.code === "23505" ||
+        /duplicate key value violates unique constraint/.test(ledgerError.message ?? "")
+      ) {
+        const { data: existing } = await supabaseAdmin
+          .from("payments")
+          .select("plan, user_id")
+          .eq("order_id", data.orderId)
+          .maybeSingle();
+
+        if (!existing || existing.user_id !== userId) {
+          return { ok: false, message: "This order does not belong to your account." };
+        }
+
+        // Self-heal: if a previous attempt recorded the order but failed to
+        // update the profile, apply the activation now. If it is already
+        // active, return success without touching expiry again.
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("plan, plan_expires_at")
+          .eq("id", userId)
+          .maybeSingle();
+
+        const stillActive =
+          profile?.plan === existing.plan &&
+          (profile?.plan_expires_at === null ||
+            new Date(profile.plan_expires_at).getTime() > Date.now());
+
+        if (!stillActive) {
+          const p = PLANS[existing.plan as PlanId];
+          if (!p) {
+            return { ok: false, message: "This order references an unknown plan." };
+          }
+          const healExpiresAt = p.durationDays
+            ? new Date(Date.now() + p.durationDays * 86400000).toISOString()
+            : null;
+          const { error: healError } = await supabaseAdmin
+            .from("profiles")
+            .update({ plan: existing.plan, plan_expires_at: healExpiresAt })
+            .eq("id", userId);
+          if (healError) {
+            console.error("[Billing] failed to heal plan after duplicate verify", healError);
+            return { ok: false, message: "Payment verified but could not update your plan." };
+          }
+        }
+
+        return { ok: true, plan: existing.plan };
+      }
+      console.error("[Billing] failed to record payment", ledgerError);
+      return { ok: false, message: "Payment verified but could not be recorded." };
+    }
+
+    // Mark the order consumed, then activate the plan.
+    const { error: consumeError } = await supabaseAdmin
+      .from("payments")
+      .update({ order_status: "consumed", consumed_at: new Date().toISOString() })
+      .eq("order_id", data.orderId);
+    if (consumeError) {
+      console.error("[Billing] failed to mark order consumed", consumeError);
+    }
+
+    // Extend from the later of (now, current active expiry) so a new purchase
+    // never shortens a running plan.
+    const { data: currentProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("plan_expires_at")
+      .eq("id", userId)
+      .maybeSingle();
+
+    let baseMs = Date.now();
+    if (
+      currentProfile?.plan_expires_at &&
+      new Date(currentProfile.plan_expires_at).getTime() > baseMs
+    ) {
+      baseMs = new Date(currentProfile.plan_expires_at).getTime();
+    }
+
     const expiresAt = planDef.durationDays
-      ? new Date(Date.now() + planDef.durationDays * 86400000).toISOString()
+      ? new Date(baseMs + planDef.durationDays * 86400000).toISOString()
       : null;
 
     const { error: updateError } = await supabaseAdmin

@@ -242,6 +242,50 @@ export type Database = {
           },
         ];
       };
+      payments: {
+        Row: {
+          amount: number;
+          consumed_at: string | null;
+          created_at: string;
+          currency: string;
+          id: string;
+          order_id: string;
+          order_status: string;
+          plan: string;
+          user_id: string;
+        };
+        Insert: {
+          amount: number;
+          consumed_at?: string | null;
+          created_at?: string;
+          currency: string;
+          id?: string;
+          order_id: string;
+          order_status?: string;
+          plan: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          consumed_at?: string | null;
+          created_at?: string;
+          currency?: string;
+          id?: string;
+          order_id?: string;
+          order_status?: string;
+          plan?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payments_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;

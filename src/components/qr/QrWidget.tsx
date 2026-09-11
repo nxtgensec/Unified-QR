@@ -259,6 +259,10 @@ export function QrWidget({
       toast.error("Logo must be under 4MB");
       return;
     }
+    if (!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type) || /\.svg($|\?)/i.test(file.name)) {
+      toast.error("Logo must be a PNG, JPG, WebP or GIF image");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => setLogo(reader.result as string);
     reader.readAsDataURL(file);
@@ -877,7 +881,7 @@ function DesignControls({
           <input
             ref={logoInputRef}
             type="file"
-            accept="image/png,image/jpeg,image/svg+xml"
+            accept="image/png,image/jpeg,image/webp,image/gif"
             onChange={onLogoUpload}
             className="hidden"
           />
