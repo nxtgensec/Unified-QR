@@ -4,7 +4,10 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
 type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
+  fetch: (
+    request: Request,
+    opts?: { context?: { nonce?: string } },
+  ) => Promise<Response> | Response;
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -44,7 +47,7 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
-function securityHeaders(): Record<string, string> {
+function securityHeaders(nonce: string): Record<string, string> {
   // The browser needs to reach the Supabase project (REST + realtime websocket)
   // and the Cashfree APIs; the checkout SDK is the only third-party script.
   const supabaseUrl =
@@ -55,10 +58,10 @@ function securityHeaders(): Record<string, string> {
 
   const csp = [
     "default-src 'self'",
-    "script-src 'self' https://sdk.cashfree.com",
-    "style-src 'self' 'unsafe-inline'",
+    `script-src 'self' https://sdk.cashfree.com 'nonce-${nonce}'`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
-    "font-src 'self' data:",
+    "font-src 'self' data: https://fonts.gstatic.com",
     `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://api.cashfree.com https://sandbox.cashfree.com`,
     "frame-src 'self' https://sdk.cashfree.com https://sandbox.cashfree.com",
     "worker-src 'self' blob:",
@@ -75,9 +78,9 @@ function securityHeaders(): Record<string, string> {
   };
 }
 
-function withSecurityHeaders(response: Response): Response {
+function withSecurityHeaders(response: Response, nonce: string): Response {
   const headers = new Headers(response.headers);
-  for (const [key, value] of Object.entries(securityHeaders())) {
+  for (const [key, value] of Object.entries(securityHeaders(nonce))) {
     headers.set(key, value);
   }
   return new Response(response.body, {
@@ -89,11 +92,12 @@ function withSecurityHeaders(response: Response): Response {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const nonce = crypto.randomUUID();
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      const response = await handler.fetch(request, { context: { nonce } });
       const normalized = await normalizeCatastrophicSsrResponse(response);
-      return withSecurityHeaders(normalized);
+      return withSecurityHeaders(normalized, nonce);
     } catch (error) {
       console.error(error);
       return withSecurityHeaders(
@@ -101,6 +105,7 @@ export default {
           status: 500,
           headers: { "content-type": "text/html; charset=utf-8" },
         }),
+        nonce,
       );
     }
   },
