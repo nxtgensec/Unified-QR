@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { PLANS, type PlanId } from "@/lib/plans";
 
 const ADMIN_EMAILS = ["unifiedqr@nxtgensec.org", "dev.nxtgensec@gmail.com"] as const;
 
@@ -128,3 +130,170 @@ export const getAdminStats = createServerFn({ method: "GET" })
       },
     };
   });
+
+const grantPremiumInput = z.object({
+  email: z.string().trim().toLowerCase(),
+  plan: z.enum(["day", "week", "month", "year"]),
+});
+
+export type GrantPremiumInput = z.infer<typeof grantPremiumInput>;
+
+export type GrantPremiumResult =
+  | { ok: true; email: string; plan: string; expiresAt: string }
+  | { ok: false; code: "forbidden" | "user_not_found" | "error"; message: string };
+
+const REVOKED_PLAN = "free";
+
+async function findAuthUserByEmail(email: string): Promise<{ id: string } | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const normalized = email.toLowerCase();
+
+  let page = 1;
+  let total = 0;
+  do {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || !data?.users) {
+      return null;
+    }
+    const match = data.users.find((u) => u.email?.toLowerCase() === normalized);
+    if (match) {
+      return { id: match.id };
+    }
+    total = data.total ?? data.users.length;
+    page += 1;
+  } while ((page - 1) * 1000 < total && page <= 10);
+
+  return null;
+}
+
+export const grantPremiumAccess = createServerFn({ method: "POST" })
+  .validator(grantPremiumInput)
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }): Promise<GrantPremiumResult> => {
+    if (!isAdminEmail((context.claims ?? {}).email)) {
+      return { ok: false, code: "forbidden", message: "Forbidden" };
+    }
+
+    const planId = data.plan as PlanId;
+    const planDef = PLANS[planId];
+    if (!planDef?.durationDays) {
+      return { ok: false, code: "error", message: "Unknown plan" };
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const target = await findAuthUserByEmail(data.email);
+    if (!target) {
+      return { ok: false, code: "user_not_found", message: `No user found for ${data.email}` };
+    }
+
+    const profile = await supabaseAdmin
+      .from("profiles")
+      .select("plan, plan_expires_at")
+      .eq("id", target.id)
+      .maybeSingle();
+
+    if (profile.error || !profile.data) {
+      return { ok: false, code: "error", message: "Could not load user profile" };
+    }
+
+    const currentExpiry = profile.data.plan_expires_at
+      ? new Date(profile.data.plan_expires_at).getTime()
+      : 0;
+    const base = Math.max(Date.now(), currentExpiry);
+    const expiresAt = new Date(base + planDef.durationDays * 86400000).toISOString();
+
+    const { error: updateError } = await supabaseAdmin
+      .from("profiles")
+      .update({ plan: planId, plan_expires_at: expiresAt })
+      .eq("id", target.id);
+
+    if (updateError) {
+      console.error("[Admin] grant plan update failed", updateError);
+      return { ok: false, code: "error", message: "Could not update the user plan" };
+    }
+
+    const { error: auditError } = await supabaseAdmin.from("admin_plan_grants").insert({
+      target_email: data.email,
+      target_user_id: target.id,
+      plan: planId,
+      expires_at: expiresAt,
+      granted_by: context.userId ? context.userId : null,
+    });
+
+    if (auditError) {
+      console.error("[Admin] grant audit insert failed", auditError);
+    }
+
+    return { ok: true, email: data.email, plan: planId, expiresAt };
+  });
+
+export const revokePremiumAccess = createServerFn({ method: "POST" })
+  .validator(grantPremiumInput.omit({ plan: true }))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }): Promise<GrantPremiumResult> => {
+    if (!isAdminEmail((context.claims ?? {}).email)) {
+      return { ok: false, code: "forbidden", message: "Forbidden" };
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const target = await findAuthUserByEmail(data.email);
+    if (!target) {
+      return { ok: false, code: "user_not_found", message: `No user found for ${data.email}` };
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from("profiles")
+      .update({ plan: REVOKED_PLAN, plan_expires_at: null })
+      .eq("id", target.id);
+
+    if (updateError) {
+      console.error("[Admin] revoke plan update failed", updateError);
+      return { ok: false, code: "error", message: "Could not revoke the user plan" };
+    }
+
+    const { error: auditError } = await supabaseAdmin.from("admin_plan_grants").insert({
+      target_email: data.email,
+      target_user_id: target.id,
+      plan: REVOKED_PLAN,
+      expires_at: null,
+      granted_by: context.userId ? context.userId : null,
+    });
+
+    if (auditError) {
+      console.error("[Admin] revoke audit insert failed", auditError);
+    }
+
+    return { ok: true, email: data.email, plan: REVOKED_PLAN, expiresAt: "" };
+  });
+
+export type AdminGrantRow = {
+  id: string;
+  target_email: string;
+  plan: string;
+  expires_at: string | null;
+  created_at: string;
+};
+
+export const getAdminGrants = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(
+    async ({
+      context,
+    }): Promise<{ ok: true; data: AdminGrantRow[] } | { ok: false; code: "forbidden" }> => {
+      if (!isAdminEmail((context.claims ?? {}).email)) {
+        return { ok: false, code: "forbidden" };
+      }
+
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+      const { data } = await supabaseAdmin
+        .from("admin_plan_grants")
+        .select("id, target_email, plan, expires_at, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      return { ok: true, data: (data ?? []) as AdminGrantRow[] };
+    },
+  );

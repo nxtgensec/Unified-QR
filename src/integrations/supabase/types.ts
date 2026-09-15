@@ -33,6 +33,51 @@ export type Database = {
   };
   public: {
     Tables: {
+      admin_plan_grants: {
+        Row: {
+          created_at: string;
+          expires_at: string | null;
+          granted_by: string | null;
+          id: string;
+          plan: string;
+          target_email: string;
+          target_user_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          expires_at?: string | null;
+          granted_by?: string | null;
+          id?: string;
+          plan: string;
+          target_email: string;
+          target_user_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          expires_at?: string | null;
+          granted_by?: string | null;
+          id?: string;
+          plan?: string;
+          target_email?: string;
+          target_user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_plan_grants_granted_by_fkey";
+            columns: ["granted_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "admin_plan_grants_target_user_id_fkey";
+            columns: ["target_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       link_items: {
         Row: {
           created_at: string;
