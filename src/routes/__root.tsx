@@ -192,7 +192,7 @@ const APP_PREFIXES = [
   "/workspace-analytics",
 ];
 
-const STANDALONE_PREFIXES = ["/p"];
+const STANDALONE_PREFIXES = ["/p", "/r"];
 
 function LanguageChooser() {
   const { needsLanguageChooser, setLocale, markLanguageChosen, t } = useLocale();
