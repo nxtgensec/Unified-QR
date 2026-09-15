@@ -87,7 +87,7 @@ function buildCodeSvg(c: SavedCode, size = 256) {
             },
           }
         : {}),
-      ...(c.logo_url ? { logo: c.logo_url } : {}),
+      ...(c.logo_url ? { logo: c.logo_url, logoRadius: c.logo_radius ?? null } : {}),
     },
     { size },
   );
@@ -234,10 +234,12 @@ const CodeCard = memo(function CodeCard({
             <span className="inline-flex items-center gap-1 text-muted-foreground">
               <Loader2 className="size-3 animate-spin" /> loading scans…
             </span>
-          ) : (
+          ) : code.is_dynamic ? (
             <>
               {count} scan{count === 1 ? "" : "s"}
             </>
+          ) : (
+            <span className="text-muted-foreground">Static — scans are not tracked</span>
           )}
         </p>
         <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
@@ -522,7 +524,7 @@ function Dashboard() {
                 >
                   <span className="min-w-0 flex-1 truncate text-xs font-semibold">{c.name}</span>
                   <span className="text-[10px] text-muted-foreground">
-                    {counts[c.id] ?? 0} scans
+                    {c.is_dynamic ? `${counts[c.id] ?? 0} scans` : "Static"}
                   </span>
                 </div>
               ))}

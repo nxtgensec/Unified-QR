@@ -50,14 +50,18 @@ export function TypeForm({ type, form, setForm }: Props) {
         <div className="space-y-3">
           <div className="rounded-xl border border-brand/20 bg-brand-soft/30 p-3 text-xs text-brand">
             <p className="flex items-center gap-1.5 font-bold">
-              <Link2 className="size-3.5" /> Want a beautiful link page?
+              <Link2 className="size-3.5" /> This is a Workspace feature
             </p>
             <p className="mt-1 text-muted-foreground">
-              Use{" "}
+              Saving this code also auto-creates a link page in your{" "}
               <Link to="/links" className="font-semibold text-brand hover:underline">
-                Link Pages
+                Workspace
+              </Link>
+              . Or{" "}
+              <Link to="/links" className="font-semibold text-brand hover:underline">
+                create the page directly
               </Link>{" "}
-              for a dedicated page with sections, PDFs, social links, and more.
+              without a QR code.
             </p>
           </div>
           {form.multiUrls.map((u, i) => (
@@ -271,6 +275,22 @@ export function TypeForm({ type, form, setForm }: Props) {
     case "social":
       return (
         <div className="space-y-3">
+          <div className="rounded-xl border border-brand/20 bg-brand-soft/30 p-3 text-xs text-brand">
+            <p className="flex items-center gap-1.5 font-bold">
+              <Link2 className="size-3.5" /> This is a Workspace feature
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Saving this code also auto-creates a link page in your{" "}
+              <Link to="/links" className="font-semibold text-brand hover:underline">
+                Workspace
+              </Link>
+              . Or{" "}
+              <Link to="/links" className="font-semibold text-brand hover:underline">
+                create the page directly
+              </Link>{" "}
+              without a QR code.
+            </p>
+          </div>
           <Field label="Instagram">
             <Input
               className={inputClass}

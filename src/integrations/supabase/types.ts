@@ -379,6 +379,7 @@ export type Database = {
           gradient_type: string | null;
           id: string;
           is_dynamic: boolean;
+          logo_radius: number | null;
           logo_url: string | null;
           name: string;
           slug: string | null;
@@ -406,6 +407,7 @@ export type Database = {
           gradient_type?: string | null;
           id?: string;
           is_dynamic?: boolean;
+          logo_radius?: number | null;
           logo_url?: string | null;
           name?: string;
           slug?: string | null;
@@ -433,6 +435,7 @@ export type Database = {
           gradient_type?: string | null;
           id?: string;
           is_dynamic?: boolean;
+          logo_radius?: number | null;
           logo_url?: string | null;
           name?: string;
           slug?: string | null;

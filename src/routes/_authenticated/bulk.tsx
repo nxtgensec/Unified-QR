@@ -219,6 +219,7 @@ function BulkPage() {
       eyeShape: bulkDesign.eyeShape,
       gradient: bulkDesign.gradient,
       logo: bulkDesign.logo,
+      logoRadius: bulkDesign.logoRadius,
       frame: bulkDesign.frame,
     };
   }
@@ -326,6 +327,7 @@ function BulkPage() {
         frame_text: d.frame?.text ?? null,
         frame_style: d.frame?.style ?? null,
         logo_url: d.logo ?? null,
+        logo_radius: d.logo ? (d.logoRadius ?? null) : null,
       }));
 
       const { data, error } = await supabase

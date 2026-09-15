@@ -178,6 +178,7 @@ function AnalyticsPage() {
     const out = new Map<string, number>();
     for (const s of scans) out.set(s.code_id, (out.get(s.code_id) ?? 0) + 1);
     return codes
+      .filter((c) => c.is_dynamic)
       .map((c) => ({ code: c, count: out.get(c.id) ?? 0 }))
       .sort((a, b) => b.count - a.count);
   }, [codes, scans]);
@@ -393,11 +394,11 @@ function AnalyticsPage() {
           </h2>
           {perCode.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">
-              No codes yet —{" "}
+              No dynamic codes yet —{" "}
               <Link to="/create" className="font-bold text-brand">
                 create one
-              </Link>
-              .
+              </Link>{" "}
+              to track scans. Static codes can't be tracked.
             </p>
           ) : (
             <ul className="mt-4 divide-y divide-border">

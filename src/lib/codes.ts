@@ -24,6 +24,7 @@ export type SavedCode = {
   frame_text: string | null;
   frame_style: string | null;
   logo_url: string | null;
+  logo_radius: number | null;
   created_at: string;
 };
 
@@ -40,6 +41,9 @@ export function shortUrl(slug: string) {
   return `${origin}/r/${slug}`;
 }
 
+const CODE_COLUMNS =
+  "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,source,batch_id,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,logo_url,logo_radius,created_at";
+
 export async function listCodes(userId?: string) {
   let uid = userId;
   if (!uid) {
@@ -52,9 +56,7 @@ export async function listCodes(userId?: string) {
 
   const query = supabase
     .from("qr_codes")
-    .select(
-      "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,source,batch_id,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,logo_url,created_at",
-    )
+    .select(CODE_COLUMNS)
     .eq("user_id", uid)
     .order("created_at", { ascending: false });
 
@@ -64,12 +66,7 @@ export async function listCodes(userId?: string) {
 }
 
 export async function getCodeWithLogo(id: string, userId?: string): Promise<SavedCode | null> {
-  let query = supabase
-    .from("qr_codes")
-    .select(
-      "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,source,batch_id,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,logo_url,created_at",
-    )
-    .eq("id", id);
+  let query = supabase.from("qr_codes").select(CODE_COLUMNS).eq("id", id);
   if (userId) query = query.eq("user_id", userId);
   const { data, error } = await query.maybeSingle();
   if (error) throw error;
@@ -110,9 +107,7 @@ export async function scanCounts(ids: string[]) {
 export async function listBulkCodes(userId: string) {
   const { data, error } = await supabase
     .from("qr_codes")
-    .select(
-      "id,user_id,team_id,name,type,content,is_dynamic,slug,destination,active,source,batch_id,template_id,fg,bg,body_shape,eye_shape,gradient_type,gradient_color,gradient_angle,frame_text,frame_style,logo_url,created_at",
-    )
+    .select(CODE_COLUMNS)
     .eq("user_id", userId)
     .eq("source", "bulk")
     .order("created_at", { ascending: false });

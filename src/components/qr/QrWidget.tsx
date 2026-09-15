@@ -43,6 +43,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { makeSlug, shortUrl } from "@/lib/codes";
 import { getDynamicLimit, effectivePlan } from "@/lib/plans";
+import { brandForTitle } from "@/lib/workspace-templates";
 
 const PLACEHOLDER = "https://qr.nxtgensec.org";
 
@@ -55,6 +56,7 @@ export type QrWidgetDesign = {
   eyeShape: EyeShape | null;
   gradient: GradientConfig | null;
   logo: string | null;
+  logoRadius: number | null;
   frame: FrameConfig | null;
 };
 
@@ -78,6 +80,7 @@ export function QrWidget({
   const [eyeShape, setEyeShape] = useState<EyeShape | null>(null);
   const [gradient, setGradient] = useState<GradientConfig | null>(null);
   const [logo, setLogo] = useState<string | null>(null);
+  const [logoRadius, setLogoRadius] = useState<number>(25);
   const [frame, setFrame] = useState<FrameConfig | null>(null);
   const [debounced, setDebounced] = useState("");
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -101,10 +104,11 @@ export function QrWidget({
           eyeShape ?? (templates.find((t) => t.id === templateId) ?? templates[0]!).eyeShape,
         gradient,
         logo,
+        logoRadius,
         frame,
       });
     }
-  }, [templateId, fg, bg, bodyShape, eyeShape, gradient, logo, frame, onDesignChange]);
+  }, [templateId, fg, bg, bodyShape, eyeShape, gradient, logo, logoRadius, frame, onDesignChange]);
 
   const template = useMemo(() => {
     const base = templates.find((t) => t.id === templateId) ?? templates[0]!;
@@ -117,9 +121,10 @@ export function QrWidget({
       eyeShape: eyeShape ?? base.eyeShape,
       gradient,
       logo,
+      logoRadius,
       frame,
     };
-  }, [templateId, fg, bg, bodyShape, eyeShape, gradient, logo, frame]);
+  }, [templateId, fg, bg, bodyShape, eyeShape, gradient, logo, logoRadius, frame]);
 
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -127,14 +132,91 @@ export function QrWidget({
   const data = debounced.trim() || PLACEHOLDER;
   const isEmpty = !debounced.trim();
 
+  async function autoCreateWorkspacePage(): Promise<string | null> {
+    if (!user || (type !== "social" && type !== "multi-url")) return null;
+    try {
+      const items: { title: string; url: string }[] = [];
+      if (type === "social") {
+        const s = form.social;
+        if (s.instagram.trim()) items.push({ title: "Instagram", url: s.instagram.trim() });
+        if (s.youtube.trim()) items.push({ title: "YouTube", url: s.youtube.trim() });
+        if (s.x.trim()) items.push({ title: "X / Twitter", url: s.x.trim() });
+      } else {
+        items.push(
+          ...form.multiUrls
+            .map((u) => u.trim())
+            .filter(Boolean)
+            .map((u, i) => {
+              let label = `Link ${i + 1}`;
+              try {
+                label = new URL(u.startsWith("http") ? u : `https://${u}`).hostname.replace(
+                  /^www\./,
+                  "",
+                );
+              } catch {
+                label = `Link ${i + 1}`;
+              }
+              return { title: label, url: u };
+            }),
+        );
+      }
+      if (items.length === 0) return null;
+
+      const { data: pageData, error: pageError } = await supabase
+        .from("link_pages")
+        .insert({
+          user_id: user.id,
+          slug: makeSlug(),
+          published: true,
+          title: type === "social" ? "My Socials" : "My Links",
+          subtitle: null,
+          theme_color: "#6366f1",
+          theme_bg: "#ffffff",
+          theme_font: "system",
+        })
+        .select("id")
+        .single();
+      if (pageError || !pageData) {
+        console.error("[QrWidget] workspace page error:", pageError?.message);
+        return null;
+      }
+
+      const { data: sectionData } = await supabase
+        .from("link_sections")
+        .insert({
+          page_id: pageData.id,
+          title: type === "social" ? "Social" : "Links",
+          sort_order: 0,
+        })
+        .select("id")
+        .single();
+      if (!sectionData) return null;
+
+      for (let i = 0; i < items.length; i++) {
+        await supabase.from("link_items").insert({
+          section_id: sectionData.id,
+          title: items[i]!.title,
+          url: items[i]!.url,
+          icon_emoji: null,
+          icon_url: brandForTitle(items[i]!.title),
+          sort_order: i,
+        });
+      }
+      return pageData.id;
+    } catch (e) {
+      console.error("[QrWidget] workspace auto-create error:", e);
+      return null;
+    }
+  }
+
   async function save(dynamic: boolean) {
     if (!user || isEmpty) return;
 
+    let destination: string | null = null;
     if (dynamic) {
+      let url: URL;
       try {
-        const url = new URL(
-          debounced.trim().startsWith("http") ? debounced.trim() : `https://${debounced.trim()}`,
-        );
+        url = new URL(payload.startsWith("http") ? payload : `https://${payload}`);
         if (!["http:", "https:"].includes(url.protocol)) {
           toast.error("Only http/https URLs are allowed.");
           return;
@@ -143,6 +225,7 @@ export function QrWidget({
         toast.error("Please enter a valid URL.");
         return;
       }
+      destination = url.href;
       const { data: profile } = await supabase
         .from("profiles")
         .select("plan, plan_expires_at")
@@ -172,10 +255,10 @@ export function QrWidget({
       team_id: null,
       name: `${type.toUpperCase()} code`,
       type,
-      content: payload,
+      content: dynamic && destination ? destination : payload,
       is_dynamic: dynamic,
       slug,
-      destination: dynamic ? payload : null,
+      destination,
       template_id: templateId,
       fg: fg,
       bg: bg,
@@ -187,17 +270,27 @@ export function QrWidget({
       frame_text: frame?.text ?? null,
       frame_style: frame?.style ?? null,
       logo_url: logo,
+      logo_radius: logo ? logoRadius : null,
     });
-    setSaving(false);
     if (error) {
+      setSaving(false);
       console.error("[QrWidget] save error:", error.message);
       toast.error("Could not save this code", {
         description: "Please try again.",
       });
       return;
     }
+
+    let workspaceToast: string | null = null;
+    if (!dynamic) {
+      const pageId = await autoCreateWorkspacePage();
+      if (pageId) workspaceToast = "A link page was also added to your workspace.";
+    }
+    setSaving(false);
+
     toast.success(dynamic ? "Dynamic code created" : "Saved to your account", {
-      description: dynamic && slug ? shortUrl(slug) : "Find it in your dashboard.",
+      description:
+        workspaceToast ?? (dynamic && slug ? shortUrl(slug) : "Find it in your dashboard."),
     });
   }
 
@@ -319,6 +412,8 @@ export function QrWidget({
             logo={logo}
             onLogoUpload={handleLogoUpload}
             onLogoRemove={() => setLogo(null)}
+            logoRadius={logoRadius}
+            setLogoRadius={setLogoRadius}
             logoInputRef={logoInputRef}
             frame={frame}
             setFrame={setFrame}
@@ -699,8 +794,16 @@ function SaveSection({
 
       <button
         type="button"
-        onClick={mode === "static" ? onSaveStatic : onSaveDynamic}
-        disabled={saving || isEmpty}
+        onClick={() => {
+          if (isEmpty) {
+            toast.error("Please fill in the required fields to create a QR code.");
+            return;
+          }
+          if (mode === "static") onSaveStatic();
+          else onSaveDynamic();
+        }}
+        disabled={saving}
+        title={isEmpty ? "Please fill in the required fields to create a QR code" : undefined}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground shadow-card transition-transform hover:-translate-y-0.5 disabled:opacity-60"
       >
         {saving ? (
@@ -735,6 +838,8 @@ function DesignControls({
   logo,
   onLogoUpload,
   onLogoRemove,
+  logoRadius,
+  setLogoRadius,
   logoInputRef,
   frame,
   setFrame,
@@ -748,6 +853,8 @@ function DesignControls({
   logo: string | null;
   onLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onLogoRemove: () => void;
+  logoRadius: number;
+  setLogoRadius: (v: number) => void;
   logoInputRef: React.RefObject<HTMLInputElement | null>;
   frame: FrameConfig | null;
   setFrame: (v: FrameConfig | null) => void;
@@ -911,9 +1018,27 @@ function DesignControls({
             </button>
           )}
           {logo && (
-            <p className="mt-1.5 text-[10px] text-muted-foreground">
-              Error correction raised to 30% for logo clarity
-            </p>
+            <div className="mt-2 space-y-2">
+              <label className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground">
+                <span>Corner radius</span>
+                <span className="flex items-center gap-2">
+                  <span>Square</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={logoRadius}
+                    onChange={(e) => setLogoRadius(Number(e.target.value))}
+                    className="w-24 accent-brand"
+                  />
+                  <span>Round</span>
+                </span>
+              </label>
+              <p className="text-[10px] text-muted-foreground">
+                Error correction raised to 30% for logo clarity
+              </p>
+            </div>
           )}
         </div>
       </Collapsible>

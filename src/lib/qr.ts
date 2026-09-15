@@ -90,10 +90,10 @@ export function buildPayload(type: QrType, form: QrFormState): string {
     case "email": {
       const to = form.email.to.trim();
       if (!to) return "";
-      const q = new URLSearchParams();
-      if (form.email.subject) q.set("subject", form.email.subject);
-      if (form.email.body) q.set("body", form.email.body);
-      const qs = q.toString();
+      const parts: string[] = [];
+      if (form.email.subject) parts.push(`subject=${encodeURIComponent(form.email.subject)}`);
+      if (form.email.body) parts.push(`body=${encodeURIComponent(form.email.body)}`);
+      const qs = parts.join("&");
       return `mailto:${to}${qs ? `?${qs}` : ""}`;
     }
     case "phone":
@@ -143,6 +143,7 @@ export type QrDesign = {
   eyeShape: EyeShape | null;
   gradient: GradientConfig | null;
   logo: string | null;
+  logoRadius: number | null;
   frame: FrameConfig | null;
 };
 
@@ -488,6 +489,7 @@ function buildDesign(
   eyeShape: EyeShape;
   gradient: GradientConfig | null;
   logo: string | null;
+  logoRadius: number | null;
   frame: FrameConfig | null;
 } {
   const t = templates.find((x) => x.id === design.templateId) ?? base;
@@ -499,6 +501,7 @@ function buildDesign(
     eyeShape: design.eyeShape ?? t.eyeShape,
     gradient: design.gradient ?? null,
     logo: design.logo ?? null,
+    logoRadius: design.logoRadius ?? null,
     frame: design.frame ?? null,
   };
 }
@@ -656,10 +659,15 @@ export function renderQrSvg(
     const logoX = (size - logoSize) / 2;
     const logoY = (size - logoSize) / 2;
     const pad = unit;
-    const rx = unit * 1.5;
+    const radiusPct = (d.logoRadius ?? 25) / 100;
+    const rx = Math.min(logoSize / 2, logoSize * 0.2 + radiusPct * (logoSize / 2 - logoSize * 0.2));
+    const clipId = "logo-clip";
+    defs.push(
+      `<clipPath id="${clipId}"><rect x="${logoX.toFixed(2)}" y="${logoY.toFixed(2)}" width="${logoSize.toFixed(2)}" height="${logoSize.toFixed(2)}" rx="${rx.toFixed(2)}"/></clipPath>`,
+    );
     parts.push(
-      `<rect x="${(logoX - pad).toFixed(2)}" y="${(logoY - pad).toFixed(2)}" width="${(logoSize + pad * 2).toFixed(2)}" height="${(logoSize + pad * 2).toFixed(2)}" rx="${rx.toFixed(2)}" fill="${escXml(d.bg)}"/>`,
-      `<image x="${logoX.toFixed(2)}" y="${logoY.toFixed(2)}" width="${logoSize.toFixed(2)}" height="${logoSize.toFixed(2)}" href="${escXml(d.logo ?? "")}" preserveAspectRatio="xMidYMid meet"/>`,
+      `<rect x="${(logoX - pad).toFixed(2)}" y="${(logoY - pad).toFixed(2)}" width="${(logoSize + pad * 2).toFixed(2)}" height="${(logoSize + pad * 2).toFixed(2)}" rx="${(pad + rx).toFixed(2)}" fill="${escXml(d.bg)}"/>`,
+      `<image x="${logoX.toFixed(2)}" y="${logoY.toFixed(2)}" width="${logoSize.toFixed(2)}" height="${logoSize.toFixed(2)}" href="${escXml(d.logo ?? "")}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})"/>`,
     );
   }
 

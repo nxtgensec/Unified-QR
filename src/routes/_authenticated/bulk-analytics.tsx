@@ -52,7 +52,7 @@ function buildCodeSvg(c: SavedCode, size = 256) {
             },
           }
         : {}),
-      ...(c.logo_url ? { logo: c.logo_url } : {}),
+      ...(c.logo_url ? { logo: c.logo_url, logoRadius: c.logo_radius ?? null } : {}),
     },
     { size },
   );
