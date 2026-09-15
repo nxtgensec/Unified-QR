@@ -274,9 +274,9 @@ export function QrWidget({
     });
     if (error) {
       setSaving(false);
-      console.error("[QrWidget] save error:", error.message);
+      console.error("[QrWidget] save error:", error.message, error);
       toast.error("Could not save this code", {
-        description: "Please try again.",
+        description: error.message ?? "Please try again.",
       });
       return;
     }
