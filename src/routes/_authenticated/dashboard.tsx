@@ -12,7 +12,14 @@ import {
   type BodyShape,
   type EyeShape,
 } from "@/lib/qr";
-import { listCodes, scanCounts, getCodeWithLogo, shortUrl, type SavedCode } from "@/lib/codes";
+import {
+  listCodes,
+  scanCounts,
+  getCodeWithLogo,
+  shortUrl,
+  makeSlug,
+  type SavedCode,
+} from "@/lib/codes";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
@@ -56,7 +63,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function codeData(c: SavedCode) {
-  return c.is_dynamic && c.slug ? shortUrl(c.slug) : c.content || "https://qr.nxtgensec.org";
+  return c.slug ? shortUrl(c.slug) : c.content || "https://qr.nxtgensec.org";
 }
 
 function buildCodeSvg(c: SavedCode, size = 256) {
@@ -108,6 +115,7 @@ const CodeCard = memo(function CodeCard({
   onRename,
   onEditDest,
   onToggleActive,
+  onTrack,
   onConfirmDelete,
 }: {
   code: SavedCode;
@@ -117,6 +125,7 @@ const CodeCard = memo(function CodeCard({
   onRename: (c: SavedCode) => void;
   onEditDest: (c: SavedCode) => void;
   onToggleActive: (c: SavedCode) => void;
+  onTrack: (c: SavedCode) => void;
   onConfirmDelete: (c: SavedCode) => void;
 }) {
   const svgDataUrl = useMemo(() => svgToDataUrl(buildCodeSvg(code, 96)), [code]);
@@ -220,7 +229,7 @@ const CodeCard = memo(function CodeCard({
         <p className="mt-1 truncate text-xs text-muted-foreground">
           {code.is_dynamic ? code.destination : code.content}
         </p>
-        {code.is_dynamic && code.slug && (
+        {code.slug && (
           <button
             type="button"
             onClick={handleCopyLink}
@@ -234,7 +243,7 @@ const CodeCard = memo(function CodeCard({
             <span className="inline-flex items-center gap-1 text-muted-foreground">
               <Loader2 className="size-3 animate-spin" /> loading scans…
             </span>
-          ) : code.is_dynamic ? (
+          ) : code.slug ? (
             <>
               {count} scan{count === 1 ? "" : "s"}
             </>
@@ -251,6 +260,9 @@ const CodeCard = memo(function CodeCard({
                 {code.active ? "Pause" : "Activate"}
               </Action>
             </>
+          )}
+          {!code.slug && code.type === "url" && (
+            <Action onClick={() => onTrack(code)}>Track scans</Action>
           )}
           <div ref={dlRef} className="relative">
             <Action onClick={() => setDlOpen((v) => !v)}>
@@ -418,6 +430,41 @@ function Dashboard() {
     setCodes((rows) => rows.map((r) => (r.id === c.id ? { ...r, active: !c.active } : r)));
   }
 
+  async function makeTrackable(c: SavedCode) {
+    let destination: string | null = null;
+    try {
+      const raw = c.content || c.destination || "";
+      const url = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        toast.error("Only http/https destinations can be tracked.");
+        return;
+      }
+      destination = url.href;
+    } catch {
+      toast.error("This code has an invalid destination URL.");
+      return;
+    }
+    let slug = makeSlug();
+    for (let tries = 0; tries < 6; tries++) {
+      const { data } = await supabase.from("qr_codes").select("id").eq("slug", slug);
+      if (!data || data.length === 0) break;
+      slug = makeSlug();
+      if (tries === 5) {
+        toast.error("Could not generate a unique short link.");
+        return;
+      }
+    }
+    const { error } = await supabase.from("qr_codes").update({ slug, destination }).eq("id", c.id);
+    if (error) {
+      toast.error("Could not enable tracking.", {
+        description: error.message ?? "Please try again.",
+      });
+      return;
+    }
+    await refresh();
+    toast.success("Scan tracking enabled", { description: shortUrl(slug) });
+  }
+
   async function saveDestination(c: SavedCode, value: string) {
     try {
       const url = new URL(value.startsWith("http") ? value : `https://${value}`);
@@ -524,7 +571,7 @@ function Dashboard() {
                 >
                   <span className="min-w-0 flex-1 truncate text-xs font-semibold">{c.name}</span>
                   <span className="text-[10px] text-muted-foreground">
-                    {c.is_dynamic ? `${counts[c.id] ?? 0} scans` : "Static"}
+                    {c.slug ? `${counts[c.id] ?? 0} scans` : "Static"}
                   </span>
                 </div>
               ))}
@@ -718,6 +765,7 @@ function Dashboard() {
                   })
                 }
                 onToggleActive={(c) => void toggleActive(c)}
+                onTrack={(c) => void makeTrackable(c)}
                 onConfirmDelete={(c) => setConfirmDelete(c)}
               />
             ))}

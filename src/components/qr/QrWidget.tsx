@@ -213,7 +213,9 @@ export function QrWidget({
     if (!user || isEmpty) return;
 
     let destination: string | null = null;
-    if (dynamic) {
+    // Static URL codes are tracked too: they get a short /r/{slug} redirect
+    // so scans can be recorded, while staying non-editable.
+    if (dynamic || type === "url") {
       let url: URL;
       try {
         url = new URL(payload.startsWith("http") ? payload : `https://${payload}`);
@@ -226,30 +228,32 @@ export function QrWidget({
         return;
       }
       destination = url.href;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("plan, plan_expires_at")
-        .eq("id", user.id)
-        .maybeSingle();
-      const plan = effectivePlan(profile?.plan, profile?.plan_expires_at);
-      const limit = getDynamicLimit(plan);
+      if (dynamic) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("plan, plan_expires_at")
+          .eq("id", user.id)
+          .maybeSingle();
+        const plan = effectivePlan(profile?.plan, profile?.plan_expires_at);
+        const limit = getDynamicLimit(plan);
 
-      const { count } = await supabase
-        .from("qr_codes")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("is_dynamic", true);
+        const { count } = await supabase
+          .from("qr_codes")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("is_dynamic", true);
 
-      if ((count ?? 0) >= limit) {
-        toast.error(
-          `You've reached your dynamic code limit (${limit}). Upgrade your plan for more.`,
-        );
-        return;
+        if ((count ?? 0) >= limit) {
+          toast.error(
+            `You've reached your dynamic code limit (${limit}). Upgrade your plan for more.`,
+          );
+          return;
+        }
       }
     }
 
     setSaving(true);
-    const slug = dynamic ? makeSlug() : null;
+    const slug = destination ? makeSlug() : null;
     const { error } = await supabase.from("qr_codes").insert({
       user_id: user.id,
       team_id: null,

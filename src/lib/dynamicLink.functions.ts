@@ -47,7 +47,6 @@ export const resolveDynamicLink = createServerFn({ method: "POST" })
       .from("qr_codes")
       .select("id, destination")
       .eq("slug", slug)
-      .eq("is_dynamic", true)
       .eq("active", true)
       .maybeSingle();
 

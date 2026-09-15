@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/bulk-analytics")({
 });
 
 function codeData(c: SavedCode) {
-  return c.is_dynamic && c.slug ? shortUrl(c.slug) : c.content || "https://qr.nxtgensec.org";
+  return c.slug ? shortUrl(c.slug) : c.content || "https://qr.nxtgensec.org";
 }
 
 function buildCodeSvg(c: SavedCode, size = 256) {
