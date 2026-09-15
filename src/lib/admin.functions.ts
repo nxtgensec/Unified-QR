@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { PLANS, type PlanId } from "@/lib/plans";
 
-const ADMIN_EMAILS = ["unifiedqr@nxtgensec.org", "dev.nxtgensec@gmail.com"] as const;
+const ADMIN_EMAILS = ["unifiedqr@nxtgensec.org", "kiransavireddy@gmail.com"] as const;
 
 export type AdminRecentUser = {
   id: string;
