@@ -21,7 +21,7 @@ export const Route = createFileRoute("/how-to-create")({
     ],
     links: [
       { rel: "canonical", href: "https://qr.nxtgensec.org/how-to-create" },
-      { rel: "alternate", hreflang: "en", href: "https://qr.nxtgensec.org/how-to-create" },
+      { rel: "alternate", hrefLang: "en", href: "https://qr.nxtgensec.org/how-to-create" },
     ],
     scripts: [
       {

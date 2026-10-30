@@ -24,7 +24,7 @@ export const Route = createFileRoute("/contact")({
     ],
     links: [
       { rel: "canonical", href: "https://qr.nxtgensec.org/contact" },
-      { rel: "alternate", hreflang: "en", href: "https://qr.nxtgensec.org/contact" },
+      { rel: "alternate", hrefLang: "en", href: "https://qr.nxtgensec.org/contact" },
     ],
     scripts: [
       {

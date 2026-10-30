@@ -20,7 +20,7 @@ export const Route = createFileRoute("/privacy")({
     ],
     links: [
       { rel: "canonical", href: "https://qr.nxtgensec.org/privacy" },
-      { rel: "alternate", hreflang: "en", href: "https://qr.nxtgensec.org/privacy" },
+      { rel: "alternate", hrefLang: "en", href: "https://qr.nxtgensec.org/privacy" },
     ],
   }),
   component: PrivacyPage,

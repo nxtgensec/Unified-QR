@@ -21,7 +21,7 @@ export const Route = createFileRoute("/qr-code-types")({
     ],
     links: [
       { rel: "canonical", href: "https://qr.nxtgensec.org/qr-code-types" },
-      { rel: "alternate", hreflang: "en", href: "https://qr.nxtgensec.org/qr-code-types" },
+      { rel: "alternate", hrefLang: "en", href: "https://qr.nxtgensec.org/qr-code-types" },
     ],
     scripts: [
       {

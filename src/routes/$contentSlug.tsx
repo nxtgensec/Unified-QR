@@ -34,7 +34,7 @@ export const Route = createFileRoute("/$contentSlug")({
         },
         {
           rel: "alternate",
-          hreflang: "en",
+          hrefLang: "en",
           href: `https://qr.nxtgensec.org/${params.contentSlug}`,
         },
       ],

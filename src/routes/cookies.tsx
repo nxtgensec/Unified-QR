@@ -18,7 +18,7 @@ export const Route = createFileRoute("/cookies")({
     ],
     links: [
       { rel: "canonical", href: "https://qr.nxtgensec.org/cookies" },
-      { rel: "alternate", hreflang: "en", href: "https://qr.nxtgensec.org/cookies" },
+      { rel: "alternate", hrefLang: "en", href: "https://qr.nxtgensec.org/cookies" },
     ],
   }),
   component: CookiePolicyPage,

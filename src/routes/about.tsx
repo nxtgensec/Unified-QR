@@ -20,7 +20,7 @@ export const Route = createFileRoute("/about")({
     ],
     links: [
       { rel: "canonical", href: "https://qr.nxtgensec.org/about" },
-      { rel: "alternate", hreflang: "en", href: "https://qr.nxtgensec.org/about" },
+      { rel: "alternate", hrefLang: "en", href: "https://qr.nxtgensec.org/about" },
     ],
     scripts: [
       {

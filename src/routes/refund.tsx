@@ -20,7 +20,7 @@ export const Route = createFileRoute("/refund")({
     ],
     links: [
       { rel: "canonical", href: "https://qr.nxtgensec.org/refund" },
-      { rel: "alternate", hreflang: "en", href: "https://qr.nxtgensec.org/refund" },
+      { rel: "alternate", hrefLang: "en", href: "https://qr.nxtgensec.org/refund" },
     ],
   }),
   component: RefundPage,

@@ -30,7 +30,7 @@ export const Route = createFileRoute("/compare")({
       { rel: "canonical", href: "https://qr.nxtgensec.org/compare" },
       {
         rel: "alternate",
-        hreflang: "en",
+        hrefLang: "en",
         href: "https://qr.nxtgensec.org/compare",
       },
     ],

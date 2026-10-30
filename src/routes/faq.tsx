@@ -27,7 +27,7 @@ export const Route = createFileRoute("/faq")({
     ],
     links: [
       { rel: "canonical", href: "https://qr.nxtgensec.org/faq" },
-      { rel: "alternate", hreflang: "en", href: "https://qr.nxtgensec.org/faq" },
+      { rel: "alternate", hrefLang: "en", href: "https://qr.nxtgensec.org/faq" },
     ],
     scripts: [
       {

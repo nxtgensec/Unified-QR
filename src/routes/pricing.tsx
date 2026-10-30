@@ -24,7 +24,7 @@ export const Route = createFileRoute("/pricing")({
     ],
     links: [
       { rel: "canonical", href: "https://qr.nxtgensec.org/pricing" },
-      { rel: "alternate", hreflang: "en", href: "https://qr.nxtgensec.org/pricing" },
+      { rel: "alternate", hrefLang: "en", href: "https://qr.nxtgensec.org/pricing" },
     ],
     scripts: [
       {
