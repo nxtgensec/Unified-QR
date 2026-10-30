@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -11,12 +11,21 @@ import {
   downloadSvg,
   downloadJpg,
   downloadPdf,
-  bodyShapeOptions,
-  eyeShapeOptions,
+  templates,
   type BodyShape,
   type EyeShape,
+  type FrameConfig,
+  type GradientConfig,
 } from "@/lib/qr";
-import { readableQrColor, readableTextColor, urlHostname } from "@/lib/utils";
+import { DesignControls, ColorPicker } from "@/components/qr/QrWidget";
+import { normalizeImageFile } from "@/lib/image";
+import {
+  readableQrColor,
+  readableTextColor,
+  urlHostname,
+  contrastRatio,
+  relativeLuminance,
+} from "@/lib/utils";
 import { BRAND_LIST, BrandIconRender, brandIdFromUrl, BRAND_PREFIX } from "@/lib/brand-icons";
 import {
   workspaceTemplates,
@@ -26,21 +35,21 @@ import {
   type WorkspaceTemplate,
 } from "@/lib/workspace-templates";
 import {
+  ArrowDown,
   ArrowLeft,
+  ArrowUp,
   ChevronDown,
   ChevronRight,
   Copy,
-  Download,
   ExternalLink,
   Eye,
   EyeOff,
   FileImage,
   FileType,
-  GripVertical,
   ImagePlus,
-  Link2,
   Loader2,
   Plus,
+  RefreshCw,
   Save,
   Smile,
   Sparkles,
@@ -90,6 +99,36 @@ type ItemRow = {
   visible: boolean;
 };
 
+type WorkspaceQrDesign = {
+  templateId: number;
+  fg: string | null;
+  bg: string | null;
+  bodyShape: BodyShape | null;
+  eyeShape: EyeShape | null;
+  gradient: GradientConfig | null;
+  logo: string | null;
+  logoRadius: number;
+  frame: FrameConfig | null;
+};
+
+const DEFAULT_WORKSPACE_QR: WorkspaceQrDesign = {
+  templateId: 1,
+  fg: null,
+  bg: null,
+  bodyShape: null,
+  eyeShape: null,
+  gradient: null,
+  logo: null,
+  logoRadius: 25,
+  frame: null,
+};
+
+function qrForegroundFor(themeColor: string, bg: string): string {
+  const themed = readableQrColor(themeColor, bg);
+  if (contrastRatio(themed, bg) >= 4.5) return themed;
+  return relativeLuminance(bg) > 0.4 ? "#111827" : "#f8fafc";
+}
+
 function LinksEditor() {
   const { user } = useAuth();
   const [pages, setPages] = useState<PageRow[]>([]);
@@ -102,42 +141,56 @@ function LinksEditor() {
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [confirmDeleteSection, setConfirmDeleteSection] = useState<SectionRow | null>(null);
   const [confirmDeletePage, setConfirmDeletePage] = useState<PageRow | null>(null);
-  const [qrFg, setQrFg] = useState<string | null>(null);
-  const [qrBody, setQrBody] = useState<BodyShape | null>(null);
-  const [qrEye, setQrEye] = useState<EyeShape | null>(null);
+  const [qrDesign, setQrDesign] = useState<WorkspaceQrDesign>(DEFAULT_WORKSPACE_QR);
+  const [movingSectionId, setMovingSectionId] = useState<string | null>(null);
+  const qrLogoInputRef = useRef<HTMLInputElement>(null);
+  const qrDesignLoadedFor = useRef<string | null>(null);
+  const loadPageSeq = useRef(0);
 
   useEffect(() => {
     if (!selectedPageId) return;
+    qrDesignLoadedFor.current = null;
     try {
       const raw = localStorage.getItem(`uqr-wsqr-${selectedPageId}`);
       if (raw) {
-        const saved = JSON.parse(raw) as {
-          fg?: string | null;
-          bodyShape?: BodyShape | null;
-          eyeShape?: EyeShape | null;
-        };
-        setQrFg(saved.fg ?? null);
-        setQrBody(saved.bodyShape ?? null);
-        setQrEye(saved.eyeShape ?? null);
+        const saved = JSON.parse(raw) as Partial<WorkspaceQrDesign>;
+        setQrDesign({
+          templateId:
+            typeof saved.templateId === "number" && templates.some((t) => t.id === saved.templateId)
+              ? saved.templateId
+              : DEFAULT_WORKSPACE_QR.templateId,
+          fg: typeof saved.fg === "string" ? saved.fg : null,
+          bg: typeof saved.bg === "string" ? saved.bg : null,
+          bodyShape: saved.bodyShape ?? null,
+          eyeShape: saved.eyeShape ?? null,
+          gradient: saved.gradient ?? null,
+          logo: typeof saved.logo === "string" ? saved.logo : null,
+          logoRadius: typeof saved.logoRadius === "number" ? saved.logoRadius : 25,
+          frame: saved.frame ?? null,
+        });
       } else {
-        setQrFg(null);
-        setQrBody(null);
-        setQrEye(null);
+        setQrDesign(DEFAULT_WORKSPACE_QR);
       }
     } catch {
-      setQrFg(null);
-      setQrBody(null);
-      setQrEye(null);
+      setQrDesign(DEFAULT_WORKSPACE_QR);
+    } finally {
+      qrDesignLoadedFor.current = selectedPageId;
     }
   }, [selectedPageId]);
 
   useEffect(() => {
-    if (!selectedPageId) return;
-    localStorage.setItem(
-      `uqr-wsqr-${selectedPageId}`,
-      JSON.stringify({ fg: qrFg, bodyShape: qrBody, eyeShape: qrEye }),
-    );
-  }, [selectedPageId, qrFg, qrBody, qrEye]);
+    if (!selectedPageId || qrDesignLoadedFor.current !== selectedPageId) return;
+    try {
+      localStorage.setItem(`uqr-wsqr-${selectedPageId}`, JSON.stringify(qrDesign));
+    } catch {
+      // Quota exceeded (e.g. a large logo) — keep the design in memory.
+    }
+  }, [selectedPageId, qrDesign]);
+
+  function updateQrDesign<K extends keyof WorkspaceQrDesign>(key: K, value: WorkspaceQrDesign[K]) {
+    setQrDesign((prev) => ({ ...prev, [key]: value }));
+  }
+
   const [pageFields, setPageFields] = useState({
     title: "My Links",
     subtitle: "",
@@ -171,12 +224,17 @@ function LinksEditor() {
   }, [user]);
 
   const loadPage = useCallback(async (pageId: string) => {
-    setSelectedPageId(pageId);
+    const seq = ++loadPageSeq.current;
     const { data: pageData } = await supabase
       .from("link_pages")
       .select("*")
       .eq("id", pageId)
       .maybeSingle();
+    if (seq !== loadPageSeq.current) return;
+
+    // Populate the form before revealing the editor, otherwise a slow page
+    // fetch can overwrite edits (e.g. an avatar upload) made just after
+    // selecting the page.
     if (pageData) {
       setPageFields({
         title: pageData.title,
@@ -189,11 +247,14 @@ function LinksEditor() {
         published: pageData.published,
       });
     }
+    setSelectedPageId(pageId);
+
     const { data: secData } = await supabase
       .from("link_sections")
       .select("id, title, sort_order, visible, parent_id")
       .eq("page_id", pageId)
       .order("sort_order");
+    if (seq !== loadPageSeq.current) return;
     const secs = (secData ?? []) as SectionRow[];
     setSections(secs);
 
@@ -204,6 +265,7 @@ function LinksEditor() {
         .select("id, section_id, title, url, icon_emoji, icon_url, sort_order, visible")
         .in("section_id", secIds)
         .order("sort_order");
+      if (seq !== loadPageSeq.current) return;
       setItems((itemData ?? []) as ItemRow[]);
     } else {
       setItems([]);
@@ -505,41 +567,169 @@ function LinksEditor() {
     });
   }
 
+  async function moveSection(secId: string, direction: -1 | 1) {
+    if (movingSectionId) return;
+    const current = sections.find((s) => s.id === secId);
+    if (!current) return;
+
+    const siblings = sections
+      .filter((s) => s.parent_id === current.parent_id)
+      .sort((a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id));
+    const index = siblings.findIndex((s) => s.id === secId);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= siblings.length) return;
+
+    const reordered = [...siblings];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(target, 0, moved!);
+
+    const previous = sections;
+    const nextOrder = new Map(reordered.map((section, position) => [section.id, position]));
+    setSections((prev) =>
+      prev.map((section) =>
+        nextOrder.has(section.id)
+          ? { ...section, sort_order: nextOrder.get(section.id)! }
+          : section,
+      ),
+    );
+    setMovingSectionId(secId);
+
+    const updates = reordered
+      .map((section, position) => ({
+        id: section.id,
+        previous: section.sort_order,
+        next: position,
+      }))
+      .filter((entry) => entry.previous !== entry.next);
+
+    const results = await Promise.all(
+      updates.map((entry) =>
+        supabase.from("link_sections").update({ sort_order: entry.next }).eq("id", entry.id),
+      ),
+    );
+
+    setMovingSectionId(null);
+    const failure = results.find((result) => result.error)?.error;
+    if (failure) {
+      setSections(previous);
+      toast.error("Could not move section", { description: failure.message });
+    }
+  }
+
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file || !selectedPageId) return;
     if (file.size > 4 * 1024 * 1024) {
       toast.error("Avatar must be under 4MB");
+      input.value = "";
       return;
     }
-    if (!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type) || /\.svg($|\?)/i.test(file.name)) {
-      toast.error("Avatar must be a PNG, JPG, WebP or GIF image");
+    try {
+      // Canvas re-encoding strips metadata and guarantees a clean raster data
+      // URL, so the database guard never sees accidental SVG-like byte runs.
+      const avatar = await normalizeImageFile(file, { maxSize: 512, fit: "cover" });
+      setPageFields((f) => ({ ...f, avatar_url: avatar }));
+    } catch {
+      toast.error("Could not read that avatar", {
+        description: "Use a PNG, JPG, WebP or GIF image under 4MB.",
+      });
+    } finally {
+      input.value = "";
+    }
+  }
+
+  async function handleQrLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error("Logo must be under 4MB");
+      input.value = "";
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPageFields((f) => ({ ...f, avatar_url: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
+    try {
+      const logo = await normalizeImageFile(file, { maxSize: 512, fit: "contain" });
+      updateQrDesign("logo", logo);
+    } catch {
+      toast.error("Could not read that logo", {
+        description: "Use a PNG, JPG, WebP or GIF image under 4MB.",
+      });
+    } finally {
+      input.value = "";
+    }
+  }
+
+  function selectQrTemplate(templateId: number) {
+    setQrDesign((prev) => ({
+      ...prev,
+      templateId,
+      // A template supplies its own background and shapes; clear overrides so
+      // the selected look is actually visible. Logo/frame stay as they are.
+      fg: null,
+      bg: null,
+      bodyShape: null,
+      eyeShape: null,
+      gradient: null,
+    }));
+  }
+
+  function resetQrDesign() {
+    setQrDesign((prev) => ({ ...DEFAULT_WORKSPACE_QR, templateId: prev.templateId }));
   }
 
   const publicUrl = selectedPage
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/p/${pageFields.slug || selectedPage.slug}`
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/p/${selectedPage.slug}`
     : "";
+
+  const qrTemplate = useMemo(
+    () => templates.find((t) => t.id === qrDesign.templateId) ?? templates[0]!,
+    [qrDesign.templateId],
+  );
+
+  const qrTemplateThumbs = useMemo(
+    () =>
+      templates.map((template) => ({
+        id: template.id,
+        src: svgToDataUrl(
+          renderQrSvg(
+            "https://example.com",
+            {
+              templateId: template.id,
+              fg: template.fg,
+              bg: template.bg,
+              eye: template.eye,
+              bodyShape: template.shape,
+              eyeShape: template.eyeShape,
+            },
+            { size: 120, margin: 2 },
+          ),
+        ),
+      })),
+    [],
+  );
+
+  const resolvedQrDesign = useMemo(() => {
+    const bg = qrDesign.bg ?? qrTemplate.bg;
+    const fg = qrDesign.fg ?? qrForegroundFor(pageFields.theme_color, bg);
+    return {
+      templateId: qrDesign.templateId,
+      fg,
+      bg,
+      eye: fg,
+      bodyShape: qrDesign.bodyShape ?? qrTemplate.shape,
+      eyeShape: qrDesign.eyeShape ?? qrTemplate.eyeShape,
+      gradient: qrDesign.gradient,
+      logo: qrDesign.logo,
+      logoRadius: qrDesign.logo ? qrDesign.logoRadius : null,
+      frame: qrDesign.frame,
+    };
+  }, [qrDesign, qrTemplate, pageFields.theme_color]);
 
   const previewSvg = useMemo(() => {
     if (!publicUrl) return null;
-    const qrColor = readableQrColor(qrFg ?? pageFields.theme_color, "#ffffff");
-    return renderQrSvg(publicUrl, {
-      templateId: 1,
-      fg: qrColor,
-      bg: "#ffffff",
-      eye: qrColor,
-      bodyShape: qrBody ?? "square",
-      eyeShape: qrEye ?? "square",
-    });
-  }, [publicUrl, pageFields.theme_color, qrFg, qrBody, qrEye]);
+    return renderQrSvg(publicUrl, resolvedQrDesign, { size: 512 });
+  }, [publicUrl, resolvedQrDesign]);
 
   const previewTextColor = useMemo(
     () => readableTextColor(pageFields.theme_color, pageFields.theme_bg),
@@ -774,6 +964,14 @@ function LinksEditor() {
                   </label>
                 </div>
 
+                {selectedPage && pageFields.slug !== selectedPage.slug && (
+                  <p className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] font-semibold text-amber-700">
+                    Changing the slug changes the QR destination. Save the page to apply it —
+                    printed codes that use <span className="font-mono">/p/{selectedPage.slug}</span>{" "}
+                    will stop working.
+                  </p>
+                )}
+
                 <div className="mt-3">
                   <span className="text-xs font-semibold text-muted-foreground">Avatar</span>
                   <div className="mt-1 flex items-center gap-3">
@@ -881,6 +1079,8 @@ function LinksEditor() {
                     onUpdateItem={updateItem}
                     onDeleteItem={deleteItem}
                     onAddSubSection={(parentId) => void addSection(parentId)}
+                    onMoveSection={(sectionId, direction) => void moveSection(sectionId, direction)}
+                    movingSectionId={movingSectionId}
                   />
                 ))}
 
@@ -1051,92 +1251,112 @@ function LinksEditor() {
                     <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                       QR Design
                     </h3>
-                    {(qrFg || qrBody || qrEye) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setQrFg(null);
-                          setQrBody(null);
-                          setQrEye(null);
-                        }}
-                        className="text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        Reset
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={resetQrDesign}
+                      className="text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Reset
+                    </button>
                   </div>
 
-                  <label className="flex items-center gap-2 text-xs font-semibold">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Template
+                  </p>
+                  <div className="mt-1 flex gap-1.5 overflow-x-auto pb-1">
+                    {qrTemplateThumbs.map((thumb) => (
+                      <button
+                        key={thumb.id}
+                        type="button"
+                        onClick={() => selectQrTemplate(thumb.id)}
+                        title={`QR template ${thumb.id}`}
+                        className={`shrink-0 rounded-lg border-2 p-0.5 transition-all ${
+                          qrDesign.templateId === thumb.id
+                            ? "border-brand ring-1 ring-brand/25"
+                            : "border-border hover:border-brand/50"
+                        }`}
+                      >
+                        <img
+                          src={thumb.src}
+                          alt={`QR template ${thumb.id}`}
+                          className="size-10 rounded"
+                        />
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <ColorPicker
+                      label="Code"
+                      value={
+                        qrDesign.fg ??
+                        qrForegroundFor(pageFields.theme_color, qrDesign.bg ?? qrTemplate.bg)
+                      }
+                      onChange={(value) => updateQrDesign("fg", value)}
+                    />
+                    <ColorPicker
+                      label="Background"
+                      value={qrDesign.bg ?? qrTemplate.bg}
+                      onChange={(value) => updateQrDesign("bg", value)}
+                    />
+                  </div>
+
+                  <label className="mt-2 flex items-center gap-2 text-[11px] font-semibold">
                     <input
                       type="checkbox"
-                      checked={!qrFg}
-                      onChange={(e) => setQrFg(e.target.checked ? null : pageFields.theme_color)}
+                      checked={!qrDesign.fg}
+                      onChange={(e) =>
+                        updateQrDesign("fg", e.target.checked ? null : pageFields.theme_color)
+                      }
                       className="size-3.5 accent-brand"
                     />
                     Match theme color (auto scan-safe)
                   </label>
-                  {qrFg && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={qrFg ?? pageFields.theme_color}
-                        onChange={(e) => setQrFg(e.target.value)}
-                        className="size-8 cursor-pointer rounded-lg border border-border bg-background p-0.5"
-                      />
-                      <span className="text-[11px] text-muted-foreground">
-                        Light colors are auto-darkened so the code stays scannable.
-                      </span>
-                    </div>
-                  )}
-
-                  <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Body shape
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    The theme colour is auto-adjusted for contrast so the code stays scannable.
                   </p>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {bodyShapeOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setQrBody(qrBody === opt.value ? null : opt.value)}
-                        className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                          (qrBody ?? "square") === opt.value
-                            ? "bg-brand text-brand-foreground"
-                            : "bg-background text-muted-foreground hover:bg-background/80"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
 
-                  <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Eye style
-                  </p>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {eyeShapeOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setQrEye(qrEye === opt.value ? null : opt.value)}
-                        className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                          (qrEye ?? "square") === opt.value
-                            ? "bg-brand text-brand-foreground"
-                            : "bg-background text-muted-foreground hover:bg-background/80"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
+                  <DesignControls
+                    bodyShape={qrDesign.bodyShape}
+                    setBodyShape={(value) => updateQrDesign("bodyShape", value)}
+                    eyeShape={qrDesign.eyeShape}
+                    setEyeShape={(value) => updateQrDesign("eyeShape", value)}
+                    gradient={qrDesign.gradient}
+                    setGradient={(value) => updateQrDesign("gradient", value)}
+                    logo={qrDesign.logo}
+                    onLogoUpload={handleQrLogoUpload}
+                    onLogoRemove={() => updateQrDesign("logo", null)}
+                    logoRadius={qrDesign.logoRadius}
+                    setLogoRadius={(value) => updateQrDesign("logoRadius", value)}
+                    logoInputRef={qrLogoInputRef}
+                    frame={qrDesign.frame}
+                    setFrame={(value) => updateQrDesign("frame", value)}
+                  />
                 </div>
               )}
 
               {/* QR Code */}
               {previewSvg && (
                 <div className="rounded-2xl border border-border bg-background p-4 shadow-card">
-                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                    Workspace QR Code
-                  </h3>
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      Workspace QR Code
+                    </h3>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                      <RefreshCw className="size-3" /> Dynamic
+                    </span>
+                  </div>
+                  <p className="mb-3 text-[10px] leading-snug text-muted-foreground">
+                    This code points to your live page. Edit links, sections or design anytime — the
+                    printed code stays the same. Scans are tracked in{" "}
+                    <Link
+                      to="/workspace-analytics"
+                      className="font-semibold text-brand hover:underline"
+                    >
+                      Workspace analytics
+                    </Link>
+                    .
+                  </p>
                   <div className="flex flex-col items-center">
                     <img
                       src={svgToDataUrl(previewSvg)}
@@ -1146,11 +1366,17 @@ function LinksEditor() {
                     <p className="mt-2 text-[10px] text-muted-foreground break-all text-center">
                       {publicUrl}
                     </p>
+                    {selectedPage && pageFields.slug !== selectedPage.slug && (
+                      <p className="mt-2 rounded-lg bg-amber-500/10 px-2 py-1.5 text-center text-[10px] font-semibold text-amber-700">
+                        Slug changed. Save to update the QR destination — old printed codes keep the
+                        previous slug.
+                      </p>
+                    )}
                     <div className="mt-3 flex flex-wrap justify-center gap-2">
                       <button
                         type="button"
                         onClick={() =>
-                          void downloadPng(previewSvg, `workspace-${pageFields.slug}.png`)
+                          void downloadPng(previewSvg, `workspace-${selectedPage?.slug}.png`)
                         }
                         className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold transition-colors hover:bg-background"
                       >
@@ -1158,7 +1384,9 @@ function LinksEditor() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => downloadSvg(previewSvg, `workspace-${pageFields.slug}.svg`)}
+                        onClick={() =>
+                          downloadSvg(previewSvg, `workspace-${selectedPage?.slug}.svg`)
+                        }
                         className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold transition-colors hover:bg-background"
                       >
                         <FileType className="size-3" /> SVG
@@ -1166,7 +1394,7 @@ function LinksEditor() {
                       <button
                         type="button"
                         onClick={() =>
-                          void downloadJpg(previewSvg, `workspace-${pageFields.slug}.jpg`)
+                          void downloadJpg(previewSvg, `workspace-${selectedPage?.slug}.jpg`)
                         }
                         className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold transition-colors hover:bg-background"
                       >
@@ -1175,7 +1403,7 @@ function LinksEditor() {
                       <button
                         type="button"
                         onClick={() =>
-                          void downloadPdf(previewSvg, `workspace-${pageFields.slug}.pdf`)
+                          void downloadPdf(previewSvg, `workspace-${selectedPage?.slug}.pdf`)
                         }
                         className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold transition-colors hover:bg-background"
                       >
@@ -1206,6 +1434,8 @@ function SectionBlock({
   onUpdateItem,
   onDeleteItem,
   onAddSubSection,
+  onMoveSection,
+  movingSectionId,
 }: {
   section: SectionRow;
   depth: number;
@@ -1219,6 +1449,8 @@ function SectionBlock({
   onUpdateItem: (id: string, patch: Partial<ItemRow>) => void;
   onDeleteItem: (id: string) => void;
   onAddSubSection: (parentId: string) => void;
+  onMoveSection: (id: string, direction: -1 | 1) => void;
+  movingSectionId: string | null;
 }) {
   const isCollapsed = collapsedSections.has(section.id);
   const sectionItems = items
@@ -1227,6 +1459,15 @@ function SectionBlock({
   const subSections = allSections
     .filter((s) => s.parent_id === section.id)
     .sort((a, b) => a.sort_order - b.sort_order);
+  const siblings = allSections
+    .filter((s) => s.parent_id === section.parent_id)
+    .sort((a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id));
+  const position = siblings.findIndex((s) => s.id === section.id);
+  const canMoveUp = position > 0;
+  const canMoveDown = position >= 0 && position < siblings.length - 1;
+  // A move writes every sibling's sort_order; block all move buttons until it
+  // finishes so a second click cannot be silently ignored.
+  const moveInProgress = movingSectionId !== null;
 
   return (
     <div
@@ -1242,9 +1483,7 @@ function SectionBlock({
         >
           {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronDown className="size-4" />}
         </button>
-        {depth === 0 ? (
-          <GripVertical className="size-4 text-muted-foreground/40" />
-        ) : (
+        {depth > 0 && (
           <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40">
             Sub
           </span>
@@ -1255,6 +1494,26 @@ function SectionBlock({
           placeholder={depth === 0 ? "Section title (optional)" : "Sub-section title (optional)"}
           className="flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-muted-foreground/40"
         />
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={() => onMoveSection(section.id, -1)}
+            disabled={!canMoveUp || moveInProgress}
+            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-25"
+            title="Move section up"
+          >
+            <ArrowUp className="size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMoveSection(section.id, 1)}
+            disabled={!canMoveDown || moveInProgress}
+            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-25"
+            title="Move section down"
+          >
+            <ArrowDown className="size-4" />
+          </button>
+        </div>
         <button
           type="button"
           onClick={() => onUpdateSection(section.id, { visible: !section.visible })}
@@ -1326,6 +1585,8 @@ function SectionBlock({
                   onUpdateItem={onUpdateItem}
                   onDeleteItem={onDeleteItem}
                   onAddSubSection={onAddSubSection}
+                  onMoveSection={onMoveSection}
+                  movingSectionId={movingSectionId}
                 />
               ))}
             </div>

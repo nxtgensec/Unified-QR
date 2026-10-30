@@ -726,12 +726,14 @@ export async function downloadPng(svg: string, filename = "qr-code.png", size = 
     img.onerror = () => reject(new Error("render failed"));
     img.src = url;
   });
+  const ratio = img.naturalWidth ? img.naturalHeight / img.naturalWidth : 1;
+  const height = Math.max(1, Math.round(size * ratio));
   const canvas = document.createElement("canvas");
   canvas.width = size;
-  canvas.height = size;
+  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  ctx.drawImage(img, 0, 0, size, size);
+  ctx.drawImage(img, 0, 0, size, height);
   triggerDownload(canvas.toDataURL("image/png"), filename);
 }
 
@@ -744,14 +746,16 @@ export async function downloadJpg(svg: string, filename = "qr-code.jpg", size = 
     img.onerror = () => reject(new Error("render failed"));
     img.src = url;
   });
+  const ratio = img.naturalWidth ? img.naturalHeight / img.naturalWidth : 1;
+  const height = Math.max(1, Math.round(size * ratio));
   const canvas = document.createElement("canvas");
   canvas.width = size;
-  canvas.height = size;
+  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, size, size);
-  ctx.drawImage(img, 0, 0, size, size);
+  ctx.fillRect(0, 0, size, height);
+  ctx.drawImage(img, 0, 0, size, height);
   triggerDownload(canvas.toDataURL("image/jpeg", 0.95), filename);
 }
 
@@ -764,19 +768,21 @@ export async function downloadPdf(svg: string, filename = "qr-code.pdf", size = 
     img.onerror = () => reject(new Error("render failed"));
     img.src = url;
   });
+  const ratio = img.naturalWidth ? img.naturalHeight / img.naturalWidth : 1;
+  const height = Math.max(1, Math.round(size * ratio));
   const canvas = document.createElement("canvas");
   canvas.width = size;
-  canvas.height = size;
+  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  ctx.drawImage(img, 0, 0, size, size);
+  ctx.drawImage(img, 0, 0, size, height);
   const imgData = canvas.toDataURL("image/png");
   const pdf = new jsPDF({
     orientation: "portrait",
     unit: "px",
-    format: [size, size],
+    format: [size, height],
   });
-  pdf.addImage(imgData, "PNG", 0, 0, size, size);
+  pdf.addImage(imgData, "PNG", 0, 0, size, height);
   pdf.save(filename);
 }
 

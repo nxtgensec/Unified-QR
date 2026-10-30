@@ -44,6 +44,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { makeSlug, shortUrl } from "@/lib/codes";
 import { getDynamicLimit, effectivePlan } from "@/lib/plans";
 import { brandForTitle } from "@/lib/workspace-templates";
+import { normalizeImageFile } from "@/lib/image";
 
 const PLACEHOLDER = "https://qr.nxtgensec.org";
 
@@ -349,21 +350,31 @@ export function QrWidget({
     [data, template, type],
   );
 
-  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
     if (file.size > 4 * 1024 * 1024) {
       toast.error("Logo must be under 4MB");
+      input.value = "";
       return;
     }
     if (!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type) || /\.svg($|\?)/i.test(file.name)) {
       toast.error("Logo must be a PNG, JPG, WebP or GIF image");
+      input.value = "";
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => setLogo(reader.result as string);
-    reader.readAsDataURL(file);
-    e.target.value = "";
+    try {
+      // Re-encode through a canvas: strips metadata, keeps the file small and
+      // guarantees the stored data URL is a genuine raster image.
+      setLogo(await normalizeImageFile(file, { maxSize: 512, fit: "contain" }));
+    } catch {
+      toast.error("Could not read that logo", {
+        description: "Use a PNG, JPG, WebP or GIF image under 4MB.",
+      });
+    } finally {
+      input.value = "";
+    }
   }
 
   function resetAllCustom() {
@@ -832,7 +843,7 @@ function SaveSection({
   );
 }
 
-function DesignControls({
+export function DesignControls({
   bodyShape,
   setBodyShape,
   eyeShape,
@@ -1135,7 +1146,7 @@ function Collapsible({
   );
 }
 
-function ColorPicker({
+export function ColorPicker({
   label,
   value,
   onChange,
